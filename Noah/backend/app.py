@@ -17,9 +17,11 @@ import modal
 from fastapi import FastAPI, Header, HTTPException
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
-# Set to David's Modal app name once his classify() is deployed.
-# While None, the mock classifier below is used.
+# David's classifier: a Modal class with classify(event) and warmup() methods
+# sharing one container (CONTRACT.md section 7, cold starts). His app is
+# "intent-monitor". While CLASSIFIER_APP is None, the mock below is used.
 CLASSIFIER_APP: Optional[str] = None
+CLASSIFIER_CLASS = "Classifier"
 
 # How long to wait for the classifier before answering "pending". A warm
 # classification takes well under a second. A result that finishes later is
@@ -176,16 +178,42 @@ def mock_classify(event: dict) -> dict:
     return result
 
 
+_classifier = None
+
+
+def classifier():
+    """An instance of David's class, looked up once per backend container."""
+    global _classifier
+    if _classifier is None:
+        _classifier = modal.Cls.from_name(CLASSIFIER_APP, CLASSIFIER_CLASS)()
+    return _classifier
+
+
+async def warm_classifier() -> Optional[str]:
+    """Starts the classifier booting without waiting for it. Boots a cold
+    container; on a warm one, warmup() returns at once and changes nothing."""
+    if CLASSIFIER_APP is None:
+        return None
+    try:
+        await classifier().warmup.spawn.aio()
+        return None
+    except Exception as exc:
+        return f"warm-up failed: {type(exc).__name__}: {exc}"
+
+
 async def classify(event: dict) -> tuple[dict, Optional[str]]:
     """Returns the result to send to the Mod, and an error or status note
     for the log."""
     if CLASSIFIER_APP is None:
         raw = mock_classify(event)
     else:
-        fn = modal.Function.from_name(CLASSIFIER_APP, "classify")
         # spawn + get: a slow call keeps running on David's side, which
         # delivers its result later in late_results.
-        call = await fn.spawn.aio(event)
+        try:
+            call = await classifier().classify.spawn.aio(event)
+        except Exception as exc:
+            error = f"classifier unreachable: {type(exc).__name__}: {exc}"
+            return fallback_result(event, error), error
         try:
             raw = await call.get.aio(timeout=CLASSIFY_WAIT_S)
         except (TimeoutError, modal.exception.TimeoutError):
@@ -229,7 +257,12 @@ def api():
 
     @web.get("/health")
     async def health():
-        return {"ok": True, "classifier": CLASSIFIER_APP or "mock"}
+        # The Mod calls this at session start, so the GPU begins booting
+        # before the first event arrives.
+        error = await warm_classifier()
+        if error:
+            print(json.dumps({"health": "warm-up", "error": error}))
+        return {"ok": True, "classifier": CLASSIFIER_APP or "mock", "warming": CLASSIFIER_APP is not None and error is None}
 
     @web.post("/v1/events")
     async def events(event: Event, authorization: str = Header(default="")):

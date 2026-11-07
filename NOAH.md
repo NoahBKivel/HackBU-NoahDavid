@@ -85,7 +85,7 @@ The full requirements are in [Noah/MOD_PRD.md](Noah/MOD_PRD.md). This section is
 
 ## 3. The backend (`Noah/backend/`, Python, FastAPI on Modal)
 
-**Status: built and deployed** with the mock classifier.
+**Status: built and deployed** with the mock classifier. It's ready to call David's `Classifier` class, but stays on the mock until David says we can use his app (it's in use for his own testing).
 
 - **Deployed URL (stable):** `https://davidkny22--alignment-monitor-api.us-east.modal.run`
   - The dev URL from `modal serve` is the same with `-dev` before `.us-east`.
@@ -93,17 +93,19 @@ The full requirements are in [Noah/MOD_PRD.md](Noah/MOD_PRD.md). This section is
 - **Code:** one file, [Noah/backend/app.py](Noah/backend/app.py).
   - It runs `modal.App("alignment-monitor")`, plus an `@app.function` with the `monitor-token` secret and `@modal.asgi_app()` serving FastAPI.
 - **Endpoints:**
-  - `GET /health` returns `{ok, classifier}` with no auth, used for warm-up. `classifier` is `"mock"` or David's app name.
+  - `GET /health` returns `{ok, classifier, warming}` with no auth. `classifier` is `"mock"` or David's app name. With a real classifier set, it fires `warmup.spawn()` without waiting (`warming: true`), so a cold GPU container starts booting and a warm one is unaffected. The Mod calls it at session start.
   - `POST /v1/events` checks `Authorization: Bearer <MONITOR_TOKEN>` and returns 401 if it's wrong. It validates the event with a Pydantic model using `extra="allow"`: `session_id`, `event_id` and `type` are required, and any missing one returns 422. Unknown fields pass through. It returns `classify(event)` as JSON.
 - **The classifier switch:** the `CLASSIFIER_APP` constant at the top of `app.py`.
   - `None` uses `mock_classify()`.
-  - Setting it to David's app name calls `modal.Function.from_name(CLASSIFIER_APP, "classify")` with `.spawn.aio(event)`, then waits with `.get.aio(timeout=CLASSIFY_WAIT_S)`.
+  - Setting it to David's app name (`"intent-monitor"`) looks up `modal.Cls.from_name(CLASSIFIER_APP, CLASSIFIER_CLASS)()` once per container (`CLASSIFIER_CLASS = "Classifier"`), calls `.classify.spawn.aio(event)`, then waits with `.get.aio(timeout=CLASSIFY_WAIT_S)`.
+  - **To connect, only with David's OK:** set `CLASSIFIER_APP = "intent-monitor"`, deploy, and send the samples. **To fall back during the demo:** set it back to `None` and deploy (takes under a minute).
 - **Slow results** (CONTRACT.md section 4, David's N-001):
   - It waits **8 s** (`CLASSIFY_WAIT_S`) for `classify()`.
   - If `classify()` isn't done by then, it returns a **pending result**: `pending: true`, `risk: null`, no actions, `details.status: "classifying"`.
   - The call keeps running on David's side, and his side delivers the finished result in `late_results` on the next response for that session.
   - The backend stores nothing. It passes `late_results` through, validating each entry against the `Result` model and dropping (and logging) any with the wrong shape.
 - **When the classifier fails:** the backend never returns an error to the Mod for a classifier problem. It returns a **fallback result**: `flagged: false`, `risk: null`, no actions, and `details: {source: "backend", error: "..."}`, so the Pane can show "classifier unavailable". It does this when:
+  - the classifier can't be reached (app or class not found)
   - the classifier raises an exception
   - the result doesn't match the contract's output shape (checked with the `Result` Pydantic model; the error lists the bad fields)
 - **Extra result fields** such as `drift` and `drift_rate` pass through untouched.
@@ -126,6 +128,7 @@ The full requirements are in [Noah/MOD_PRD.md](Noah/MOD_PRD.md). This section is
     - a 12 s classification returned `pending` at about 8 s
     - `late_results` passed through with `drift` and `drift_rate` intact
     - a malformed late entry was dropped while the valid one was kept
+  - the class interface, tested against our own fake `Classifier` class with David's method names (since stopped; David's app was not called): `/health` fired `warmup` on a cold container and returned in about 4 s, a normal result, pending at about 9.7 s, the late result delivered once on the next event, the wrong shape and an exception all behaved as above. Then redeployed on the mock and the four samples passed.
 - **No server-side storage.** David's database holds the history, and the Mod holds the graph data.
 - **Commands** (run from the repo root):
   - `set PYTHONUTF8=1` first in cmd, or prefix `PYTHONUTF8=1` in bash (see build notes).

@@ -220,14 +220,16 @@ This is everything the Mod sends, subject to the large-item exception.
 
 **Open:**
 - **Needed from David** (to revisit with him):
-  - His Modal app name, and how `classify` is exposed: a plain function, or the `Classifier` class from the cold-start proposal below. The backend can call either.
+  - ~~His Modal app name and how `classify` is exposed~~: answered in c1c5c2b, app `intent-monitor`, class `Classifier` with `classify` and `warmup`. The backend now calls it this way (on the mock until David OKs connecting).
+  - **OK to connect the backend to `intent-monitor`.** Noah's side won't call it until David says it won't disrupt his testing.
+  - **Late results are lost on a cold start (David's side).** `classify` decides "late" by timing from its own start (`LATE_AFTER_S`). Time spent waiting for a container to boot, or queued behind other calls, isn't counted. So on a cold start the backend answers pending at 8 s, then `classify` runs fast, counts itself on time, and returns its result to a caller that has stopped listening. Proposed fix: the backend adds the time it sent the event (e.g. `backend_sent_at`, Unix seconds) and `classify` measures from that. Needs David's agreement on the field name.
   - Confirmation of the output shape in section 4.
   - **Notice text must not include a source prefix.** The Mod adds "Alignment monitor:" to every notice itself (Noah/MOD_PRD.md FR-23).
   - Which event fields his classifier uses. Everything is sent, so this is for awareness, not trimming.
   - When a first deployable `classify()` will exist, even without fine-tuning.
   - Whether he agrees to the cold-start proposal below.
   - His agent should update DAVID.md, which is still the version seeded from planning.
-  - The exact set of `details` keys.
+  - The exact set of `details` keys. For the stock model: `source` ("stock-kev"), `placeholder`, `question`, `classify_ms`, and `skipped` for events with no action or text. Still open for the fine-tuned version.
 - **Classifier cold starts (needs addressing before the live demo; owners: both).**
   - **Problem:** Modal shuts idle containers down after about a minute.
     - Restarting the backend takes a few seconds, which is harmless.
