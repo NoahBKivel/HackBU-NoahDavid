@@ -164,6 +164,10 @@ The order doubles as the cut list: each step leaves something you can demo.
   - Hook matchers or pane IDs are built from constants. Write them as literals.
 
   The refusal appears to Noah as a dim "reload failed" line in the chat.
+- **Pane design rules (Noah, 2026-11-07):**
+  - The default view must fit on screen at once, without scrolling.
+  - Don't put everything in bordered containers. Borders behave badly as the panel width changes (tiles wrapped into a tall column and cut off at the edge).
+  - Change the design in small steps that Noah reviews one at a time.
 - **Type-check with TypeScript in the scratchpad.** The `claude` command line isn't installed, so run `tsc -p <mod>/.claude-plugin/types/tsconfig.json` with a TypeScript copy installed in the session scratchpad. The engine checks rules, not types.
 - **The Mod's temporary debug trace** writes to a scratchpad file, to `$.store` key `trace`, and optionally (with `DEBUG_CONTEXT`) to every tool result. Remove it before linking.
 - `$.session.append` with `type: "user"` **is** read by the model. Use `type: "system"` for notices meant only for the user.

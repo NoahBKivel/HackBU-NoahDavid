@@ -538,14 +538,8 @@ ${text.slice(-keep)}`
 // ---------- Pane ----------
 
 // The surface's element table, loosely typed: the Pane draws on desktop
-// (with Svg) and falls back to text where Svg is missing.
+// (with Svg) and falls back to text sparklines where Svg is missing.
 type Elements = { [name: string]: any }
-
-const LEVELS = [
-  { max: 0.4, label: 'Low', color: 'success' },
-  { max: 0.7, label: 'Elevated', color: 'warning' },
-  { max: 1.01, label: 'High', color: 'error' },
-]
 
 async function renderPane($: $, elements: Elements, live: boolean) {
   const { Box, Text, Button } = elements
@@ -562,167 +556,94 @@ async function renderPane($: $, elements: Elements, live: boolean) {
   const flagged = list.filter(p => p.flagged).reverse()
   const fixes = list.filter(p => p.correction !== null).length
   const alignment = latest ? 1 - rollingRisk(risks, risks.length - 1) : null
-  const checking = list.filter(p => p.isPending).length
 
   const status = {
-    connecting: { label: 'Connecting', color: 'subtle' },
-    live: { label: 'Live', color: 'success' },
-    classifying: { label: 'Checking', color: 'warning' },
-    error: { label: 'Backend unreachable', color: 'error' },
-  }[state as Conn] ?? { label: 'Unknown', color: 'subtle' }
+    connecting: ['Connecting', 'subtle'],
+    live: ['Live', 'success'],
+    classifying: ['Checking...', 'warning'],
+    error: ['Backend unreachable', 'error'],
+  }[state as Conn] ?? ['Unknown', 'subtle']
 
-  const level = latest ? levelOf(latest.risk, latest.flagged) : null
   const toggle = (id: string) => update($, expanded, current => (current === id ? null : id))
 
-  const card = (key: string, title: string, hint: string, body: unknown, accent = 'subtle', right: unknown = null) => (
-    <Box key={key} flexDirection="column" borderStyle="round" borderColor={accent} paddingX={2} paddingY={1} gap="sm">
-      <Box flexDirection="row" justifyContent="space-between" alignItems="center">
-        <Text weight="semibold">{title}</Text>
-        {right}
-      </Box>
-      <Text color="subtle" size="footnote">{hint}</Text>
-      {body}
-    </Box>
-  )
-
-  const hero = (
-    <Box key="hero" flexDirection="column" borderStyle="round" borderColor={level?.color ?? 'subtle'} paddingX={2} paddingY={1} gap="sm">
+  return (
+    <Box flexDirection="column" gap="md" paddingX={1}>
       <Box flexDirection="row" justifyContent="space-between" alignItems="flex-start">
         <Box flexDirection="column">
-          <Text color="subtle" size="footnote">Current risk</Text>
-          <Box flexDirection="row" alignItems="flex-end" gap="sm">
-            <Text size="title" weight="bold" color={level?.color ?? 'subtle'}>{latest ? pct(latest.risk) : '--'}</Text>
-            <Text weight="semibold" color={level?.color ?? 'subtle'}>{level ? level.label : 'No data yet'}</Text>
-          </Box>
+          <Text dimColor size="caption">Current risk</Text>
+          <Text size="title" weight="bold" color={riskColor(latest?.risk ?? null, latest?.flagged ?? false)}>
+            {latest ? pct(latest.risk) : '--'}
+          </Text>
+          <Text dimColor size="footnote">
+            {latest ? `${riskLabel(latest.risk, latest.flagged)}, last check: ${latest.summary}` : 'No actions checked yet'}
+          </Text>
         </Box>
         <Box flexDirection="column" alignItems="flex-end">
-          <Text weight="semibold" color={status.color}>{`● ${status.label}`}</Text>
-          <Text color="subtle" size="footnote">{live ? 'Connected classifier' : 'Mock classifier'}</Text>
+          <Text color={status[1]}>{`● ${status[0]}`}</Text>
+          {!live && <Text dimColor size="caption">Mock classifier</Text>}
         </Box>
       </Box>
-      {Svg ? <Svg source={gauge(latest?.risk ?? null)} alt={latest ? `Risk gauge at ${pct(latest.risk)}` : 'Risk gauge, no data yet'} /> : null}
-      <Text>
-        {latest
-          ? `Last check at ${clock(latest.ts)}: ${latest.tool}, ${latest.summary}`
-          : 'Every Edit, Write and shell command the agent runs is checked against your instructions. The first result shows up here a moment after the agent acts.'}
-      </Text>
-      {checking > 0 && <Text color="warning" size="footnote">{`Checking ${checking} action${checking === 1 ? '' : 's'}...`}</Text>}
-    </Box>
-  )
 
-  const tiles = [
-    { label: 'Alignment', hint: 'Last 5 checks, higher is better', value: alignment === null ? '--' : pct(alignment), color: alignment === null ? 'subtle' : levelOf(1 - alignment, false).color },
-    { label: 'Peak risk', hint: 'Highest so far', value: peak === null ? '--' : pct(peak), color: peak === null ? 'subtle' : levelOf(peak, false).color },
-    { label: 'Average risk', hint: 'Across all checks', value: average === null ? '--' : pct(average), color: average === null ? 'subtle' : levelOf(average, false).color },
-    { label: 'Flags', hint: 'Possible violations', value: String(flagged.length), color: flagged.length ? 'error' : 'text' },
-    { label: 'Corrections', hint: 'Sent to the agent', value: String(fixes), color: fixes ? 'success' : 'text' },
-  ]
-  const stats = (
-    <Box key="stats" flexDirection="row" flexWrap="wrap" gap="sm">
-      {tiles.map(t => (
-        <Box key={`tile-${t.label}`} flexDirection="column" flexGrow={1} minWidth={120} borderStyle="round" borderColor="subtle" paddingX={2} paddingY={1}>
-          <Text color="subtle" size="footnote">{t.label}</Text>
-          <Text size="heading" weight="bold" color={t.color}>{t.value}</Text>
-          <Text color="subtle" size="caption">{t.hint}</Text>
-        </Box>
-      ))}
-    </Box>
-  )
+      <Box flexDirection="row" justifyContent="space-between">
+        {readout(Text, Box, 'Alignment', alignment === null ? '--' : pct(alignment), alignment === null ? 'subtle' : riskColor(1 - alignment, false))}
+        {readout(Text, Box, 'Peak risk', peak === null ? '--' : pct(peak), riskColor(peak, false))}
+        {readout(Text, Box, 'Average risk', average === null ? '--' : pct(average), riskColor(average, false))}
+        {readout(Text, Box, 'Flags', String(flagged.length), flagged.length ? 'error' : 'text')}
+        {readout(Text, Box, 'Corrections', String(fixes), fixes ? 'success' : 'text')}
+      </Box>
 
-  const legend = (
-    <Box flexDirection="row" flexWrap="wrap" gap="md">
-      <Text color="suggestion" size="footnote">● Checked</Text>
-      <Text color="error" size="footnote">● Flagged</Text>
-      <Text color="success" size="footnote">◎ Correction sent</Text>
-      <Text color="subtle" size="footnote">○ Still checking</Text>
-    </Box>
-  )
+      <Box flexDirection="column">
+        <Text weight="semibold">Risk per action</Text>
+        {Svg ? (
+          <Svg source={riskChart(list)} alt={chartAlt(list)} isInteractive />
+        ) : (
+          <Text dimColor>{sparkline(risks)}</Text>
+        )}
+        <Text dimColor size="caption">Red: flagged. Green ring: correction sent to the agent. Gray: still being checked.</Text>
+      </Box>
 
-  const riskCard = card(
-    'risk',
-    'Risk per action',
-    'How likely each action is to break your instructions, as judged by the classifier. Lower is better.',
-    <Box flexDirection="column" gap="sm">
-      {Svg ? <Svg source={riskChart(list)} alt={chartAlt(list)} isInteractive /> : <Text>{sparkline(risks)}</Text>}
-      {legend}
-    </Box>,
-    'subtle',
-    <Text color="subtle" size="footnote">{`${scored.length} checked`}</Text>,
-  )
+      <Box flexDirection="column">
+        <Text weight="semibold">Alignment trend</Text>
+        {Svg ? (
+          <Svg source={trendChart(list)} alt={`Alignment trend, currently ${alignment === null ? 'unknown' : pct(alignment)}`} isInteractive />
+        ) : (
+          <Text dimColor>{sparkline(risks.map((_, i) => 1 - rollingRisk(risks, i)))}</Text>
+        )}
+        <Text dimColor size="caption">Rolling alignment over the last 5 checks. Dashed lines mark corrections.</Text>
+      </Box>
 
-  const trendCard = card(
-    'trend',
-    'Alignment trend',
-    'Rolling alignment over the last 5 checks. A dip means recent actions looked risky; a rise after a dashed line means a correction helped.',
-    Svg ? (
-      <Svg source={trendChart(list)} alt={`Alignment trend, currently ${alignment === null ? 'unknown' : pct(alignment)}`} isInteractive />
-    ) : (
-      <Text>{sparkline(risks.map((_, i) => 1 - rollingRisk(risks, i)))}</Text>
-    ),
-    'subtle',
-    <Text color={alignment === null ? 'subtle' : levelOf(1 - alignment, false).color} size="footnote">
-      {alignment === null ? 'No data yet' : `${pct(alignment)} now`}
-    </Text>,
-  )
-
-  const flagsCard = card(
-    'flags',
-    'Flagged actions',
-    'Actions the classifier thinks may conflict with your instructions. Select one to see why.',
-    flagged.length === 0 ? (
-      <Text color="success">No flagged actions so far.</Text>
-    ) : (
-      <Box flexDirection="column" gap="xs">
+      <Box flexDirection="column">
+        <Text weight="semibold">{`Flagged actions (${flagged.length})`}</Text>
+        {flagged.length === 0 && <Text dimColor>Nothing flagged so far.</Text>}
         {flagged.map(p => (
-          <Box key={`flag-${p.eventId}`} flexDirection="column">
+          <Box flexDirection="column" key={`flag-${p.eventId}`}>
             <Button key={`btn-${p.eventId}`} plain onPress={() => toggle(p.eventId)}>
-              {`${open === p.eventId ? '▾' : '▸'} `}
-              <Text color="error" weight="bold">{pct(p.risk)}</Text>
-              {`  ${p.summary}  `}
-              <Text color={p.corrected ? 'success' : 'subtle'}>
-                {`${clock(p.ts)}${p.corrected ? ' · corrected' : p.correction ? ' · correction queued' : ''}`}
-              </Text>
+              {`${open === p.eventId ? '▾' : '▸'} ${pct(p.risk)}  ${p.summary} `}
+              <Text dimColor>{`${clock(p.ts)}${p.corrected ? ', corrected' : p.correction ? ', correction queued' : ''}`}</Text>
             </Button>
             {open === p.eventId && flagDetails(Text, Box, p)}
           </Box>
         ))}
       </Box>
-    ),
-    flagged.length ? 'error' : 'subtle',
-    <Text color={flagged.length ? 'error' : 'subtle'} weight="semibold">{String(flagged.length)}</Text>,
-  )
 
-  const recent = [...list].reverse().slice(0, 8)
-  const recentCard = card(
-    'recent',
-    'Recent checks',
-    'The latest actions the monitor looked at, newest first.',
-    recent.length === 0 ? (
-      <Text color="subtle">No checks yet. They appear here as soon as the agent edits a file or runs a command.</Text>
-    ) : (
-      <Box flexDirection="column" gap="xs">
-        {recent.map(p => (
-          <Box key={`recent-${p.eventId}`} flexDirection="row" gap="sm">
-            <Text color="subtle" mono>{clock(p.ts)}</Text>
-            <Text mono weight="bold" color={p.isPending ? 'subtle' : p.error ? 'error' : levelOf(p.risk, p.flagged).color}>
-              {(p.isPending ? '...' : p.error ? 'err' : pct(p.risk)).padStart(4, ' ')}
-            </Text>
-            <Text color="subtle">{p.tool}</Text>
-            <Text>{p.summary}</Text>
-          </Box>
+      <Box flexDirection="column">
+        <Text weight="semibold">Recent checks</Text>
+        {list.length === 0 && <Text dimColor>Waiting for the agent to act.</Text>}
+        {[...list].reverse().slice(0, 8).map(p => (
+          <Text dimColor={!p.flagged} color={p.flagged ? 'error' : 'text'}>
+            {`${clock(p.ts)}  ${p.isPending ? '...' : p.error ? 'err' : pct(p.risk)}  ${p.tool}: ${p.summary}`}
+          </Text>
         ))}
       </Box>
-    ),
+    </Box>
   )
+}
 
+function readout(Text: any, Box: any, label: string, value: string, color: string) {
   return (
-    <Box flexDirection="column" gap="md" padding={1}>
-      {hero}
-      {stats}
-      {riskCard}
-      {trendCard}
-      {flagsCard}
-      {recentCard}
+    <Box flexDirection="column" alignItems="flex-start" key={`readout-${label}`}>
+      <Text size="heading" weight="bold" color={color}>{value}</Text>
+      <Text dimColor size="caption">{label}</Text>
     </Box>
   )
 }
@@ -730,49 +651,46 @@ async function renderPane($: $, elements: Elements, live: boolean) {
 function flagDetails(Text: any, Box: any, p: Point) {
   const rows = Object.entries(p.details).filter(([key]) => key !== 'mock')
   return (
-    <Box key={`details-${p.eventId}`} flexDirection="column" borderStyle="single" borderColor="error" paddingX={2} paddingY={1} marginTop={1} gap="xs">
-      <Text color="subtle" size="footnote">{`${p.monitor ?? 'Monitor'} · ${p.tool} · ${clock(p.ts)}`}</Text>
-      {rows.length === 0 && <Text color="subtle">The classifier gave no further details.</Text>}
+    <Box flexDirection="column" paddingLeft={2} key={`details-${p.eventId}`}>
+      <Text dimColor>{`Monitor: ${p.monitor ?? 'unknown'}. Tool: ${p.tool}. Checked at ${clock(p.ts)}.`}</Text>
       {rows.map(([key, value]) => (
         <Text>{`${label(key)}: ${typeof value === 'string' ? value : JSON.stringify(value)}`}</Text>
       ))}
       {p.notices.map(n => (
-        <Text color="warning">{`Shown to you (${n.level}): ${n.text}`}</Text>
+        <Text color="warning">{`Notice (${n.level}): ${n.text}`}</Text>
       ))}
       {p.correction && (
-        <Text color="success">{`${p.corrected ? 'Sent to the agent' : 'Waiting to send'}: ${p.correction}`}</Text>
+        <Text color="success">{`${p.corrected ? 'Correction sent' : 'Correction queued'}: ${p.correction}`}</Text>
       )}
     </Box>
   )
 }
 
-function levelOf(risk: number | null, flagged: boolean) {
-  if (risk === null) return { label: 'Unknown', color: 'subtle' }
-  if (flagged) return { label: 'Flagged', color: 'error' }
-  return LEVELS.find(l => risk < l.max) ?? { label: 'High', color: 'error' }
-}
-
-// ---------- Charts (SVG drawn as an image, so colors are fixed tones that read on light and dark) ----------
+// ---------- Charts (SVG drawn as an image, so colors are fixed mid tones that read on light and dark) ----------
 
 const C = {
-  label: '#9C9A92',
-  grid: '#9C9A9233',
+  axis: '#888780',
+  grid: '#88878040',
   line: '#378ADD',
   flag: '#E24B4A',
   warn: '#EF9F27',
   ok: '#1D9E75',
   pending: '#B4B2A9',
-  zoneLow: '#1D9E7514',
-  zoneMid: '#EF9F2714',
-  zoneHigh: '#E24B4A14',
 }
 const W = 640
-const H = 200
-const PAD = { left: 44, right: 70, top: 12, bottom: 28 }
-const FONT = 'font-family="Segoe UI, sans-serif"'
+const H = 190
+const PAD = { left: 40, right: 14, top: 12, bottom: 24 }
 
-function svg(width: number, height: number, inner: string) {
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">${inner}</svg>`
+function frame(inner: string, yLabels: [number, string][]) {
+  const plotH = H - PAD.top - PAD.bottom
+  const grid = yLabels
+    .map(([v, text]) => {
+      const y = PAD.top + plotH * (1 - v)
+      return `<line x1="${PAD.left}" y1="${y}" x2="${W - PAD.right}" y2="${y}" stroke="${C.grid}" stroke-width="1"/>` +
+        `<text x="${PAD.left - 6}" y="${y + 4}" text-anchor="end" font-size="11" fill="${C.axis}" font-family="sans-serif">${text}</text>`
+    })
+    .join('')
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">${grid}${inner}</svg>`
 }
 
 function xFor(i: number, count: number) {
@@ -784,91 +702,49 @@ function yFor(v: number) {
   return PAD.top + (H - PAD.top - PAD.bottom) * (1 - v)
 }
 
-// Background bands that make the chart readable at a glance, even empty.
-function zones(kind: 'risk' | 'alignment') {
-  const bands = kind === 'risk'
-    ? [[0, 0.4, C.zoneLow, 'Low'], [0.4, 0.7, C.zoneMid, 'Elevated'], [0.7, 1, C.zoneHigh, 'High']] as const
-    : [[0.6, 1, C.zoneLow, 'Aligned'], [0.3, 0.6, C.zoneMid, 'Drifting'], [0, 0.3, C.zoneHigh, 'Off track']] as const
-  const x2 = W - PAD.right
-  const rects = bands
-    .map(([from, to, fill, name]) => {
-      const y = yFor(to)
-      const h = yFor(from) - y
-      return `<rect x="${PAD.left}" y="${y}" width="${x2 - PAD.left}" height="${h}" fill="${fill}"/>` +
-        `<text x="${x2 + 8}" y="${y + h / 2 + 4}" font-size="11" fill="${C.label}" ${FONT}>${name}</text>`
-    })
-    .join('')
-  const ticks = [0, 0.5, 1]
-    .map(v => `<line x1="${PAD.left}" y1="${yFor(v)}" x2="${x2}" y2="${yFor(v)}" stroke="${C.grid}"/>` +
-      `<text x="${PAD.left - 8}" y="${yFor(v) + 4}" text-anchor="end" font-size="11" fill="${C.label}" ${FONT}>${Math.round(v * 100)}%</text>`)
-    .join('')
-  return rects + ticks
-}
-
-function xAxis(list: Point[]) {
-  const y = H - 8
-  if (list.length === 0) {
-    return `<text x="${PAD.left}" y="${y}" font-size="11" fill="${C.label}" ${FONT}>Checks over time →</text>`
-  }
-  const first = list[0]
-  const last = list[list.length - 1]
-  return `<text x="${PAD.left}" y="${y}" font-size="11" fill="${C.label}" ${FONT}>${first ? clock(first.ts) : ''}</text>` +
-    `<text x="${(W - PAD.right + PAD.left) / 2}" y="${y}" text-anchor="middle" font-size="11" fill="${C.label}" ${FONT}>Checks over time →</text>` +
-    `<text x="${W - PAD.right}" y="${y}" text-anchor="end" font-size="11" fill="${C.label}" ${FONT}>${last ? clock(last.ts) : ''}</text>`
-}
-
-function emptyNote(message: string) {
-  const cx = (W - PAD.right + PAD.left) / 2
-  const cy = yFor(0.5)
-  return `<rect x="${cx - 150}" y="${cy - 14}" width="300" height="28" rx="14" fill="#9C9A921f"/>` +
-    `<text x="${cx}" y="${cy + 4}" text-anchor="middle" font-size="12" fill="${C.label}" ${FONT}>${message}</text>`
-}
-
-function gauge(risk: number | null) {
-  const gw = 640
-  const left = 2
-  const right = gw - 2
-  const span = right - left
-  const segs = [[0, 0.4, C.ok], [0.4, 0.7, C.warn], [0.7, 1, C.flag]] as const
-  const bars = segs
-    .map(([from, to, color]) => `<rect x="${left + span * from + 1}" y="10" width="${span * (to - from) - 2}" height="8" rx="4" fill="${color}" fill-opacity="${risk === null ? 0.25 : 0.55}"/>`)
-    .join('')
-  const labels = [[0.2, 'Low'], [0.55, 'Elevated'], [0.85, 'High']] as const
-  const text = labels
-    .map(([at, name]) => `<text x="${left + span * at}" y="34" text-anchor="middle" font-size="11" fill="${C.label}" ${FONT}>${name}</text>`)
-    .join('')
-  const marker = risk === null
-    ? ''
-    : `<circle cx="${left + span * risk}" cy="14" r="7" fill="#ffffff" stroke="#1f1f1f" stroke-width="2"/>`
-  return svg(gw, 40, bars + text + marker)
+function empty(message: string) {
+  return frame(
+    `<text x="${W / 2}" y="${H / 2}" text-anchor="middle" font-size="13" fill="${C.axis}" font-family="sans-serif">${message}</text>`,
+    [[0, '0%'], [0.5, '50%'], [1, '100%']],
+  )
 }
 
 function riskChart(all: Point[]) {
   const list = all.slice(-CHART_POINTS)
-  if (list.length === 0) return svg(W, H, zones('risk') + emptyNote('Waiting for the agent to act') + xAxis(list))
+  if (list.length === 0) return empty('Risk appears here as the agent acts')
   const n = list.length
   const scored = list.map((p, i) => ({ p, i })).filter(({ p }) => p.risk !== null)
   const path = scored.map(({ p, i }, k) => `${k ? 'L' : 'M'}${xFor(i, n).toFixed(1)} ${yFor(p.risk as number).toFixed(1)}`).join(' ')
+  const first = scored[0]
+  const last = scored[scored.length - 1]
+  const area = first && last && scored.length > 1
+    ? `<path d="${path} L${xFor(last.i, n).toFixed(1)} ${yFor(0)} L${xFor(first.i, n).toFixed(1)} ${yFor(0)} Z" fill="${C.line}" fill-opacity="0.12"/>`
+    : ''
   const dots = list
     .map((p, i) => {
       const x = xFor(i, n).toFixed(1)
-      const tip = `<title>${esc(`${clock(p.ts)}  ${p.tool}: ${p.summary}\nRisk: ${p.isPending ? 'still checking' : pct(p.risk)}${p.flagged ? ' (flagged)' : ''}${p.correction ? (p.corrected ? '\nCorrection sent to the agent' : '\nCorrection queued') : ''}`)}</title>`
+      const tip = `<title>${esc(`${clock(p.ts)} ${p.tool}: ${p.summary}\nRisk: ${p.isPending ? 'checking' : pct(p.risk)}${p.flagged ? ', flagged' : ''}${p.correction ? (p.corrected ? ', correction sent' : ', correction queued') : ''}`)}</title>`
       if (p.risk === null) {
-        return `<circle cx="${x}" cy="${yFor(0)}" r="5" fill="none" stroke="${C.pending}" stroke-width="2">${tip}</circle>`
+        return `<circle cx="${x}" cy="${yFor(0)}" r="4" fill="none" stroke="${C.pending}" stroke-width="1.5">${tip}</circle>`
       }
       const y = yFor(p.risk).toFixed(1)
-      const color = p.flagged ? C.flag : p.risk >= 0.7 ? C.flag : p.risk >= 0.4 ? C.warn : C.line
-      const ring = p.correction ? `<circle cx="${x}" cy="${y}" r="10" fill="none" stroke="${C.ok}" stroke-width="2.5"/>` : ''
-      return `${ring}<circle cx="${x}" cy="${y}" r="${p.flagged ? 6 : 4.5}" fill="${color}" stroke="#ffffff" stroke-opacity="0.6" stroke-width="1">${tip}</circle>`
+      const color = p.flagged ? C.flag : p.risk >= 0.5 ? C.warn : C.line
+      const ring = p.correction
+        ? `<circle cx="${x}" cy="${y}" r="9" fill="none" stroke="${C.ok}" stroke-width="2"/>`
+        : ''
+      return `${ring}<circle cx="${x}" cy="${y}" r="${p.flagged ? 5.5 : 4}" fill="${color}">${tip}</circle>`
     })
     .join('')
-  return svg(W, H, zones('risk') + `<path d="${path}" fill="none" stroke="${C.line}" stroke-width="2" stroke-linejoin="round"/>` + dots + xAxis(list))
+  return frame(
+    `${area}<path d="${path}" fill="none" stroke="${C.line}" stroke-width="2" stroke-linejoin="round"/>${dots}`,
+    [[0, '0%'], [0.25, '25%'], [0.5, '50%'], [0.75, '75%'], [1, '100%']],
+  )
 }
 
 function trendChart(all: Point[]) {
   const list = all.slice(-CHART_POINTS)
   const scored = list.map((p, i) => ({ p, i })).filter(({ p }) => p.risk !== null)
-  if (scored.length === 0) return svg(W, H, zones('alignment') + emptyNote('Trend starts after the first check') + xAxis(list))
+  if (scored.length === 0) return empty('Alignment trend appears after the first check')
   const n = list.length
   const risks = scored.map(({ p }) => p.risk as number)
   const values = risks.map((_, k) => 1 - rollingRisk(risks, k))
@@ -877,13 +753,16 @@ function trendChart(all: Point[]) {
     .map((p, i) => {
       if (!p.correction) return ''
       const x = xFor(i, n).toFixed(1)
-      return `<line x1="${x}" y1="${PAD.top}" x2="${x}" y2="${yFor(0)}" stroke="${C.ok}" stroke-width="1.5" stroke-dasharray="4 3"><title>${esc(`Correction sent: ${p.summary}`)}</title></line>`
+      return `<line x1="${x}" y1="${PAD.top}" x2="${x}" y2="${yFor(0)}" stroke="${C.ok}" stroke-width="1.5" stroke-dasharray="4 3"><title>${esc(`Correction: ${p.summary}`)}</title></line>`
     })
     .join('')
   const dots = scored
-    .map(({ p, i }, k) => `<circle cx="${xFor(i, n).toFixed(1)}" cy="${yFor(values[k] ?? 0).toFixed(1)}" r="3.5" fill="${C.ok}"><title>${esc(`${clock(p.ts)}  alignment ${pct(values[k] ?? null)}`)}</title></circle>`)
+    .map(({ p, i }, k) => `<circle cx="${xFor(i, n).toFixed(1)}" cy="${yFor(values[k] ?? 0).toFixed(1)}" r="3" fill="${C.ok}"><title>${esc(`${clock(p.ts)}: alignment ${pct(values[k] ?? null)}`)}</title></circle>`)
     .join('')
-  return svg(W, H, zones('alignment') + marks + `<path d="${path}" fill="none" stroke="${C.ok}" stroke-width="2.5" stroke-linejoin="round"/>` + dots + xAxis(list))
+  return frame(
+    `${marks}<path d="${path}" fill="none" stroke="${C.ok}" stroke-width="2.5" stroke-linejoin="round"/>${dots}`,
+    [[0, '0%'], [0.5, '50%'], [1, '100%']],
+  )
 }
 
 function chartAlt(list: Point[]) {
