@@ -39,6 +39,8 @@ Noah/
 
 ## 2. The Mod (`Noah/mod/`, TypeScript)
 
+The full requirements are in [Noah/MOD_PRD.md](Noah/MOD_PRD.md). This section is the build summary.
+
 - **Files:**
   - `.claude-plugin/plugin.json`
   - `hooks/hooks.json` = `{ "modules": ["./register.tsx"] }`
