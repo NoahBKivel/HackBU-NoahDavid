@@ -149,3 +149,4 @@ The order doubles as the cut list: each step leaves something you can demo.
 | No Modal Dict | David's database holds the history |
 | The Mod sends as much data as possible | No need to agree on a payload first. Only large items are trimmed, and only with Noah's OK. |
 | Docs are split into CONTRACT, NOAH and DAVID, all in the root | Each side keeps its own doc, the bridge is shared, and any agent can read all three |
+| A root CLAUDE.md holds the rules every agent must follow | Claude Code loads it automatically, so new agents find the docs and the update rule without being told |
