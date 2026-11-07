@@ -660,7 +660,7 @@ async function renderPane($: $, elements: Elements, live: boolean) {
   const recent = [...list].reverse()
 
   return (
-    <Box flexDirection="column" gap="lg" paddingX={1}>
+    <Box flexDirection="column" gap="sm" paddingX={1}>
       <Box flexDirection="row" justifyContent="space-between" alignItems="flex-start">
         <Box flexDirection="column">
           <Text dimColor size="caption">Current risk</Text>
@@ -689,10 +689,10 @@ async function renderPane($: $, elements: Elements, live: boolean) {
       </Box>
 
 
-      <Box flexDirection="column" marginTop={1}>
+      <Box flexDirection="column" borderStyle="round" borderColor="#88878040" paddingX={1}>
         {chartTitle(Text, Box, Button, Svg, 'Risk per action', 'info-risk', chosen.risk, pick('risk'))}
         {Svg ? (
-          <Svg source={riskChart(riskList, chosen.risk)} alt={chartAlt(riskList)} isInteractive />
+          <Svg source={riskChart(riskList, chosen.risk)} alt={chartAlt(riskList)} />
         ) : (
           <Text dimColor>{sparkline(risks)}</Text>
         )}
@@ -700,14 +700,13 @@ async function renderPane($: $, elements: Elements, live: boolean) {
           'How likely each checked action is to break your instructions, as judged by the classifier. Lower is better.',
           '● Blue: checked.  ● Amber: elevated.  ● Red: flagged.',
           'Dashed green line: a correction was sent to the agent.  ○ Gray: still being checked.',
-          'Hover a point for its details.',
         ])}
       </Box>
 
-      <Box flexDirection="column">
+      <Box flexDirection="column" borderStyle="round" borderColor="#88878040" paddingX={1}>
         {chartTitle(Text, Box, Button, Svg, 'Alignment trend', 'info-trend', chosen.trend, pick('trend'))}
         {Svg ? (
-          <Svg source={trendChart(trendList, chosen.trend)} alt={`Alignment trend, currently ${alignment === null ? 'unknown' : pct(alignment)}`} isInteractive />
+          <Svg source={trendChart(trendList, chosen.trend)} alt={`Alignment trend, currently ${alignment === null ? 'unknown' : pct(alignment)}`} />
         ) : (
           <Text dimColor>{sparkline(risks.map((_, i) => 1 - rollingRisk(risks, i)))}</Text>
         )}
@@ -881,8 +880,8 @@ const C = {
   trend: '#7F77DD',
 }
 const W = 640
-const H = 190
-const PAD = { left: 40, right: 14, top: 6, bottom: 24 }
+const H = 160
+const PAD = { left: 40, right: 14, top: 14, bottom: 22 }
 
 function frame(inner: string, yLabels: [number, string][], times: number[] = []) {
   const plotH = H - PAD.top - PAD.bottom
@@ -1040,7 +1039,7 @@ function correctionLines(list: Point[], xs: number[]) {
       const x = (xs[i] ?? 0).toFixed(1)
       const cx = Number(x)
       const tip = `<title>${esc(`Correction sent: ${p.summary}`)}</title>`
-      const arrow = `<path d="M${cx - 5} 0 L${cx + 5} 0 L${cx} ${PAD.top + 1} Z" fill="${C.ok}" fill-opacity="0.85">${tip}</path>`
+      const arrow = `<path d="M${cx - 5} ${PAD.top - 7} L${cx + 5} ${PAD.top - 7} L${cx} ${PAD.top + 1} Z" fill="${C.ok}" fill-opacity="0.85">${tip}</path>`
       return `<line x1="${x}" y1="${PAD.top}" x2="${x}" y2="${yFor(0)}" stroke="${C.ok}" stroke-width="1.5" stroke-dasharray="4 3">${tip}</line>${arrow}`
     })
     .join('')
