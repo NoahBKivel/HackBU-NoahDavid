@@ -82,15 +82,31 @@ The full requirements are in [Noah/MOD_PRD.md](Noah/MOD_PRD.md). This section is
 
 ## 3. The backend (`Noah/backend/`, Python, FastAPI on Modal)
 
-- One `app.py`: `modal.App("alignment-monitor")`, plus `@app.function(secrets=[modal.Secret.from_name("monitor-token")])` and `@modal.asgi_app()` for a FastAPI app.
+**Status: built and deployed** with the mock classifier.
+
+- **Deployed URL (stable):** `https://davidkny22--alignment-monitor-api.us-east.modal.run`
+  - The dev URL from `modal serve` is the same with `-dev` before `.us-east`.
+  - It's in David's workspace (`davidkny22`), reached through Noah's Modal profile `hackbu`.
+- **Code:** one file, [Noah/backend/app.py](Noah/backend/app.py).
+  - It runs `modal.App("alignment-monitor")`, plus an `@app.function` with the `monitor-token` secret and `@modal.asgi_app()` serving FastAPI.
 - **Endpoints:**
-  - `GET /health` returns `{ok: true}` with no auth, used for warm-up.
-  - `POST /v1/events` takes a Bearer token and validates the event with a Pydantic model using `extra="allow"`. It runs `await classify.remote.aio(event)` and returns the result.
-- **Calling the classifier:** `modal.Function.from_name("<david-app>", "classify")`. Until David's is live, use a **mock** `classify()` in this app that returns the contract's output shape.
+  - `GET /health` returns `{ok, classifier}` with no auth, used for warm-up. `classifier` is `"mock"` or David's app name.
+  - `POST /v1/events` checks `Authorization: Bearer <MONITOR_TOKEN>` and returns 401 if it's wrong. It validates the event with a Pydantic model using `extra="allow"`: `session_id`, `event_id` and `type` are required, and any missing one returns 422. Unknown fields pass through. It returns `classify(event)` as JSON.
+- **The classifier switch:** the `CLASSIFIER_APP` constant at the top of `app.py`.
+  - `None` uses `mock_classify()`.
+  - Setting it to David's app name calls `modal.Function.from_name(CLASSIFIER_APP, "classify").remote.aio(event)`.
+- **Mock behavior:**
+  - Flags deleting test files: `rm`, `Remove-Item` or `del` on a path containing "test", or a `file_changes` delete of one. Returns risk 0.93 with the actions `notify_user` (detected), `inject_agent` and `notify_user` (intervened).
+  - Anything else gets risk 0.05 and no actions.
+- **API token:**
+  - The Modal Secret `monitor-token` (key `MONITOR_TOKEN`).
+  - The same value is in `Noah/backend/secrets.local.json`, which is gitignored and **never committed**. The Mod's `apiToken` setting reads it from there.
+- **Verified end to end on Modal:** health 200, no token 401, missing fields 422, a normal Edit unflagged, `rm tests/test_slow.py` flagged with all three actions.
 - **No server-side storage.** David's database holds the history, and the Mod holds the graph data.
-- **Commands:**
-  - `.venv\Scripts\modal serve Noah/backend/app.py` is for development. It gives a temporary URL ending in `-dev`.
-  - `.venv\Scripts\modal deploy Noah/backend/app.py` gives the stable URL for the demo. Put that URL in the Mod's `apiUrl`.
+- **Commands** (run from the repo root):
+  - `set PYTHONUTF8=1` first in cmd, or prefix `PYTHONUTF8=1` in bash (see build notes).
+  - `.venv\Scripts\modal serve Noah/backend/app.py` for development, with hot reload and the `-dev` URL.
+  - `.venv\Scripts\modal deploy Noah/backend/app.py` updates the stable URL.
 
 ---
 
@@ -104,7 +120,7 @@ The order doubles as the cut list: each step leaves something you can demo.
    - `context[]` reaches the agent
    - a `system` notice shows in the desktop app
    - **a request sent without waiting still completes after the hook returns.** If it doesn't, wait for it with a `Promise.race` of about 1.5 s.
-3. [ ] Backend with a mock `classify()`, deployed to get a stable URL
+3. [x] Backend with a mock `classify()`, deployed to get a stable URL (section 3)
 4. [ ] The full Mod: collection, sending events, running actions
 5. [ ] Hook up David's real `classify()`
 6. [ ] The Pane with the graph
@@ -120,6 +136,7 @@ The order doubles as the cut list: each step leaves something you can demo.
 - Hook budget: 10 s of the hook's own time per call. Time spent waiting on `$` calls or `next()` doesn't count.
 - Send events after `next(e)` and never make the agent wait on the network.
 - The `-dev` URL from `modal serve` is not the URL from `modal deploy`, so the Mod's `apiUrl` has to match whichever you're using.
+- **The Modal CLI crashes on Windows** with `'charmap' codec can't encode character '✓'` because its console output uses a checkmark. Run it with `PYTHONUTF8=1` (and `PYTHONIOENCODING=utf-8`) set.
 - Keep queued corrections in `$.state`, because module variables reset when the Mod reloads.
 - `$.session.append` with `type: "user"` **is** read by the model. Use `type: "system"` for notices meant only for the user.
 - `$.ui.notify` doesn't work in the desktop app (`no-surface`), so use notices, `$.ui.toast` or the Pane.
