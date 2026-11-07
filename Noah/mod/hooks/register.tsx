@@ -722,12 +722,18 @@ async function renderPane($: $, elements: Elements, live: boolean) {
       <Box flexDirection="row" justifyContent="space-between" alignItems="flex-start">
         <Box flexDirection="column">
           <Text dimColor size="caption">Current risk</Text>
-          <Text size="title" weight="bold" color={riskColor(latest?.risk ?? null, latest?.flagged ?? false)}>
-            {latest ? pct(latest.risk) : '--'}
-          </Text>
-          <Text dimColor size="footnote">
-            {latest ? riskLabel(latest.risk, latest.flagged) : 'No actions checked yet'}
-          </Text>
+          <Box flexDirection="row" alignItems="flex-end" gap="xs">
+            {Svg ? (
+              <Svg source={bigNumber(latest ? pct(latest.risk) : '--', riskColor(latest?.risk ?? null, latest?.flagged ?? false))} alt={`Current risk ${latest ? pct(latest.risk) : 'unknown'}`} />
+            ) : (
+              <Text size="title" weight="bold" color={riskColor(latest?.risk ?? null, latest?.flagged ?? false)}>
+                {latest ? pct(latest.risk) : '--'}
+              </Text>
+            )}
+            <Text size="heading" weight="semibold" color={latest ? riskColor(latest.risk, latest.flagged) : 'subtle'}>
+              {latest ? riskLabel(latest.risk, latest.flagged) : 'No actions checked yet'}
+            </Text>
+          </Box>
         </Box>
         <Box flexDirection="column" alignItems="flex-end">
           <Box flexDirection="row" gap="xs">
@@ -914,6 +920,20 @@ function showMore(Text: any, Button: any, which: string, total: number, shown: n
       <Text underline dimColor size="footnote">{isOpen ? 'Show less' : `Show ${total - shown} more`}</Text>
     </Button>
   )
+}
+
+// The headline risk drawn as an image, larger than the biggest text size.
+// Colors are the desktop dark theme's success, warning and error tones,
+// sampled from the pane, so the number matches the readouts below it.
+const HEADLINE_COLORS: { [key: string]: string } = { success: '#53C556', warning: '#E49C06', error: '#F17778', subtle: '#888780' }
+
+function bigNumber(text: string, color: string) {
+  // Bold digits and % run about 28 px each at this size; the extra room
+  // keeps wide glyphs from being clipped. The baseline sits 5 px above the
+  // bottom, about where text's own baseline sits, so the two line up.
+  const width = Math.max(52, text.length * 27 + 4)
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="42" viewBox="0 0 ${width} 42">` +
+    `<text x="0" y="37" font-size="40" font-weight="700" font-family="Segoe UI, sans-serif" fill="${HEADLINE_COLORS[color] ?? '#888780'}">${esc(text)}</text></svg>`
 }
 
 function readout(Text: any, Box: any, label: string, value: string, color: string) {
