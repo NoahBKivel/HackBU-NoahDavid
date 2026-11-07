@@ -71,7 +71,13 @@ A classifier on Modal judges each action. Based on its decision, the Mod alerts 
 
 **Core rule: send as much as possible.**
 - The Mod sends everything it can collect (the full menu in section 5), and the classifier uses whatever it needs.
-- **Large items may be trimmed:** original file contents, very long shell output, the full conversation history, and attachment bytes. **Ask Noah before deciding what to leave out.**
+- **Large items trimmed (decided by Noah):**
+  - The file's contents before an edit (`originalFile`) are dropped. The diff is sent.
+  - Shell stdout and stderr are capped at about 20 KB each.
+  - The full conversation isn't sent.
+  - Attachment bytes aren't sent.
+
+  David: say if the classifier needs any of these.
 - The backend accepts unknown extra fields (`extra="allow"`) and passes them through untouched.
 
 ### Event: Mod → `POST /v1/events` (Bearer token)
@@ -207,7 +213,7 @@ This is everything the Mod sends, subject to the large-item exception.
 
 **Open:**
 - David's app name, and confirmation of the `classify()` call and output shape.
-- Which large items get trimmed (Noah decides when building events).
 
 **Changes:** (date, change, agreed by)
 - 2026-11-07: first version.
+- 2026-11-07: large-item trimming set (Noah's decision, which the contract leaves to him).

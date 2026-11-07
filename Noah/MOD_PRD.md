@@ -6,7 +6,7 @@ The product requirements for the Claude Code Mod in `Noah/mod/`. It covers what 
 
 Keep this file current like the other docs. Mark requirements done as they ship, and record changes in section 10.
 
-**Status:** draft, 2026-11-07. Items marked **(open)** need Noah's decision. Items marked **(verify)** need checking against the Mod type definitions at build time.
+**Status:** approved, 2026-11-07. Items marked **(verify)** need checking against the Mod type definitions at build time.
 
 ---
 
@@ -71,7 +71,7 @@ While a coding agent works, the Mod gives the user a live, explainable view of w
 ### 4.4 Capturing what the agent says (`turn.step`, `turn.complete`)
 - **FR-10:** Stream through `turn.step` (an async generator, `yield* next(e)`) and collect the visible text and **displayed** thinking chunks for the current step. Don't change any chunk.
 - **FR-11:** On `turn.complete`, send a `turn_completed` event with the final message, the reason the turn ended, and token usage.
-- **FR-12:** Collect the latest TodoWrite list from that tool's calls, and the plan text from ExitPlanMode.
+- **FR-12:** Collect the latest TodoWrite list from that tool's calls. The plan-mode plan from ExitPlanMode is **not** collected, because the demo doesn't use plan mode.
 
 ### 4.5 Capturing actions (`tool.call`)
 - **FR-13:** Hook **Edit, Write, Bash and PowerShell**. On Windows the agent may use PowerShell instead of Bash.
@@ -84,8 +84,12 @@ While a coding agent works, the Mod gives the user a live, explainable view of w
   - the step's text, thinking and todos
   - any new instructions since the last event
   - `seq` and timestamps
-- **FR-16: Large items (open).** Decide what to trim or drop: `originalFile`, long shell output, the full conversation, attachment bytes. Everything else is sent in full.
-- **FR-17:** After a shell command, run `git status --porcelain` through `$.process` to catch files that changed outside Edit and Write. **(open: worth it for the demo?)**
+- **FR-16: Large items.** Everything is sent in full except:
+  - **`originalFile`** (the whole file before an edit) is dropped. The diff already shows the change.
+  - **Shell stdout and stderr** are capped at about 20 KB each, keeping the start and the end, with a `[truncated N bytes]` marker in the middle.
+  - **The full conversation** is not sent. The Mod sends deltas, and David can ask for the full history later if he needs it.
+  - **Attachment bytes** are never sent, only the type and filename.
+- **FR-17:** No `git status` after shell commands. In the demo, the deletion shows up in the command itself.
 
 ### 4.6 Sending events
 - **FR-18:**
@@ -102,7 +106,7 @@ While a coding agent works, the Mod gives the user a live, explainable view of w
 - **FR-22:** Run `actions` **in list order**.
 - **FR-23 `notify_user`:** show `text` to the user only. The model never reads it.
   - `detected` and `intervened`: `$.session.append({ message: { type: "system", content: [{ type: "text", text }] } })`, so it stays in the transcript.
-  - `potential`: a quieter `$.ui.log(text)` line. **(open: or make it a system notice too?)**
+  - `potential`: a quieter dim line with `$.ui.log(text)`, so only real detections get a full notice.
   - Prefix each notice so its source is clear, e.g. `Alignment monitor: ...`.
 - **FR-24 `inject_agent`:** add `text` to the correction queue in `$.state`.
   - On the next `tool.call` from the **main agent** (no `agentId`), on any tool, return `{ ...r, context: [...(r.context ?? []), ...queue] }` and clear the queue.
@@ -196,11 +200,12 @@ Keep it to one module unless it gets hard to read. Development happens in the se
 
 ## 10. Open questions and changes
 
-**Open:**
-- **FR-16:** which large items to trim or drop.
-- **FR-17:** run `git status` after shell commands or not.
-- **FR-23:** how `potential` notices look.
-- **FR-12:** whether the plan-mode plan is worth sending.
+**Open:** none.
 
 **Changes:** (date, change)
 - 2026-11-07: first draft.
+- 2026-11-07: Noah approved the defaults:
+  - FR-16: drop `originalFile`, cap shell output at about 20 KB, no full conversation, no attachment bytes
+  - FR-17: no `git status`
+  - FR-23: `potential` notices as a dim line
+  - FR-12: no plan-mode plan
