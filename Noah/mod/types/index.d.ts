@@ -17,6 +17,8 @@ export type Point = {
   notices: Notice[]
   correction: string | null
   error: string | null
+  drift: number | null
+  driftRate: number | null
 }
 
 export type Item = { [key: string]: unknown }

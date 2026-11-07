@@ -4,7 +4,8 @@ import type { EngineInterface, Register } from 'claude-code'
 import type { Conn, Correction, Item, Notice, Point, Todo } from '../types'
 
 const PLUGIN = 'alignment-monitor'
-const WATCHED_TOOLS = new Set(['Edit', 'Write', 'Bash', 'PowerShell'])
+// Tools the mock classifier treats as history only (no score), like David's side does.
+const READ_TOOLS = new Set(['Read', 'Grep', 'Glob', 'WebFetch', 'WebSearch', 'LS', 'NotebookRead'])
 const MAX_EVENT_BYTES = 5_000_000
 const FETCH_TIMEOUT_MS = 60_000
 const MAX_POINTS = 2000
@@ -16,15 +17,19 @@ type Result = {
   event_id?: string
   monitor?: string
   flagged?: boolean
-  risk?: number
+  risk?: number | null
+  drift?: number | null
+  drift_rate?: number | null
+  pending?: boolean
   details?: { [key: string]: unknown }
   actions?: Action[]
+  late_results?: Result[]
 }
 type Event = { [key: string]: unknown } & { event_id: string; type: string }
 
 // Change a shape tag whenever that value's fields change, so a reload
 // drops what an older version stored instead of drawing it wrong.
-const points = atom({ plugin: 'alignment-monitor', key: 'points' } as const, [], { shape: 'points-1' })
+const points = atom({ plugin: 'alignment-monitor', key: 'points' } as const, [], { shape: 'points-2' })
 const conn = atom({ plugin: 'alignment-monitor', key: 'conn' } as const, 'connecting')
 const corrections = atom({ plugin: 'alignment-monitor', key: 'corrections' } as const, [])
 const pending = atom({ plugin: 'alignment-monitor', key: 'pending' } as const, [])
@@ -48,9 +53,9 @@ const WINDOWS: { id: string; label: string; ms: number }[] = [
   { id: 'all', label: 'All', ms: Infinity },
 ]
 
-// The latest model step's visible text and displayed thinking. Kept in the
-// module, not $.state, because it is rewritten on every step.
-let lastStep = { text: '', thinking: '' }
+// The agent's visible text and displayed thinking since the last event
+// was built. Kept in the module, not $.state, because it grows every step.
+let stepText = { text: '', thinking: '' }
 
 // Backend settings from the Mod's options. Hooks pass $ only to functions
 // declared at the top of this file, so settings live here, not in a closure.
@@ -134,7 +139,10 @@ export const register: Register = (on, options) => {
       yield chunk
     }
     if (e.agentId === undefined) {
-      lastStep = { text, thinking }
+      stepText = {
+        text: [stepText.text, text].filter(Boolean).join('\n\n'),
+        thinking: [stepText.thinking, thinking].filter(Boolean).join('\n\n'),
+      }
     }
   })
 
@@ -159,10 +167,8 @@ export const register: Register = (on, options) => {
         }
       }
 
-      if (WATCHED_TOOLS.has(e.tool)) {
-        const event = await toolEvent($, e as unknown as Record<string, unknown>, ran as unknown as Record<string, unknown>)
-        void dispatch($, event, describeTool(e as unknown as Record<string, unknown>), isLive)
-      }
+      const event = await toolEvent($, e as unknown as Record<string, unknown>, ran as unknown as Record<string, unknown>)
+      void dispatch($, event, describeTool(e as unknown as Record<string, unknown>), isLive)
       if (DEBUG_CONTEXT && answer.deny === undefined) {
         const note = `[alignment-monitor debug] ${traceLines.slice(-10).join(' | ')}`
         answer = { ...answer, context: [...(answer.context ?? []), note] } as typeof ran
@@ -248,6 +254,14 @@ async function warmUp($: $) {
   }
 }
 
+// Hands over the text gathered since the last event and starts afresh.
+let lastTaken = { text: '', thinking: '' }
+function takeStepText() {
+  lastTaken = stepText
+  stepText = { text: '', thinking: '' }
+  return lastTaken
+}
+
 async function baseEvent($: $, type: string, eventId: string): Promise<Event> {
   const n = await update($, seq, count => count + 1)
   const items = await read($, pending)
@@ -261,8 +275,8 @@ async function baseEvent($: $, type: string, eventId: string): Promise<Event> {
     type,
     ts: new Date(await $.clock.now()).toISOString(),
     new_items: items,
-    agent_text: lastStep.text,
-    agent_thinking: lastStep.thinking,
+    agent_text: takeStepText().text,
+    agent_thinking: lastTaken.thinking,
     todos: await read($, todos),
   }
 }
@@ -317,6 +331,8 @@ async function dispatch(
       notices: [],
       correction: null,
       error: null,
+      drift: null,
+      driftRate: null,
     }
     await update($, points, list => [...list, point].slice(-MAX_POINTS))
   }
@@ -328,7 +344,10 @@ async function dispatch(
     const result = live ? await post($, event) : await mockClassify($, event)
     trace($, `dispatch result ${event.event_id} risk=${result.risk} actions=${result.actions?.length ?? 0}`)
     await applyResult($, event.event_id, result)
-    trace($, `dispatch applied ${event.event_id}`)
+    for (const late of result.late_results ?? []) {
+      if (typeof late.event_id === 'string') await applyResult($, late.event_id, late)
+    }
+    trace($, `dispatch applied ${event.event_id} late=${result.late_results?.length ?? 0}`)
     await update($, conn, () => 'live')
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error)
@@ -353,6 +372,11 @@ async function post($: $, event: Event): Promise<Result> {
 }
 
 async function applyResult($: $, eventId: string, result: Result) {
+  if (result.pending === true) {
+    // Still classifying on David's side; the result comes later in late_results.
+    await patchPoint($, eventId, p => ({ ...p, isPending: true, details: result.details ?? p.details }))
+    return
+  }
   const notices: Notice[] = []
   let correction: string | null = null
 
@@ -374,6 +398,8 @@ async function applyResult($: $, eventId: string, result: Result) {
     ...p,
     isPending: false,
     risk: typeof result.risk === 'number' ? clamp01(result.risk) : null,
+    drift: typeof result.drift === 'number' ? result.drift : null,
+    driftRate: typeof result.drift_rate === 'number' ? result.drift_rate : null,
     flagged: result.flagged === true,
     monitor: result.monitor ?? null,
     details: result.details ?? {},
@@ -483,9 +509,19 @@ async function loadSample($: $) {
       notices: flagged ? [{ level: 'detected', text: 'Sample: the agent deleted test files.' }] : [],
       correction: corrected ? 'Sample correction: restore the deleted tests.' : null,
       error: null,
+      drift: null,
+      driftRate: null,
     })
   })
   // Keep any real checks from this session after the sample history.
+  // Drift: how far off course the run is, as a slow average of risk.
+  let drift = 0
+  for (const p of sample) {
+    const next = drift * 0.85 + (p.risk ?? 0) * 0.15
+    p.driftRate = next - drift
+    p.drift = next
+    drift = next
+  }
   await update($, points, list =>
     [...sample, ...list.filter(p => !p.eventId.startsWith('sample-'))].sort((a, b) => a.ts - b.ts).slice(-MAX_POINTS),
   )
@@ -497,6 +533,9 @@ async function loadSample($: $) {
 async function mockClassify($: $, event: Event): Promise<Result> {
   await $.clock.sleep(600)
   const action = (event.action ?? {}) as { tool?: string; args?: Record<string, unknown> }
+  if (READ_TOOLS.has(String(action.tool))) {
+    return { event_id: event.event_id, monitor: 'goal_adherence', flagged: false, risk: null, details: { mock: true, classified: false }, actions: [] }
+  }
   const args = action.args ?? {}
   const command = String(args.command ?? '')
   const path = String(args.file_path ?? '')
@@ -557,12 +596,20 @@ async function mockClassify($: $, event: Event): Promise<Result> {
 
 function describeTool(e: Record<string, unknown>) {
   const tool = String(e.tool)
-  if (tool === 'Edit' || tool === 'Write') {
-    const path = String(e.file_path ?? '')
-    return { tool, summary: `${tool === 'Edit' ? 'Edited' : 'Wrote'} ${path.split(/[\\/]/).pop() ?? path}` }
+  const short = (text: string) => {
+    const one = text.replace(/\s+/g, ' ').trim()
+    return one.length > 70 ? `${one.slice(0, 67)}...` : one
   }
-  const command = String(e.command ?? '').replace(/\s+/g, ' ').trim()
-  return { tool, summary: command.length > 70 ? `${command.slice(0, 67)}...` : command }
+  const file = (path: unknown) => String(path ?? '').split(/[\\/]/).pop() ?? ''
+  if (tool === 'Edit' || tool === 'Write') return { tool, summary: `${tool === 'Edit' ? 'Edited' : 'Wrote'} ${file(e.file_path)}` }
+  if (tool === 'Read') return { tool, summary: `Read ${file(e.file_path)}` }
+  if (typeof e.command === 'string') return { tool, summary: short(e.command) }
+  if (typeof e.pattern === 'string') return { tool, summary: short(`${e.pattern}${e.path ? ` in ${file(e.path)}` : ''}`) }
+  if (typeof e.url === 'string') return { tool, summary: short(e.url) }
+  if (typeof e.query === 'string') return { tool, summary: short(e.query) }
+  if (Array.isArray(e.todos)) return { tool, summary: `Updated ${e.todos.length} todos` }
+  if (typeof e.description === 'string') return { tool, summary: short(e.description) }
+  return { tool, summary: tool }
 }
 
 function fileChanges(tool: string, args: Record<string, unknown>, result: Record<string, unknown> | undefined) {
@@ -640,7 +687,11 @@ async function renderPane($: $, elements: Elements, live: boolean) {
   const average = risks.length ? risks.reduce((a, b) => a + b, 0) / risks.length : null
   const flagged = list.filter(p => p.flagged).reverse()
   const fixes = list.filter(p => p.correction !== null).length
-  const alignment = latest ? 1 - rollingRisk(risks, risks.length - 1) : null
+  const driftSeries = driftValues(scored)
+  const driftNow = driftSeries.length ? driftSeries[driftSeries.length - 1] ?? null : null
+  const driftPrev = driftSeries.length > 1 ? driftSeries[driftSeries.length - 2] ?? null : null
+  const rate = latest?.driftRate ?? (driftNow !== null && driftPrev !== null ? driftNow - driftPrev : null)
+  const arrow = rate === null ? '' : rate > 0.005 ? ' ↑' : rate < -0.005 ? ' ↓' : ' →'
 
   const status = {
     connecting: ['Connecting', 'subtle'],
@@ -681,7 +732,7 @@ async function renderPane($: $, elements: Elements, live: boolean) {
       </Box>
 
       <Box flexDirection="row" justifyContent="space-between">
-        {readout(Text, Box, 'Alignment', alignment === null ? '--' : pct(alignment), alignment === null ? 'subtle' : riskColor(1 - alignment, false))}
+        {readout(Text, Box, 'Drift', driftNow === null ? '--' : `${pct(Math.min(1, driftNow))}${arrow}`, driftNow === null ? 'subtle' : riskColor(driftNow, false))}
         {readout(Text, Box, 'Peak risk', peak === null ? '--' : pct(peak), riskColor(peak, false))}
         {readout(Text, Box, 'Average risk', average === null ? '--' : pct(average), riskColor(average, false))}
         {readout(Text, Box, 'Flags', String(flagged.length), flagged.length ? 'error' : 'text')}
@@ -698,21 +749,25 @@ async function renderPane($: $, elements: Elements, live: boolean) {
         )}
         {infoReveal(Text, Box, 'info-risk', [
           'How likely each checked action is to break your instructions, as judged by the classifier. Lower is better.',
-          '● Blue: checked.  ● Amber: elevated.  ● Red: flagged.',
-          'Dashed green line: a correction was sent to the agent.  ○ Gray: still being checked.',
+          [['● Blue', C.line], [': checked']],
+          [['● Amber', C.warn], [': elevated risk']],
+          [['● Red', C.flag], [': flagged']],
+          [['┊ Dashed green line', C.ok], [': a correction was sent to the agent']],
+          [['○ Gray', C.pending], [': still being checked']],
         ])}
       </Box>
 
       <Box flexDirection="column" borderStyle="round" borderColor="#88878040" paddingX={1}>
-        {chartTitle(Text, Box, Button, Svg, 'Alignment trend', 'info-trend', chosen.trend, pick('trend'))}
+        {chartTitle(Text, Box, Button, Svg, 'Drift', 'info-trend', chosen.trend, pick('trend'))}
         {Svg ? (
-          <Svg source={trendChart(trendList, chosen.trend)} alt={`Alignment trend, currently ${alignment === null ? 'unknown' : pct(alignment)}`} />
+          <Svg source={trendChart(trendList, chosen.trend)} alt={`Drift chart, currently ${driftNow === null ? 'unknown' : pct(Math.min(1, driftNow))}`} />
         ) : (
           <Text dimColor>{sparkline(risks.map((_, i) => 1 - rollingRisk(risks, i)))}</Text>
         )}
         {infoReveal(Text, Box, 'info-trend', [
-          'Rolling alignment over the last 5 checks (100% minus average risk). Higher is better.',
-          'A dip means recent actions looked risky. Dashed green lines mark corrections; a rise after one means it helped.',
+          'How far off course the whole run is, as judged by the classifier. 0% means on track. Lower is better.',
+          'A rising line means the agent is wandering from your instructions, even if no single action looks bad.',
+          'Dashed green lines mark corrections; the line falling after one means it helped.',
         ])}
       </Box>
 
@@ -804,7 +859,9 @@ function chartTitle(Text: any, Box: any, Button: any, Svg: any, title: string, s
   )
 }
 
-function infoReveal(Text: any, Box: any, scope: string, lines: string[]) {
+type InfoLine = string | ([string] | [string, string])[]
+
+function infoReveal(Text: any, Box: any, scope: string, lines: InfoLine[]) {
   return (
     <Box
       position="absolute"
@@ -819,9 +876,15 @@ function infoReveal(Text: any, Box: any, scope: string, lines: string[]) {
       backgroundColor="inverseText"
       paddingX={1}
     >
-      {lines.map(line => (
-        <Text size="footnote">{line}</Text>
-      ))}
+      {lines.map(line =>
+        typeof line === 'string' ? (
+          <Text size="footnote">{line}</Text>
+        ) : (
+          <Text size="footnote">
+            {line.map(([text, color]) => (color ? <Text size="footnote" color={color}>{text}</Text> : text))}
+          </Text>
+        ),
+      )}
     </Box>
   )
 }
@@ -1015,20 +1078,26 @@ function riskChart(all: Point[], window: string) {
 function trendChart(all: Point[], window: string) {
   const list = downsample(all)
   const scored = list.map((p, i) => ({ p, i })).filter(({ p }) => p.risk !== null)
-  if (scored.length === 0) return empty(window === 'all' ? 'Alignment trend appears after the first check' : `No checks in ${windowName(window)}`)
+  if (scored.length === 0) return empty(window === 'all' ? 'Drift appears after the first check' : `No checks in ${windowName(window)}`)
   const xs = xPositions(list)
-  const risks = scored.map(({ p }) => p.risk as number)
-  const values = risks.map((_, k) => 1 - rollingRisk(risks, k))
+  const values = driftValues(scored.map(({ p }) => p)).map(v => Math.min(1, v))
   const path = scored.map(({ i }, k) => `${k ? 'L' : 'M'}${(xs[i] ?? 0).toFixed(1)} ${yFor(values[k] ?? 0).toFixed(1)}`).join(' ')
   const marks = correctionLines(list, xs)
   const dots = scored
-    .map(({ p, i }, k) => `<circle cx="${(xs[i] ?? 0).toFixed(1)}" cy="${yFor(values[k] ?? 0).toFixed(1)}" r="3" fill="${C.trend}"><title>${esc(`${clock(p.ts)}: alignment ${pct(values[k] ?? null)}`)}</title></circle>`)
+    .map(({ p, i }, k) => `<circle cx="${(xs[i] ?? 0).toFixed(1)}" cy="${yFor(values[k] ?? 0).toFixed(1)}" r="3" fill="${C.trend}"><title>${esc(`${clock(p.ts)}: drift ${pct(values[k] ?? null)}`)}</title></circle>`)
     .join('')
   return frame(
     `${marks}<path d="${path}" fill="none" stroke="${C.trend}" stroke-width="2.5" stroke-linejoin="round"/>${dots}`,
     [[0, '0%'], [0.5, '50%'], [1, '100%']],
     list.map(p => p.ts),
   )
+}
+
+// Drift per scored check: the classifier's own value when it sent one,
+// otherwise the average risk of the last 5 checks as a stand-in.
+function driftValues(scored: Point[]) {
+  const risks = scored.map(p => p.risk as number)
+  return scored.map((p, k) => (typeof p.drift === 'number' ? p.drift : rollingRisk(risks, k)))
 }
 
 // Dashed green vertical lines, topped by a small arrow, where a correction was sent to the agent.

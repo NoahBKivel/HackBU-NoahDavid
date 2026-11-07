@@ -61,8 +61,8 @@ The full requirements are in [Noah/MOD_PRD.md](Noah/MOD_PRD.md). This section is
     - send a `session_started` event and `GET /health` to wake Modal
     - open the Pane
   - `prompt.submit`: record each user instruction **verbatim** with its timestamp and order.
-  - `turn.step`: collect the visible text and displayed thinking.
-  - `tool.call` on **Edit, Write, Bash and PowerShell**: on Windows the agent may use PowerShell instead of Bash.
+  - `turn.step`: collect the visible text and displayed thinking, **accumulated across every step since the last event** (reset when an event is built).
+  - `tool.call` on **every tool** (N-001): David's side decides what it classifies, and reads come back unscored.
     - Run `const r = await next(e)`.
     - Build the event and send it without waiting.
     - If there are queued corrections and the call is from the main agent (no `agentId`), return `{ ...r, context: [...(r.context ?? []), ...queued] }`.
@@ -182,6 +182,14 @@ The order doubles as the cut list: each step leaves something you can demo.
   - **Draw charts as plain `Svg` images, without `isInteractive`.** The interactive frame (needed for hover tooltips on points) ignored the chart's height and added large empty bands above and below it. Point tooltips are off as a result.
   - **Never put a border on a small control.** On the desktop a Box border adds a lot of size: a rounded border around the time window buttons made them huge. Plain Buttons can't be given rounded backgrounds, so the selected window uses a square tint the size of the button.
 - **Type-check with TypeScript in the scratchpad.** The `claude` command line isn't installed, so run `tsc -p <mod>/.claude-plugin/types/tsconfig.json` with a TypeScript copy installed in the session scratchpad. The engine checks rules, not types.
+- **Slow results (N-001), handled in the Mod:**
+  - A `pending: true` result keeps the point in its checking state.
+  - Each entry in `late_results` is applied to its own `event_id` through `applyResult`, running its notices and corrections in order.
+  - **Drift (Noah approved):**
+    - The second chart is now **"Drift"**, which plots the classifier's `drift` (lower is better).
+    - The readout row shows **Drift** with a ↑, ↓ or → arrow from `drift_rate`, in place of "Alignment".
+    - Until the classifier sends `drift`, both use the average risk of the last 5 checks as a stand-in.
+  - Still to do when linking: verify a ~5 MB send through `$.http.fetch`, and point the Mod at the deployed backend URL with the token from `userConfig`.
 - **Mock-only behavior to check when linking the real backend:**
   - The "Mock classifier" label and the auto-loaded 10-day sample history only appear while `apiUrl` and `apiToken` are unset, so they disappear once the real backend is configured.
   - Confirm both are gone in the live demo.

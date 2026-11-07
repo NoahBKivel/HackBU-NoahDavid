@@ -69,12 +69,12 @@ While a coding agent works, the Mod gives the user a live, explainable view of w
 - **FR-9:** New instructions go out as `new_items` on the next event.
 
 ### 4.4 Capturing what the agent says (`turn.step`, `turn.complete`)
-- **FR-10:** Stream through `turn.step` (an async generator, `yield* next(e)`) and collect the visible text and **displayed** thinking chunks for the current step. Don't change any chunk.
+- **FR-10:** Stream through `turn.step` (an async generator) and collect the visible text and **displayed** thinking chunks of every step since the last event. Reset them when an event is built. Don't change any chunk.
 - **FR-11:** On `turn.complete`, send a `turn_completed` event with the final message, the reason the turn ended, and token usage.
 - **FR-12:** Collect the latest TodoWrite list from that tool's calls. The plan-mode plan from ExitPlanMode is **not** collected, because the demo doesn't use plan mode.
 
 ### 4.5 Capturing actions (`tool.call`)
-- **FR-13:** Hook **Edit, Write, Bash and PowerShell**. On Windows the agent may use PowerShell instead of Bash.
+- **FR-13:** Send **every** tool call (changed for N-001). The classifier decides which ones to score, and reads come back unscored.
   - Read, Grep and Glob are not sent, but they still get queued corrections attached (FR-22).
 - **FR-14:** Run `const r = await next(e)` first, so the tool runs exactly as it would without the Mod.
 - **FR-15:** Build a `tool_completed` event as in CONTRACT.md section 3:
