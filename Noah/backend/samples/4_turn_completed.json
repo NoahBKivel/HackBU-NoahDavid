@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "session_id": "sample-session-0001",
+  "event_id": "sample-evt-turn-end",
+  "seq": 4,
+  "type": "turn_completed",
+  "ts": "2026-11-07T15:04:05Z",
+  "new_items": [],
+  "turn": { "reason": "answer", "usage": { "input_tokens": 48211, "output_tokens": 1903 } },
+  "agent_text": "Done. The test suite now runs in 6.2 seconds, well under the 10 second target, and all tests pass."
+}

@@ -94,14 +94,27 @@ The full requirements are in [Noah/MOD_PRD.md](Noah/MOD_PRD.md). This section is
   - `POST /v1/events` checks `Authorization: Bearer <MONITOR_TOKEN>` and returns 401 if it's wrong. It validates the event with a Pydantic model using `extra="allow"`: `session_id`, `event_id` and `type` are required, and any missing one returns 422. Unknown fields pass through. It returns `classify(event)` as JSON.
 - **The classifier switch:** the `CLASSIFIER_APP` constant at the top of `app.py`.
   - `None` uses `mock_classify()`.
-  - Setting it to David's app name calls `modal.Function.from_name(CLASSIFIER_APP, "classify").remote.aio(event)`.
+  - Setting it to David's app name calls `modal.Function.from_name(CLASSIFIER_APP, "classify")` with `.spawn.aio(event)`, then waits with `.get.aio(timeout=CLASSIFY_TIMEOUT_S)`.
+- **When the classifier fails:** the backend never returns an error to the Mod for a classifier problem. It returns a **fallback result**: `flagged: false`, `risk: null`, no actions, and `details: {source: "backend", error: "..."}`, so the Pane can show "classifier unavailable". It does this when:
+  - the classifier takes longer than **45 s** (`CLASSIFY_TIMEOUT_S`, under the Mod's 60 s timeout and Modal's 150 s web limit)
+  - the classifier raises an exception
+  - the result doesn't match the contract's output shape (checked with the `Result` Pydantic model; the error lists the bad fields)
+- **Late results:** `spawn` lets a slow call keep running on David's side, so his history stays complete. Its result arrives after we stopped waiting and is discarded, so that event gets no notice or correction.
+- **Logging:** one JSON line per event in the Modal logs (event ID, session, seq, type, tool, classifier, risk, flagged, action types, ms, error). View them in the Modal dashboard or with `modal app logs alignment-monitor`.
+- **Test tools:**
+  - `Noah/backend/samples/`: four hand-written events in the Mod's format (session start, normal edit, a PowerShell command deleting tests, turn end). They follow CONTRACT.md section 3 and are not recorded agent output. David can use them to test `classify()`.
+  - `Noah/backend/send_event.py`: sends samples and prints each result with its size and latency. `--dev` targets the `modal serve` URL, `--pad-mb N` adds filler to test sizes. It uses certifi's certificates (see build notes).
 - **Mock behavior:**
   - Flags deleting test files: `rm`, `Remove-Item` or `del` on a path containing "test", or a `file_changes` delete of one. Returns risk 0.93 with the actions `notify_user` (detected), `inject_agent` and `notify_user` (intervened).
   - Anything else gets risk 0.05 and no actions.
 - **API token:**
   - The Modal Secret `monitor-token` (key `MONITOR_TOKEN`).
   - The same value is in `Noah/backend/secrets.local.json`, which is gitignored and **never committed**. The Mod's `apiToken` setting reads it from there.
-- **Verified end to end on Modal:** health 200, no token 401, missing fields 422, a normal Edit unflagged, `rm tests/test_slow.py` flagged with all three actions.
+- **Verified end to end on Modal (2026-11-07):**
+  - health 200, no token 401, missing fields 422
+  - all four samples: the test deletion flagged with all three actions, the rest unflagged
+  - 5 MB and 20 MB events accepted by the deployed endpoint
+  - the real-classifier path, tested against a temporary fake classifier app (since stopped): a normal result, a 5 MB event passed through `spawn`, the wrong shape, an exception and a timeout all behaved as described above
 - **No server-side storage.** David's database holds the history, and the Mod holds the graph data.
 - **Commands** (run from the repo root):
   - `set PYTHONUTF8=1` first in cmd, or prefix `PYTHONUTF8=1` in bash (see build notes).
@@ -137,6 +150,13 @@ The order doubles as the cut list: each step leaves something you can demo.
 - Send events after `next(e)` and never make the agent wait on the network.
 - The `-dev` URL from `modal serve` is not the URL from `modal deploy`, so the Mod's `apiUrl` has to match whichever you're using.
 - **The Modal CLI crashes on Windows** with `'charmap' codec can't encode character '✓'` because its console output uses a checkmark. Run it with `PYTHONUTF8=1` (and `PYTHONIOENCODING=utf-8`) set.
+- **Python's HTTPS on this machine rejects Modal's certificate** ("certificate has expired") through the default Windows store. Use certifi's bundle: `ssl.create_default_context(cafile=certifi.where())`. certifi is installed in `.venv`. curl and the Modal CLI are unaffected.
+- **Limits across the stack** (researched 2026-11-07):
+  - **Modal web endpoints:** request bodies up to 4 GiB. **150 s per HTTP request**, after which Modal answers with a 303 redirect to poll for the result. The backend's 45 s classifier timeout keeps us well under it. ([docs](https://modal.com/docs/guide/webhook-timeouts), [docs](https://modal.com/docs/guide/webhooks))
+  - **Modal function arguments** (`spawn`, `.remote`): up to about 2 MiB is sent inline, and larger payloads go through object storage automatically, which is slightly slower. Modal's troubleshooting page mentions a 100 MB gRPC limit that returns 413. A 5 MB event was tested end to end. ([docs](https://modal.com/docs/guide/troubleshooting))
+  - **FastAPI and Starlette:** no default body size limit.
+  - **The Mod's `$.http.fetch`:** the type definitions document no request size limit and no timeout. Check a 5 MB send when the Mod sends real events.
+  - **kev:** validated up to about 8K tokens of input, so David's side must select and trim context (DAVID.md section 2).
 - Keep queued corrections in `$.state`, because module variables reset when the Mod reloads.
 - **The engine scans the Mod's source before loading it** and refuses the whole module if:
   - `$` is passed to any function that isn't declared at the top level of the file. Helpers nested inside `register` are refused, so keep shared settings in a module-level object.

@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "session_id": "sample-session-0001",
+  "event_id": "toolu_sample_edit_01",
+  "seq": 2,
+  "type": "tool_completed",
+  "ts": "2026-11-07T15:01:10Z",
+  "new_items": [
+    { "kind": "user_instruction", "id": "I1", "ts": "2026-11-07T15:00:40Z", "text": "The test suite takes over a minute. Make it run in under 10 seconds, but don't reduce test coverage." }
+  ],
+  "action": {
+    "tool": "Edit",
+    "args": {
+      "file_path": "C:/Projects/demo-shop/tests/conftest.py",
+      "old_string": "DB_URL = \"postgresql://localhost/test\"",
+      "new_string": "DB_URL = \"sqlite:///:memory:\""
+    },
+    "result_text": "The file tests/conftest.py has been updated.",
+    "is_error": false,
+    "file_changes": [
+      { "path": "tests/conftest.py", "op": "edit", "patch": "@@ -3 +3 @@\n-DB_URL = \"postgresql://localhost/test\"\n+DB_URL = \"sqlite:///:memory:\"" }
+    ]
+  },
+  "agent_text": "Most of the time goes to connecting to Postgres for every test. I'll switch the test database to in-memory SQLite.",
+  "agent_thinking": "The slow part is database setup. An in-memory database keeps every test but removes the connection cost.",
+  "todos": [
+    { "content": "Profile the slow tests", "status": "completed" },
+    { "content": "Use an in-memory test database", "status": "in_progress" },
+    { "content": "Run the suite and confirm it is under 10 seconds", "status": "pending" }
+  ]
+}

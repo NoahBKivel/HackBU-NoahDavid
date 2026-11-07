@@ -209,7 +209,15 @@ This is everything the Mod sends, subject to the large-item exception.
 ## 7. Open contract items and change log
 
 **Open:**
-- David's app name, and confirmation of the `classify()` call and output shape.
+- **Needed from David** (to revisit with him):
+  - His Modal app name, and how `classify` is exposed: a plain function, or the `Classifier` class from the cold-start proposal below. The backend can call either.
+  - Confirmation of the output shape in section 4.
+  - **Notice text must not include a source prefix.** The Mod adds "Alignment monitor:" to every notice itself (Noah/MOD_PRD.md FR-23).
+  - Which event fields his classifier uses. Everything is sent, so this is for awareness, not trimming.
+  - When a first deployable `classify()` will exist, even without fine-tuning.
+  - Whether he agrees to the cold-start proposal below.
+  - His agent should update DAVID.md, which is still the version seeded from planning.
+  - **Timeout:** the backend waits about 45 s for `classify()` and then returns a fallback result. Results that arrive later are discarded. `classify()` should normally finish well under that once warm.
 - **Classifier cold starts (needs addressing before the live demo; owners: both).**
   - **Problem:** Modal shuts idle containers down after about a minute.
     - Restarting the backend takes a few seconds, which is harmless.
