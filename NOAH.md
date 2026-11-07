@@ -147,9 +147,7 @@ The order doubles as the cut list: each step leaves something you can demo.
 ## 6. Open items
 
 - **The demo scenario:** it has to make the agent misbehave reliably. Build a demo repo that tempts the shortcut, and keep a backup prompt.
-- **Live demo readiness (confirmed we demo live):**
-  - Before presenting, set `min_containers=1` on the backend API function and on David's `classify`, and send one test event to confirm both are warm. Turn them off afterward.
-  - Proposed for David: a `Classifier` class with `classify` and a no-op `warmup` in the same container, plus a longer `scaledown_window`. The backend would fire `warmup` without waiting from `/health`, and the Mod would call `/health` on session start and on every `prompt.submit`. This needs David's agreement (contract change).
+- **Live demo readiness:** classifier cold starts must be handled before presenting. The full problem, the simple fix for the demo and the proposed warm-up design are in CONTRACT.md section 7 ("Classifier cold starts").
 - See CONTRACT.md section 7 for open interface items.
 
 ---

@@ -210,6 +210,28 @@ This is everything the Mod sends, subject to the large-item exception.
 
 **Open:**
 - David's app name, and confirmation of the `classify()` call and output shape.
+- **Classifier cold starts (needs addressing before the live demo; owners: both).**
+  - **Problem:** Modal shuts idle containers down after about a minute.
+    - Restarting the backend takes a few seconds, which is harmless.
+    - Restarting David's GPU classifier means booting a GPU container and loading kev's weights, likely tens of seconds or more.
+    - During that time, results arrive late: notices and corrections land several tool calls after the action. If FastAPI's wait outlasts the HTTP request, the result is lost.
+    - It's most likely at the start of a session. In a live demo, the presenter talks and types the prompt before the agent acts, so a warm-up at session start goes cold again before the first event.
+  - **Simplest fix (for the live demo and recording):**
+    - Set `min_containers=1` on David's `classify` and on the backend's API function.
+    - Send one test event to confirm both are warm.
+    - Turn them back off afterward: an idle GPU container costs credits every hour it runs.
+  - **Proposed fix for normal use (contract change, needs both to agree):**
+    - **David:** expose the classifier as a Modal class, e.g. `Classifier`.
+      - The weights load once per container in `@modal.enter()`.
+      - Two methods: `classify(event)` and a no-op `warmup()`.
+      - They must share a container. Two separate functions wouldn't warm each other.
+      - Allow a few concurrent calls (`@modal.concurrent`), so a warm-up arriving during a classification doesn't start a second GPU container.
+      - Optionally raise `scaledown_window` to about 10 to 20 minutes, so it stays warm between bursts of activity.
+    - **Noah:**
+      - The backend calls `modal.Cls.from_name("<david-app>", "Classifier")` and then `.classify.remote.aio(event)` on an instance.
+      - `GET /health` fires `.warmup.spawn()` without waiting.
+      - The Mod calls `/health` on session start **and on every user prompt**, so the GPU starts booting the moment a task is given.
+    - **Behavior:** warming a cold classifier boots it, and warming one that's already running returns instantly with no effect.
 
 **Changes:** (date, change, agreed by)
 - 2026-11-07: first version.
