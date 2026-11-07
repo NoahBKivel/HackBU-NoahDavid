@@ -774,7 +774,7 @@ async function renderPane($: $, elements: Elements, live: boolean) {
         {infoReveal(Text, Box, 'info-trend', [
           'How far off course the whole run is, as judged by the classifier. 0% means on track. Lower is better.',
           'A rising line means the agent is wandering from your instructions, even if no single action looks bad.',
-          'Dashed green lines mark corrections; the line falling after one means it helped.',
+          [['┊ Dashed green line', C.ok], [': a correction was sent to the agent. The line falling after one means it helped.']],
           'Agent trend (next to the title and on the Drift readout):',
           [['↑ Red', 'error'], [': drift is rising, the agent is moving further off course']],
           [['↓ Green', 'success'], [': drift is falling, the agent is getting back on track']],
@@ -805,6 +805,7 @@ async function renderPane($: $, elements: Elements, live: boolean) {
             {open === p.eventId && flagDetails(Text, Box, p)}
           </Box>
         ))}
+        {!lists.flags && flagged.length > FLAGS_SHOWN && <Box paddingLeft={4}><Text dimColor>...</Text></Box>}
       </Box>
 
       <Box flexDirection="column">
@@ -831,6 +832,7 @@ async function renderPane($: $, elements: Elements, live: boolean) {
             {open === `recent-${p.eventId}` && flagDetails(Text, Box, p)}
           </Box>
         ))}
+        {!lists.recent && recent.length > RECENT_SHOWN && <Box paddingLeft={4}><Text dimColor>...</Text></Box>}
       </Box>
     </Box>
   )
