@@ -167,6 +167,6 @@ The order doubles as the cut list: each step leaves something you can demo.
 | No Modal Dict | David's database holds the history |
 | The Mod sends as much data as possible | No need to agree on a payload first. Only large items are trimmed, and only with Noah's OK. |
 | Docs are split into CONTRACT, NOAH and DAVID, all in the root | Each side keeps its own doc, the bridge is shared, and any agent can read all three |
-| Large items in events: drop `originalFile`, cap shell output at about 20 KB, no full conversation, no attachment bytes | Keeps events small, and the diff already shows each change. See MOD_PRD.md FR-16. |
+| Events send everything raw, with a 5 MB safety cap per event | David's classifier handles large entries. The cap only stops one huge file from breaking the pipeline. See MOD_PRD.md FR-16. |
 | A root CLAUDE.md holds the rules every agent must follow | Claude Code loads it automatically, so new agents find the docs and the update rule without being told |
 | The Mod only sends the most recent events: no checkpoint or batch events, even for long autonomous runs | The classifier analyzes behavior over time from its own history. Events go out after every tool call, so a long run inside one turn is still monitored and corrected action by action. |

@@ -84,11 +84,12 @@ While a coding agent works, the Mod gives the user a live, explainable view of w
   - the step's text, thinking and todos
   - any new instructions since the last event
   - `seq` and timestamps
-- **FR-16: Large items.** Everything is sent in full except:
-  - **`originalFile`** (the whole file before an edit) is dropped. The diff already shows the change.
-  - **Shell stdout and stderr** are capped at about 20 KB each, keeping the start and the end, with a `[truncated N bytes]` marker in the middle.
-  - **The full conversation** is not sent. The Mod sends deltas, and David can ask for the full history later if he needs it.
-  - **Attachment bytes** are never sent, only the type and filename.
+- **FR-16: Send everything raw.** David's classifier handles large entries, so the Mod doesn't trim:
+  - `originalFile` (the whole file before an edit) is sent.
+  - Shell stdout and stderr are sent in full. When Claude Code keeps only a preview, the Mod reads the saved full output from `rawOutputPath` and sends it as `full_output`.
+  - Agent text, thinking and project docs are sent in full.
+  - **Safety cap:** if one event goes over 5 MB, the Mod cuts its longest strings, keeping the start and end with a `[cut N chars]` marker, until it fits.
+  - Still not sent: the full conversation on every event (events already carry everything new) and attachment bytes.
 - **FR-17:** No `git status` after shell commands. In the demo, the deletion shows up in the command itself.
 
 ### 4.6 Sending events
@@ -138,7 +139,7 @@ While a coding agent works, the Mod gives the user a live, explainable view of w
 - **NFR-1:** The Mod never noticeably slows the agent. Hooks do only local work before returning, and network calls aren't awaited.
 - **NFR-2:** A failure in the Mod never breaks the agent. Each hook catches its own errors and falls back to `next(e)`.
 - **NFR-3:** No secrets in source. The URL and token come only from `userConfig`.
-- **NFR-4:** Event bodies stay under about 256 KB after the large-item rules (FR-16).
+- **NFR-4:** Event bodies stay under 5 MB (FR-16).
 - **NFR-5:** State that has to survive a Mod reload lives in `$.state`, not in module variables.
 
 ---
@@ -203,6 +204,7 @@ Keep it to one module unless it gets hard to read. Development happens in the se
 **Open:** none.
 
 **Changes:** (date, change)
+- 2026-11-07: FR-16 changed to send everything raw with a 5 MB per-event safety cap, because the classifier handles large entries (Noah).
 - 2026-11-07: first draft.
 - 2026-11-07: Noah approved the defaults:
   - FR-16: drop `originalFile`, cap shell output at about 20 KB, no full conversation, no attachment bytes

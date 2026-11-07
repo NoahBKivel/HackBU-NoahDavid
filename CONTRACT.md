@@ -71,13 +71,10 @@ A classifier on Modal judges each action. Based on its decision, the Mod alerts 
 
 **Core rule: send as much as possible.**
 - The Mod sends everything it can collect (the full menu in section 5), and the classifier uses whatever it needs.
-- **Large items trimmed (decided by Noah):**
-  - The file's contents before an edit (`originalFile`) are dropped. The diff is sent.
-  - Shell stdout and stderr are capped at about 20 KB each.
-  - The full conversation isn't sent.
-  - Attachment bytes aren't sent.
-
-  David: say if the classifier needs any of these.
+- **Large items are sent raw (decided by Noah):** the classifier side handles large entries.
+  - The Mod sends the file before each edit (`originalFile`) and full shell output (`full_output` when Claude Code cut it short).
+  - **The one limit is a 5 MB safety cap per event:** past that, the longest strings are cut with a `[cut N chars]` marker.
+  - The full conversation isn't resent with each event, and attachment bytes aren't sent.
 - The backend accepts unknown extra fields (`extra="allow"`) and passes them through untouched.
 
 ### Event: Mod → `POST /v1/events` (Bearer token)
@@ -216,4 +213,4 @@ This is everything the Mod sends, subject to the large-item exception.
 
 **Changes:** (date, change, agreed by)
 - 2026-11-07: first version.
-- 2026-11-07: large-item trimming set (Noah's decision, which the contract leaves to him).
+- 2026-11-07: large items: sent raw, with a 5 MB per-event safety cap (Noah's decision, which the contract leaves to him).
