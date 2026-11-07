@@ -23,7 +23,7 @@ A classifier on Modal judges each action. Based on its decision, the Mod alerts 
 
 **Hackathon:** HackBU. Building runs from 1pm on 2026-11-07 to the **Devpost deadline at 11am on 2026-11-08**.
 - All code must be written during that period. Don't reuse earlier code, including Noah's old `tool-pulse` test mod.
-- A demo video is required. A live presentation is possible but not confirmed.
+- A demo video is required, **and we will demo live** (confirmed 2026-11-07). Both the backend and the classifier must be warm and responsive during the live demo (NOAH.md and DAVID.md have the steps for each side).
 - The demo runs in the Claude Code **desktop app** on Windows 11.
 
 **Team:**

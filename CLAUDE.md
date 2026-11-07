@@ -52,7 +52,7 @@ through untouched, and returns the classifier's result and actions as JSON.
 - Building runs from 1pm on 2026-11-07 to the **Devpost deadline at 11am on 2026-11-08**.
 - All code must be written during that period. Don't reuse earlier code, including Noah's old `tool-pulse` test mod.
 - **Demo-grade only:** build what the demo needs, skip robustness work, and mark extras as "later". Ask before adding anything the demo doesn't visibly need.
-- A demo video is required. Keep the system demoable after every change.
+- A demo video is required, and the project is also **demoed live**. Keep the system demoable after every change.
 
 ## 6. Working with Noah
 
