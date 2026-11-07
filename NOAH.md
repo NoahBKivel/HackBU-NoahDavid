@@ -28,6 +28,9 @@ This is the architecture and build guide for `Noah/`: the Claude Code Mod and th
   - **Title:** Conventional Commits with a scope (`feat(mod): ...`, `fix(backend): ...`, `docs(contract): ...`). Plain, descriptive words, so someone reading only the title knows what changed. No jargon, internal names, or phase and step language.
   - **Body:** a short paragraph with more detail than the title, never just repeating it.
   - **Never:** em dashes, or `Co-Authored-By` and other attribution lines. Attribution is turned off in Noah's Claude Code settings.
+- **When to commit:**
+  - If Noah suggests a commit, that's approval to commit and push.
+  - If a while has passed without one, ask him whether to commit, so the history shows steady progress.
 
 ```
 Noah/
@@ -176,6 +179,7 @@ The order doubles as the cut list: each step leaves something you can demo.
   - The default view must fit on screen at once, without scrolling.
   - Don't put everything in bordered containers. Borders behave badly as the panel width changes (tiles wrapped into a tall column and cut off at the edge).
   - Change the design in small steps that Noah reviews one at a time.
+  - **Never put a border on a small control.** On the desktop a Box border adds a lot of size: a rounded border around the time window buttons made them huge. Plain Buttons can't be given rounded backgrounds, so the selected window uses a square tint the size of the button.
 - **Type-check with TypeScript in the scratchpad.** The `claude` command line isn't installed, so run `tsc -p <mod>/.claude-plugin/types/tsconfig.json` with a TypeScript copy installed in the session scratchpad. The engine checks rules, not types.
 - **Mock-only behavior to check when linking the real backend:**
   - The "Mock classifier" label and the auto-loaded 10-day sample history only appear while `apiUrl` and `apiToken` are unset, so they disappear once the real backend is configured.

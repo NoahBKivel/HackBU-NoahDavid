@@ -682,7 +682,7 @@ async function renderPane($: $, elements: Elements, live: boolean) {
 
 
       <Box flexDirection="column" marginTop={1}>
-        {chartTitle(Text, Box, Button, 'Risk per action', 'info-risk', chosen.risk, pick('risk'))}
+        {chartTitle(Text, Box, Button, Svg, 'Risk per action', 'info-risk', chosen.risk, pick('risk'))}
         {Svg ? (
           <Svg source={riskChart(riskList, chosen.risk)} alt={chartAlt(riskList)} isInteractive />
         ) : (
@@ -697,7 +697,7 @@ async function renderPane($: $, elements: Elements, live: boolean) {
       </Box>
 
       <Box flexDirection="column">
-        {chartTitle(Text, Box, Button, 'Alignment trend', 'info-trend', chosen.trend, pick('trend'))}
+        {chartTitle(Text, Box, Button, Svg, 'Alignment trend', 'info-trend', chosen.trend, pick('trend'))}
         {Svg ? (
           <Svg source={trendChart(trendList, chosen.trend)} alt={`Alignment trend, currently ${alignment === null ? 'unknown' : pct(alignment)}`} isInteractive />
         ) : (
@@ -738,25 +738,31 @@ async function renderPane($: $, elements: Elements, live: boolean) {
 
 // A section title with an (i) icon. Hovering the icon reveals the matching
 // infoReveal card, floating over the chart so nothing else moves.
-function chartTitle(Text: any, Box: any, Button: any, title: string, scope: string, current: string, onPick: (id: string) => unknown) {
+// The bar sits 4 px right of the image's left edge, so centering the image
+// nudges the bar 2 px right to line up under the button's label.
+const UNDERLINE = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="2" viewBox="0 0 20 2"><rect x="4" width="16" height="2" rx="1" fill="#9C9A92"/></svg>'
+
+function chartTitle(Text: any, Box: any, Button: any, Svg: any, title: string, scope: string, current: string, onPick: (id: string) => unknown) {
   return (
     <Box flexDirection="row" justifyContent="space-between" alignItems="center">
       <Text weight="semibold">{title}</Text>
       <Box flexDirection="row" alignItems="center" gap="xs">
         {WINDOWS.map(w => (
-          w.id === current ? (
-            <Button key={`${scope}-${w.id}`} variant="secondary" dimColor onPress={() => onPick(w.id)}>
+          // The app draws its own pill on hover. Selection is a short underline
+          // drawn in an absolutely positioned box, so it takes no space and the
+          // options stay in line with the title.
+          <Box key={`${scope}-${w.id}-opt`} position="relative">
+            <Button key={`${scope}-${w.id}`} plain dimColor={w.id !== current} onPress={() => onPick(w.id)}>
               <Text color="inactive" dimColor size="footnote">
                 {w.label}
               </Text>
             </Button>
-          ) : (
-            <Button key={`${scope}-${w.id}`} plain dimColor onPress={() => onPick(w.id)}>
-              <Text color="inactive" dimColor size="footnote">
-                {w.label}
-              </Text>
-            </Button>
-          )
+            {w.id === current && Svg && (
+              <Box position="absolute" bottom={0} left={0} right={0} flexDirection="row" justifyContent="center">
+                <Svg source={UNDERLINE} alt="Selected" />
+              </Box>
+            )}
+          </Box>
         ))}
         <Text color="inactive" dimColor hover={{ scope, color: 'subtle', dimColor: false }}>ⓘ</Text>
       </Box>
