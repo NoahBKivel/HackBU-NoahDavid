@@ -7,8 +7,8 @@ const PLUGIN = 'alignment-monitor'
 const WATCHED_TOOLS = new Set(['Edit', 'Write', 'Bash', 'PowerShell'])
 const MAX_EVENT_BYTES = 5_000_000
 const FETCH_TIMEOUT_MS = 60_000
-const MAX_POINTS = 300
-const CHART_POINTS = 60
+const MAX_POINTS = 2000
+const CHART_POINTS = 120
 
 type $ = EngineInterface
 type Action = { type?: string; level?: string; text?: string }
@@ -33,6 +33,15 @@ const instructionCount = atom({ plugin: 'alignment-monitor', key: 'instructionCo
 const expanded = atom({ plugin: 'alignment-monitor', key: 'expanded' } as const, null)
 const todos = atom({ plugin: 'alignment-monitor', key: 'todos' } as const, [])
 const session = atom({ plugin: 'alignment-monitor', key: 'session' } as const, null)
+const windows = atom({ plugin: 'alignment-monitor', key: 'windows' } as const, { risk: 'all', trend: 'all' })
+
+// Time windows a chart can show, by the label drawn next to its title.
+const WINDOWS: { id: string; label: string; ms: number }[] = [
+  { id: 'hour', label: '1h', ms: 60 * 60 * 1000 },
+  { id: 'day', label: '1d', ms: 24 * 60 * 60 * 1000 },
+  { id: 'week', label: '1w', ms: 7 * 24 * 60 * 60 * 1000 },
+  { id: 'all', label: 'All', ms: Infinity },
+]
 
 // The latest model step's visible text and displayed thinking. Kept in the
 // module, not $.state, because it is rewritten on every step.
@@ -54,12 +63,22 @@ export const register: Register = (on, options) => {
     try {
       await $.command.register({
         name: 'alignment',
-        description: 'Open the alignment monitor pane',
+        description: 'Open the alignment monitor pane. Add "sample" to load test history (mock mode only).',
+        argumentHint: '[sample]',
       })
       const id = await $.session.id()
       const known = await read($, session)
       if (known?.id !== id) {
         await startSession($, id)
+      } else {
+        // A reload ends any check still in flight; those never get an answer.
+        await update($, points, list =>
+          list.map(p => (p.isPending ? { ...p, isPending: false, error: 'Interrupted by a Mod reload' } : p)),
+        )
+      }
+      if (!isLive) {
+        const current = await read($, points)
+        if (!current.some(p => p.eventId.startsWith('sample-'))) await loadSample($)
       }
       void $.ui.open({ id: 'alignment', title: 'Alignment' })
       await refreshStatus($, isLive)
@@ -69,8 +88,13 @@ export const register: Register = (on, options) => {
     return result
   })
 
-  on('command.run', { command: 'alignment' }, async $ => {
+  on('command.run', { command: 'alignment' }, async ($, e) => {
     await $.ui.open({ id: 'alignment', title: 'Alignment', focus: true })
+    if (e.args.trim() === 'sample') {
+      if (isLive) return { text: 'Sample history is only available with the mock classifier.' }
+      const count = await loadSample($)
+      return { text: `Loaded ${count} sample checks spanning the past 10 days.` }
+    }
     return { text: 'Alignment monitor pane opened.' }
   })
 
@@ -407,6 +431,62 @@ function trace($: $, line: string) {
   void $.fs.write(TRACE_FILE, traceLines.slice(-200).join('\n')).catch(() => {})
 }
 
+// ---------- Sample history (mock mode, for trying the chart windows) ----------
+
+// Replaces this session's checks with ten days of made-up history: a few
+// sessions a day, a busy last hour, occasional flags with corrections.
+async function loadSample($: $) {
+  const now = await $.clock.now()
+  let seed = 7
+  const rand = () => ((seed = (seed * 16807) % 2147483647) / 2147483647)
+  const tools = ['Edit', 'Bash', 'Write', 'PowerShell']
+  const actions = ['Edited src/app.py', 'pytest -q', 'Wrote docs/notes.md', 'Edited tests/test_api.py', 'npm run build', 'git status', 'Edited src/cache.py']
+  const times: number[] = []
+  for (let day = 9; day >= 1; day--) {
+    const sessions = 1 + Math.floor(rand() * 3)
+    for (let k = 0; k < sessions; k++) {
+      const start = now - day * 86_400_000 + (8 + rand() * 12) * 3_600_000
+      const checks = 6 + Math.floor(rand() * 18)
+      for (let c = 0; c < checks; c++) times.push(start + c * (60_000 + rand() * 240_000))
+    }
+  }
+  for (let h = 20; h >= 2; h -= 3) times.push(now - h * 3_600_000 + rand() * 1_800_000)
+  for (let m = 58; m >= 1; m -= 2) times.push(now - m * 60_000)
+  times.sort((a, b) => a - b)
+
+  const sample: Point[] = []
+  let recovering = 0
+  times.forEach((ts, i) => {
+    const flagged = recovering === 0 && rand() < 0.05
+    const base = recovering > 0 ? 0.08 + rand() * 0.15 : rand() < 0.15 ? 0.4 + rand() * 0.25 : 0.03 + rand() * 0.25
+    const risk = flagged ? 0.8 + rand() * 0.18 : base
+    const corrected = flagged && rand() < 0.7
+    recovering = corrected ? 3 : Math.max(0, recovering - 1)
+    const t = Math.floor(rand() * tools.length)
+    sample.push({
+      eventId: `sample-${i}`,
+      seq: i + 1,
+      ts,
+      tool: tools[t] ?? 'Edit',
+      summary: flagged ? 'rm tests/test_slow.py' : actions[Math.floor(rand() * actions.length)] ?? 'Edited a file',
+      risk,
+      flagged,
+      corrected,
+      isPending: false,
+      monitor: 'goal_adherence',
+      details: flagged ? { behavior: 'Deleted test files', concern: 'Sample data: possible proxy optimization.' } : {},
+      notices: flagged ? [{ level: 'detected', text: 'Sample: the agent deleted test files.' }] : [],
+      correction: corrected ? 'Sample correction: restore the deleted tests.' : null,
+      error: null,
+    })
+  })
+  // Keep any real checks from this session after the sample history.
+  await update($, points, list =>
+    [...sample, ...list.filter(p => !p.eventId.startsWith('sample-'))].sort((a, b) => a.ts - b.ts).slice(-MAX_POINTS),
+  )
+  return sample.length
+}
+
 // ---------- Mock classifier (used until the backend URL and token are set) ----------
 
 async function mockClassify($: $, event: Event): Promise<Result> {
@@ -565,6 +645,11 @@ async function renderPane($: $, elements: Elements, live: boolean) {
   }[state as Conn] ?? ['Unknown', 'subtle']
 
   const toggle = (id: string) => update($, expanded, current => (current === id ? null : id))
+  const chosen = await read($, windows)
+  const now = await $.clock.now()
+  const riskList = inWindow(list, chosen.risk, now)
+  const trendList = inWindow(list, chosen.trend, now)
+  const pick = (chart: 'risk' | 'trend') => (id: string) => update($, windows, w => ({ ...w, [chart]: id }))
 
   return (
     <Box flexDirection="column" gap="md" paddingX={1}>
@@ -575,11 +660,14 @@ async function renderPane($: $, elements: Elements, live: boolean) {
             {latest ? pct(latest.risk) : '--'}
           </Text>
           <Text dimColor size="footnote">
-            {latest ? `${riskLabel(latest.risk, latest.flagged)}, last check: ${latest.summary}` : 'No actions checked yet'}
+            {latest ? riskLabel(latest.risk, latest.flagged) : 'No actions checked yet'}
           </Text>
         </Box>
         <Box flexDirection="column" alignItems="flex-end">
-          <Text color={status[1]}>{`● ${status[0]}`}</Text>
+          <Box flexDirection="row" gap="xs">
+            <Text color={status[1]} wrap="truncate">●</Text>
+            <Text color={status[1]} wrap="truncate">{status[0]}</Text>
+          </Box>
           {!live && <Text dimColor size="caption">Mock classifier</Text>}
         </Box>
       </Box>
@@ -592,24 +680,33 @@ async function renderPane($: $, elements: Elements, live: boolean) {
         {readout(Text, Box, 'Corrections', String(fixes), fixes ? 'success' : 'text')}
       </Box>
 
-      <Box flexDirection="column">
-        <Text weight="semibold">Risk per action</Text>
+
+      <Box flexDirection="column" marginTop={1}>
+        {chartTitle(Text, Box, Button, 'Risk per action', 'info-risk', chosen.risk, pick('risk'))}
         {Svg ? (
-          <Svg source={riskChart(list)} alt={chartAlt(list)} isInteractive />
+          <Svg source={riskChart(riskList, chosen.risk)} alt={chartAlt(riskList)} isInteractive />
         ) : (
           <Text dimColor>{sparkline(risks)}</Text>
         )}
-        <Text dimColor size="caption">Red: flagged. Green ring: correction sent to the agent. Gray: still being checked.</Text>
+        {infoReveal(Text, Box, 'info-risk', [
+          'How likely each checked action is to break your instructions, as judged by the classifier. Lower is better.',
+          '● Blue: checked.  ● Amber: elevated.  ● Red: flagged.',
+          'Dashed green line: a correction was sent to the agent.  ○ Gray: still being checked.',
+          'Hover a point for its details.',
+        ])}
       </Box>
 
       <Box flexDirection="column">
-        <Text weight="semibold">Alignment trend</Text>
+        {chartTitle(Text, Box, Button, 'Alignment trend', 'info-trend', chosen.trend, pick('trend'))}
         {Svg ? (
-          <Svg source={trendChart(list)} alt={`Alignment trend, currently ${alignment === null ? 'unknown' : pct(alignment)}`} isInteractive />
+          <Svg source={trendChart(trendList, chosen.trend)} alt={`Alignment trend, currently ${alignment === null ? 'unknown' : pct(alignment)}`} isInteractive />
         ) : (
           <Text dimColor>{sparkline(risks.map((_, i) => 1 - rollingRisk(risks, i)))}</Text>
         )}
-        <Text dimColor size="caption">Rolling alignment over the last 5 checks. Dashed lines mark corrections.</Text>
+        {infoReveal(Text, Box, 'info-trend', [
+          'Rolling alignment over the last 5 checks (100% minus average risk). Higher is better.',
+          'A dip means recent actions looked risky. Dashed green lines mark corrections; a rise after one means it helped.',
+        ])}
       </Box>
 
       <Box flexDirection="column">
@@ -635,6 +732,56 @@ async function renderPane($: $, elements: Elements, live: boolean) {
           </Text>
         ))}
       </Box>
+    </Box>
+  )
+}
+
+// A section title with an (i) icon. Hovering the icon reveals the matching
+// infoReveal card, floating over the chart so nothing else moves.
+function chartTitle(Text: any, Box: any, Button: any, title: string, scope: string, current: string, onPick: (id: string) => unknown) {
+  return (
+    <Box flexDirection="row" justifyContent="space-between" alignItems="center">
+      <Text weight="semibold">{title}</Text>
+      <Box flexDirection="row" alignItems="center" gap="xs">
+        {WINDOWS.map(w => (
+          w.id === current ? (
+            <Button key={`${scope}-${w.id}`} variant="secondary" dimColor onPress={() => onPick(w.id)}>
+              <Text color="inactive" dimColor size="footnote">
+                {w.label}
+              </Text>
+            </Button>
+          ) : (
+            <Button key={`${scope}-${w.id}`} plain dimColor onPress={() => onPick(w.id)}>
+              <Text color="inactive" dimColor size="footnote">
+                {w.label}
+              </Text>
+            </Button>
+          )
+        ))}
+        <Text color="inactive" dimColor hover={{ scope, color: 'subtle', dimColor: false }}>ⓘ</Text>
+      </Box>
+    </Box>
+  )
+}
+
+function infoReveal(Text: any, Box: any, scope: string, lines: string[]) {
+  return (
+    <Box
+      position="absolute"
+      top={1}
+      left={0}
+      right={0}
+      display="none"
+      hover={{ scope, display: 'flex' }}
+      flexDirection="column"
+      borderStyle="round"
+      borderColor="subtle"
+      backgroundColor="inverseText"
+      paddingX={1}
+    >
+      {lines.map(line => (
+        <Text size="footnote">{line}</Text>
+      ))}
     </Box>
   )
 }
@@ -676,12 +823,13 @@ const C = {
   warn: '#EF9F27',
   ok: '#1D9E75',
   pending: '#B4B2A9',
+  trend: '#7F77DD',
 }
 const W = 640
 const H = 190
-const PAD = { left: 40, right: 14, top: 12, bottom: 24 }
+const PAD = { left: 40, right: 14, top: 6, bottom: 24 }
 
-function frame(inner: string, yLabels: [number, string][]) {
+function frame(inner: string, yLabels: [number, string][], times: number[] = []) {
   const plotH = H - PAD.top - PAD.bottom
   const grid = yLabels
     .map(([v, text]) => {
@@ -690,12 +838,79 @@ function frame(inner: string, yLabels: [number, string][]) {
         `<text x="${PAD.left - 6}" y="${y + 4}" text-anchor="end" font-size="11" fill="${C.axis}" font-family="sans-serif">${text}</text>`
     })
     .join('')
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">${grid}${inner}</svg>`
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">${grid}${timeAxis(times)}${inner}</svg>`
 }
 
-function xFor(i: number, count: number) {
+// x for each point from its real time, so gaps in the agent's work show as
+// gaps on the chart and the time axis below reads correctly.
+function xPositions(list: Point[]) {
   const plotW = W - PAD.left - PAD.right
-  return count <= 1 ? PAD.left + plotW / 2 : PAD.left + (plotW * i) / (count - 1)
+  const first = list[0]?.ts ?? 0
+  const last = list[list.length - 1]?.ts ?? 0
+  const span = last - first
+  return list.map(p => (span <= 0 ? PAD.left + plotW / 2 : PAD.left + (plotW * (p.ts - first)) / span))
+}
+
+const SECOND = 1000
+const MINUTE = 60 * SECOND
+const HOUR = 60 * MINUTE
+const DAY = 24 * HOUR
+const STEPS = [10 * SECOND, 15 * SECOND, 30 * SECOND, MINUTE, 2 * MINUTE, 5 * MINUTE, 10 * MINUTE, 15 * MINUTE,
+  30 * MINUTE, HOUR, 2 * HOUR, 3 * HOUR, 6 * HOUR, 12 * HOUR, DAY, 2 * DAY, 7 * DAY]
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+
+// Time labels under a chart, picked to suit the session's length: seconds
+// for a few minutes, clock times for hours, dates once it runs for days.
+function timeAxis(times: number[]) {
+  if (times.length === 0) return ''
+  const plotW = W - PAD.left - PAD.right
+  const first = times[0] ?? 0
+  const last = times[times.length - 1] ?? 0
+  const span = last - first
+  const y = H - 6
+  const label = (x: number, text: string, anchor = 'middle') =>
+    `<text x="${x.toFixed(1)}" y="${y}" text-anchor="${anchor}" font-size="11" fill="${C.axis}" font-family="sans-serif">${text}</text>`
+  if (span <= 0) return label(PAD.left + plotW / 2, timeLabel(first, MINUTE, false))
+
+  const step = STEPS.find(s => span / s <= 5) ?? 30 * DAY
+  const multiDay = new Date(first).toDateString() !== new Date(last).toDateString()
+  let t = alignToStep(first, step)
+  if (step >= DAY) {
+    const midnight = new Date(first)
+    midnight.setHours(0, 0, 0, 0)
+    t = midnight.getTime() < first ? midnight.getTime() + DAY : midnight.getTime()
+  }
+  const parts: string[] = []
+  let lastDay = ''
+  for (let guard = 0; t <= last && guard < 12; guard++, t += step) {
+    const x = PAD.left + (plotW * (t - first)) / span
+    const day = new Date(t).toDateString()
+    const showDate = step >= DAY || (multiDay && day !== lastDay)
+    parts.push(`<line x1="${x.toFixed(1)}" y1="${PAD.top}" x2="${x.toFixed(1)}" y2="${yFor(0)}" stroke="${C.grid}" stroke-width="1"/>`)
+    parts.push(label(x, timeLabel(t, step, showDate)))
+    lastDay = day
+  }
+  if (parts.length === 0) {
+    // Too short for any round time to fall inside: label both ends.
+    return label(PAD.left, timeLabel(first, SECOND, false), 'start') + label(W - PAD.right, timeLabel(last, SECOND, false), 'end')
+  }
+  return parts.join('')
+}
+
+// Rounds up to the next step boundary in local time (whole minutes, hours).
+function alignToStep(ts: number, step: number) {
+  const d = new Date(ts)
+  const offset = d.getTimezoneOffset() * MINUTE
+  return Math.ceil((ts - offset) / step) * step + offset
+}
+
+function timeLabel(ts: number, step: number, withDate: boolean) {
+  const d = new Date(ts)
+  const two = (n: number) => String(n).padStart(2, '0')
+  const date = `${MONTHS[d.getMonth()]} ${d.getDate()}`
+  if (step >= DAY) return date
+  const time = step < MINUTE ? `${two(d.getHours())}:${two(d.getMinutes())}:${two(d.getSeconds())}` : `${two(d.getHours())}:${two(d.getMinutes())}`
+  return withDate ? `${date} ${time}` : time
 }
 
 function yFor(v: number) {
@@ -709,60 +924,71 @@ function empty(message: string) {
   )
 }
 
-function riskChart(all: Point[]) {
-  const list = all.slice(-CHART_POINTS)
-  if (list.length === 0) return empty('Risk appears here as the agent acts')
-  const n = list.length
+function riskChart(all: Point[], window: string) {
+  const list = downsample(all)
+  if (list.length === 0) return empty(all.length === 0 && window === 'all' ? 'Risk appears here as the agent acts' : `No checks in ${windowName(window)}`)
+  const xs = xPositions(list)
   const scored = list.map((p, i) => ({ p, i })).filter(({ p }) => p.risk !== null)
-  const path = scored.map(({ p, i }, k) => `${k ? 'L' : 'M'}${xFor(i, n).toFixed(1)} ${yFor(p.risk as number).toFixed(1)}`).join(' ')
+  const path = scored.map(({ p, i }, k) => `${k ? 'L' : 'M'}${(xs[i] ?? 0).toFixed(1)} ${yFor(p.risk as number).toFixed(1)}`).join(' ')
   const first = scored[0]
   const last = scored[scored.length - 1]
   const area = first && last && scored.length > 1
-    ? `<path d="${path} L${xFor(last.i, n).toFixed(1)} ${yFor(0)} L${xFor(first.i, n).toFixed(1)} ${yFor(0)} Z" fill="${C.line}" fill-opacity="0.12"/>`
+    ? `<path d="${path} L${(xs[last.i] ?? 0).toFixed(1)} ${yFor(0)} L${(xs[first.i] ?? 0).toFixed(1)} ${yFor(0)} Z" fill="${C.line}" fill-opacity="0.12"/>`
     : ''
   const dots = list
     .map((p, i) => {
-      const x = xFor(i, n).toFixed(1)
+      const x = (xs[i] ?? 0).toFixed(1)
       const tip = `<title>${esc(`${clock(p.ts)} ${p.tool}: ${p.summary}\nRisk: ${p.isPending ? 'checking' : pct(p.risk)}${p.flagged ? ', flagged' : ''}${p.correction ? (p.corrected ? ', correction sent' : ', correction queued') : ''}`)}</title>`
       if (p.risk === null) {
-        return `<circle cx="${x}" cy="${yFor(0)}" r="4" fill="none" stroke="${C.pending}" stroke-width="1.5">${tip}</circle>`
+        // Only checks still waiting for an answer are drawn; failed ones are left out.
+        return p.isPending
+          ? `<circle cx="${x}" cy="${yFor(0)}" r="4" fill="none" stroke="${C.pending}" stroke-width="1.5">${tip}</circle>`
+          : ''
       }
       const y = yFor(p.risk).toFixed(1)
       const color = p.flagged ? C.flag : p.risk >= 0.5 ? C.warn : C.line
-      const ring = p.correction
-        ? `<circle cx="${x}" cy="${y}" r="9" fill="none" stroke="${C.ok}" stroke-width="2"/>`
-        : ''
-      return `${ring}<circle cx="${x}" cy="${y}" r="${p.flagged ? 5.5 : 4}" fill="${color}">${tip}</circle>`
+      return `<circle cx="${x}" cy="${y}" r="${p.flagged ? 5.5 : 4}" fill="${color}">${tip}</circle>`
     })
     .join('')
+  const marks = correctionLines(list, xs)
   return frame(
-    `${area}<path d="${path}" fill="none" stroke="${C.line}" stroke-width="2" stroke-linejoin="round"/>${dots}`,
+    `${area}${marks}<path d="${path}" fill="none" stroke="${C.line}" stroke-width="2" stroke-linejoin="round"/>${dots}`,
     [[0, '0%'], [0.25, '25%'], [0.5, '50%'], [0.75, '75%'], [1, '100%']],
+    list.map(p => p.ts),
   )
 }
 
-function trendChart(all: Point[]) {
-  const list = all.slice(-CHART_POINTS)
+function trendChart(all: Point[], window: string) {
+  const list = downsample(all)
   const scored = list.map((p, i) => ({ p, i })).filter(({ p }) => p.risk !== null)
-  if (scored.length === 0) return empty('Alignment trend appears after the first check')
-  const n = list.length
+  if (scored.length === 0) return empty(window === 'all' ? 'Alignment trend appears after the first check' : `No checks in ${windowName(window)}`)
+  const xs = xPositions(list)
   const risks = scored.map(({ p }) => p.risk as number)
   const values = risks.map((_, k) => 1 - rollingRisk(risks, k))
-  const path = scored.map(({ i }, k) => `${k ? 'L' : 'M'}${xFor(i, n).toFixed(1)} ${yFor(values[k] ?? 0).toFixed(1)}`).join(' ')
-  const marks = list
-    .map((p, i) => {
-      if (!p.correction) return ''
-      const x = xFor(i, n).toFixed(1)
-      return `<line x1="${x}" y1="${PAD.top}" x2="${x}" y2="${yFor(0)}" stroke="${C.ok}" stroke-width="1.5" stroke-dasharray="4 3"><title>${esc(`Correction: ${p.summary}`)}</title></line>`
-    })
-    .join('')
+  const path = scored.map(({ i }, k) => `${k ? 'L' : 'M'}${(xs[i] ?? 0).toFixed(1)} ${yFor(values[k] ?? 0).toFixed(1)}`).join(' ')
+  const marks = correctionLines(list, xs)
   const dots = scored
-    .map(({ p, i }, k) => `<circle cx="${xFor(i, n).toFixed(1)}" cy="${yFor(values[k] ?? 0).toFixed(1)}" r="3" fill="${C.ok}"><title>${esc(`${clock(p.ts)}: alignment ${pct(values[k] ?? null)}`)}</title></circle>`)
+    .map(({ p, i }, k) => `<circle cx="${(xs[i] ?? 0).toFixed(1)}" cy="${yFor(values[k] ?? 0).toFixed(1)}" r="3" fill="${C.trend}"><title>${esc(`${clock(p.ts)}: alignment ${pct(values[k] ?? null)}`)}</title></circle>`)
     .join('')
   return frame(
-    `${marks}<path d="${path}" fill="none" stroke="${C.ok}" stroke-width="2.5" stroke-linejoin="round"/>${dots}`,
+    `${marks}<path d="${path}" fill="none" stroke="${C.trend}" stroke-width="2.5" stroke-linejoin="round"/>${dots}`,
     [[0, '0%'], [0.5, '50%'], [1, '100%']],
+    list.map(p => p.ts),
   )
+}
+
+// Dashed green vertical lines, topped by a small arrow, where a correction was sent to the agent.
+function correctionLines(list: Point[], xs: number[]) {
+  return list
+    .map((p, i) => {
+      if (!p.correction) return ''
+      const x = (xs[i] ?? 0).toFixed(1)
+      const cx = Number(x)
+      const tip = `<title>${esc(`Correction sent: ${p.summary}`)}</title>`
+      const arrow = `<path d="M${cx - 5} 0 L${cx + 5} 0 L${cx} ${PAD.top + 1} Z" fill="${C.ok}" fill-opacity="0.85">${tip}</path>`
+      return `<line x1="${x}" y1="${PAD.top}" x2="${x}" y2="${yFor(0)}" stroke="${C.ok}" stroke-width="1.5" stroke-dasharray="4 3">${tip}</line>${arrow}`
+    })
+    .join('')
 }
 
 function chartAlt(list: Point[]) {
@@ -770,6 +996,36 @@ function chartAlt(list: Point[]) {
   if (scored.length === 0) return 'Risk chart, no checks yet'
   const last = scored[scored.length - 1]
   return `Risk chart of ${scored.length} checks, latest ${pct(last?.risk ?? null)}, ${list.filter(p => p.flagged).length} flagged`
+}
+
+// Checks inside the chosen time window.
+function inWindow(list: Point[], window: string, now: number) {
+  const ms = WINDOWS.find(w => w.id === window)?.ms ?? Infinity
+  return ms === Infinity ? list : list.filter(p => p.ts >= now - ms)
+}
+
+function windowName(window: string) {
+  return { hour: 'the past hour', day: 'the past day', week: 'the past week' }[window] ?? 'this session'
+}
+
+// Keeps a chart readable over long windows: splits the time span into
+// CHART_POINTS buckets and keeps the riskiest check of each, so flags,
+// corrections and spikes always stay visible.
+function downsample(list: Point[]) {
+  if (list.length <= CHART_POINTS) return list
+  const first = list[0]?.ts ?? 0
+  const span = Math.max(1, (list[list.length - 1]?.ts ?? 0) - first)
+  const buckets = new Map<number, Point>()
+  for (const p of list) {
+    const b = Math.min(CHART_POINTS - 1, Math.floor(((p.ts - first) / span) * CHART_POINTS))
+    const kept = buckets.get(b)
+    const score = (q: Point) => (q.flagged ? 2 : 0) + (q.correction ? 1 : 0) + (q.risk ?? 0)
+    if (!kept || score(p) > score(kept)) buckets.set(b, p)
+  }
+  const latest = list[list.length - 1]
+  const kept = [...buckets.values()]
+  if (latest && !kept.includes(latest)) kept.push(latest)
+  return kept.sort((a, b) => a.ts - b.ts)
 }
 
 // ---------- Small helpers ----------

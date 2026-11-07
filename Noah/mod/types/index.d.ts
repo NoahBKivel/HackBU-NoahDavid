@@ -39,6 +39,7 @@ declare module 'claude-code' {
       expanded: string | null
       todos: Todo[]
       session: SessionInfo | null
+      windows: { risk: string; trend: string }
     }
   }
 }

@@ -177,6 +177,9 @@ The order doubles as the cut list: each step leaves something you can demo.
   - Don't put everything in bordered containers. Borders behave badly as the panel width changes (tiles wrapped into a tall column and cut off at the edge).
   - Change the design in small steps that Noah reviews one at a time.
 - **Type-check with TypeScript in the scratchpad.** The `claude` command line isn't installed, so run `tsc -p <mod>/.claude-plugin/types/tsconfig.json` with a TypeScript copy installed in the session scratchpad. The engine checks rules, not types.
+- **Mock-only behavior to check when linking the real backend:**
+  - The "Mock classifier" label and the auto-loaded 10-day sample history only appear while `apiUrl` and `apiToken` are unset, so they disappear once the real backend is configured.
+  - Confirm both are gone in the live demo.
 - **The Mod's temporary debug trace** writes to a scratchpad file, to `$.store` key `trace`, and optionally (with `DEBUG_CONTEXT`) to every tool result. Remove it before linking.
 - `$.session.append` with `type: "user"` **is** read by the model. Use `type: "system"` for notices meant only for the user.
 - `$.ui.notify` doesn't work in the desktop app (`no-surface`), so use notices, `$.ui.toast` or the Pane.
