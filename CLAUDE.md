@@ -59,4 +59,4 @@ through untouched, and returns the classifier's result and actions as JSON.
 - Claude writes the code, and Noah reviews and runs it. Give him exact commands.
 - Keep explanations brief but complete, and go deeper only when asked.
 - **Before using any Claude Code Mod API, check it in the type definitions.** Don't guess. Load the `plugin-authoring` skill first for Mod work (NOAH.md section 2).
-- Use the project's Python 3.12 virtual environment (`.venv\Scripts\...`), not the system Python 3.14.
+- Use the project's Python 3.12 virtual environment, not the system Python 3.14. The environment is gitignored, so a session working in a git worktree won't have its own copy. Call it by its absolute path: `C:\Projects\NYCAIRRtest\.venv\Scripts\python` or `...\modal`.
