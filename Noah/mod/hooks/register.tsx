@@ -34,6 +34,11 @@ const expanded = atom({ plugin: 'alignment-monitor', key: 'expanded' } as const,
 const todos = atom({ plugin: 'alignment-monitor', key: 'todos' } as const, [])
 const session = atom({ plugin: 'alignment-monitor', key: 'session' } as const, null)
 const windows = atom({ plugin: 'alignment-monitor', key: 'windows' } as const, { risk: 'all', trend: 'all' })
+const listsOpen = atom({ plugin: 'alignment-monitor', key: 'listsOpen' } as const, { flags: false, recent: false })
+
+// How many rows the flagged and recent lists show before "Show more".
+const FLAGS_SHOWN = 3
+const RECENT_SHOWN = 4
 
 // Time windows a chart can show, by the label drawn next to its title.
 const WINDOWS: { id: string; label: string; ms: number }[] = [
@@ -650,9 +655,12 @@ async function renderPane($: $, elements: Elements, live: boolean) {
   const riskList = inWindow(list, chosen.risk, now)
   const trendList = inWindow(list, chosen.trend, now)
   const pick = (chart: 'risk' | 'trend') => (id: string) => update($, windows, w => ({ ...w, [chart]: id }))
+  const lists = await read($, listsOpen)
+  const expandList = (which: 'flags' | 'recent') => () => update($, listsOpen, v => ({ ...v, [which]: !v[which] }))
+  const recent = [...list].reverse()
 
   return (
-    <Box flexDirection="column" gap="md" paddingX={1}>
+    <Box flexDirection="column" gap="lg" paddingX={1}>
       <Box flexDirection="row" justifyContent="space-between" alignItems="flex-start">
         <Box flexDirection="column">
           <Text dimColor size="caption">Current risk</Text>
@@ -710,26 +718,53 @@ async function renderPane($: $, elements: Elements, live: boolean) {
       </Box>
 
       <Box flexDirection="column">
-        <Text weight="semibold">{`Flagged actions (${flagged.length})`}</Text>
+        <Box flexDirection="row" justifyContent="space-between" alignItems="center">
+          <Text weight="semibold">{`Flagged actions (${flagged.length})`}</Text>
+          {showMore(Text, Button, 'flags', flagged.length, FLAGS_SHOWN, lists.flags, expandList('flags'))}
+        </Box>
         {flagged.length === 0 && <Text dimColor>Nothing flagged so far.</Text>}
-        {flagged.map(p => (
+        {(lists.flags ? flagged : flagged.slice(0, FLAGS_SHOWN)).map(p => (
           <Box flexDirection="column" key={`flag-${p.eventId}`}>
-            <Button key={`btn-${p.eventId}`} plain onPress={() => toggle(p.eventId)}>
-              {`${open === p.eventId ? '▾' : '▸'} ${pct(p.risk)}  ${p.summary} `}
-              <Text dimColor>{`${clock(p.ts)}${p.corrected ? ', corrected' : p.correction ? ', correction queued' : ''}`}</Text>
-            </Button>
+            <Box flexDirection="row" gap="sm">
+              <Box flexShrink={0}>
+                <Button key={`btn-${p.eventId}`} plain onPress={() => toggle(p.eventId)}>
+                  {`${open === p.eventId ? '▾' : '▸'} ${pct(p.risk)}`}
+                </Button>
+              </Box>
+              <Box flexShrink={1}>
+                <Text dimColor wrap="truncate">
+                  {`${p.summary}  ${clock(p.ts)}${p.corrected ? ', corrected' : p.correction ? ', correction queued' : ''}`}
+                </Text>
+              </Box>
+            </Box>
             {open === p.eventId && flagDetails(Text, Box, p)}
           </Box>
         ))}
       </Box>
 
       <Box flexDirection="column">
-        <Text weight="semibold">Recent checks</Text>
+        <Box flexDirection="row" justifyContent="space-between" alignItems="center">
+          <Text weight="semibold">Recent checks</Text>
+          {showMore(Text, Button, 'recent', Math.min(recent.length, 50), RECENT_SHOWN, lists.recent, expandList('recent'))}
+        </Box>
         {list.length === 0 && <Text dimColor>Waiting for the agent to act.</Text>}
-        {[...list].reverse().slice(0, 8).map(p => (
-          <Text dimColor={!p.flagged} color={p.flagged ? 'error' : 'text'}>
-            {`${clock(p.ts)}  ${p.isPending ? '...' : p.error ? 'err' : pct(p.risk)}  ${p.tool}: ${p.summary}`}
-          </Text>
+        {(lists.recent ? recent.slice(0, 50) : recent.slice(0, RECENT_SHOWN)).map(p => (
+          <Box key={`recent-${p.eventId}`} flexDirection="column">
+            <Box flexDirection="row" gap="sm">
+              <Box flexShrink={0}>
+                <Button key={`recent-btn-${p.eventId}`} plain onPress={() => toggle(`recent-${p.eventId}`)}>
+                  {`${open === `recent-${p.eventId}` ? '▾' : '▸'} ${clock(p.ts)}`}
+                </Button>
+              </Box>
+              <Box flexShrink={0} width={5}>
+                <Text color={p.flagged ? 'error' : 'text'} wrap="truncate">{p.risk === null ? '' : pct(p.risk)}</Text>
+              </Box>
+              <Box flexShrink={1}>
+                <Text dimColor wrap="truncate">{`${p.tool}: ${p.summary}`}</Text>
+              </Box>
+            </Box>
+            {open === `recent-${p.eventId}` && flagDetails(Text, Box, p)}
+          </Box>
         ))}
       </Box>
     </Box>
@@ -792,6 +827,17 @@ function infoReveal(Text: any, Box: any, scope: string, lines: string[]) {
   )
 }
 
+// An underlined "Show more" / "Show less" link under a list, shown only
+// when the list has more rows than it shows by default.
+function showMore(Text: any, Button: any, which: string, total: number, shown: number, isOpen: boolean, onPress: () => unknown) {
+  if (total <= shown) return null
+  return (
+    <Button key={`more-${which}`} plain dimColor onPress={onPress}>
+      <Text underline dimColor size="footnote">{isOpen ? 'Show less' : `Show ${total - shown} more`}</Text>
+    </Button>
+  )
+}
+
 function readout(Text: any, Box: any, label: string, value: string, color: string) {
   return (
     <Box flexDirection="column" alignItems="flex-start" key={`readout-${label}`}>
@@ -804,8 +850,11 @@ function readout(Text: any, Box: any, label: string, value: string, color: strin
 function flagDetails(Text: any, Box: any, p: Point) {
   const rows = Object.entries(p.details).filter(([key]) => key !== 'mock')
   return (
-    <Box flexDirection="column" paddingLeft={2} key={`details-${p.eventId}`}>
+    <Box flexDirection="column" paddingLeft={4} key={`details-${p.eventId}`}>
       <Text dimColor>{`Monitor: ${p.monitor ?? 'unknown'}. Tool: ${p.tool}. Checked at ${clock(p.ts)}.`}</Text>
+      <Text>{`Action: ${p.summary}`}</Text>
+      <Text>{`Risk: ${p.isPending ? 'still checking' : pct(p.risk)}${p.flagged ? ' (flagged)' : ''}`}</Text>
+      {p.error && <Text color="error">{`No result: ${p.error}`}</Text>}
       {rows.map(([key, value]) => (
         <Text>{`${label(key)}: ${typeof value === 'string' ? value : JSON.stringify(value)}`}</Text>
       ))}

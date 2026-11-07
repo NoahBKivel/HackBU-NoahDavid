@@ -40,6 +40,7 @@ declare module 'claude-code' {
       todos: Todo[]
       session: SessionInfo | null
       windows: { risk: string; trend: string }
+      listsOpen: { flags: boolean; recent: boolean }
     }
   }
 }
