@@ -24,6 +24,10 @@ This is the architecture and build guide for `Noah/`: the Claude Code Mod and th
   - Python 3.12 virtual environment at `.venv\`, with `modal` and `fastapi[standard]` installed.
   - Run Modal with `.venv\Scripts\modal`. The default Python is 3.14, so don't use it.
 - **Git:** only touch `Noah/` and the shared root docs. Run `git pull --rebase` before pushing, and never commit secrets.
+- **Commit messages** (also in Noah's `~/.claude/CLAUDE.md`):
+  - **Title:** Conventional Commits with a scope (`feat(mod): ...`, `fix(backend): ...`, `docs(contract): ...`). Plain, descriptive words, so someone reading only the title knows what changed. No jargon, internal names, or phase and step language.
+  - **Body:** a short paragraph with more detail than the title, never just repeating it.
+  - **Never:** em dashes, or `Co-Authored-By` and other attribution lines. Attribution is turned off in Noah's Claude Code settings.
 
 ```
 Noah/
