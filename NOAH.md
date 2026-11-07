@@ -115,11 +115,11 @@ The full requirements are in [Noah/MOD_PRD.md](Noah/MOD_PRD.md). This section is
 The order doubles as the cut list: each step leaves something you can demo.
 
 1. [x] Repo setup and docs
-2. [ ] **First test Mod (do this first):** check that
-   - `tool.call` sees an Edit or Bash call and its result
-   - `context[]` reaches the agent
-   - a `system` notice shows in the desktop app
-   - **a request sent without waiting still completes after the hook returns.** If it doesn't, wait for it with a `Promise.race` of about 1.5 s.
+2. [x] **First test Mod, verified 2026-11-07:**
+   - `tool.call` sees calls and their results.
+   - `context[]` reaches the agent on the next tool call.
+   - **Work started without waiting keeps running after the hook returns**, so no `Promise.race` fallback is needed.
+   - The Mod lives in `Noah/mod/` and runs with a built-in mock classifier until `apiUrl` and `apiToken` are set.
 3. [x] Backend with a mock `classify()`, deployed to get a stable URL (section 3)
 4. [ ] The full Mod: collection, sending events, running actions
 5. [ ] Hook up David's real `classify()`
@@ -138,6 +138,14 @@ The order doubles as the cut list: each step leaves something you can demo.
 - The `-dev` URL from `modal serve` is not the URL from `modal deploy`, so the Mod's `apiUrl` has to match whichever you're using.
 - **The Modal CLI crashes on Windows** with `'charmap' codec can't encode character '✓'` because its console output uses a checkmark. Run it with `PYTHONUTF8=1` (and `PYTHONIOENCODING=utf-8`) set.
 - Keep queued corrections in `$.state`, because module variables reset when the Mod reloads.
+- **The engine scans the Mod's source before loading it** and refuses the whole module if:
+  - `$` is passed to any function that isn't declared at the top level of the file. Helpers nested inside `register` are refused, so keep shared settings in a module-level object.
+  - An `atom` reference's `plugin` or `key` isn't a string literal.
+  - Hook matchers or pane IDs are built from constants. Write them as literals.
+
+  The refusal appears to Noah as a dim "reload failed" line in the chat.
+- **Type-check with TypeScript in the scratchpad.** The `claude` command line isn't installed, so run `tsc -p <mod>/.claude-plugin/types/tsconfig.json` with a TypeScript copy installed in the session scratchpad. The engine checks rules, not types.
+- **The Mod's temporary debug trace** writes to a scratchpad file, to `$.store` key `trace`, and optionally (with `DEBUG_CONTEXT`) to every tool result. Remove it before linking.
 - `$.session.append` with `type: "user"` **is** read by the model. Use `type: "system"` for notices meant only for the user.
 - `$.ui.notify` doesn't work in the desktop app (`no-surface`), so use notices, `$.ui.toast` or the Pane.
 - `$.model.complete` is available for requirement extraction, but **don't use it** unless David decides to. He's concerned it would share the agent's proxy bias.
