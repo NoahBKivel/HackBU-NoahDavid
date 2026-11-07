@@ -6,7 +6,15 @@ A Claude Code Mod that watches what a coding agent does and checks it against wh
 
 | Folder | Owner | Contents |
 |---|---|---|
-| `Noah/` | Noah | Claude Code Mod (`mod/`), FastAPI backend on Modal (`backend/`), [architecture and contract](Noah/ARCHITECTURE.md) |
+| `Noah/` | Noah | Claude Code Mod (`mod/`), FastAPI backend on Modal (`backend/`) |
 | `David/` | David | Alignment classifier (kev-based) on Modal |
 
 Each person pushes only to their own folder.
+
+## Docs
+
+| Doc | Covers | Maintained by |
+|---|---|---|
+| [CONTRACT.md](CONTRACT.md) | Shared context, system overview, the interface between the two halves | Both (changes need agreement) |
+| [NOAH.md](NOAH.md) | Mod and backend architecture and build guide | Noah's side |
+| [DAVID.md](DAVID.md) | Classifier architecture and build guide | David's side |
