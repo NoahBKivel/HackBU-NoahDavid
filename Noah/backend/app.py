@@ -21,9 +21,11 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError
 # While None, the mock classifier below is used.
 CLASSIFIER_APP: Optional[str] = None
 
-# How long to wait for the classifier before answering with a fallback.
-# Kept under the Mod's ~60 s request timeout and Modal's 150 s web timeout.
-CLASSIFY_TIMEOUT_S = 45
+# How long to wait for the classifier before answering "pending". A warm
+# classification takes well under a second. A result that finishes later is
+# delivered by David's side in `late_results` on the next response for the
+# session (David/NOTES-FROM-DAVID-AGENT.md, N-001).
+CLASSIFY_WAIT_S = 8
 
 app = modal.App("alignment-monitor")
 image = modal.Image.debian_slim(python_version="3.12").pip_install("fastapi[standard]")
@@ -64,11 +66,47 @@ class Result(BaseModel):
     risk: Optional[float] = Field(default=None, ge=0, le=1)
     details: dict[str, Any] = {}
     actions: list[Action] = []
+    pending: bool = False
+
+
+def pending_result(event: dict) -> dict:
+    """Answer when the classifier is still working after CLASSIFY_WAIT_S.
+    Its real result comes back later in `late_results`."""
+    return {
+        "schema_version": 1,
+        "event_id": event["event_id"],
+        "monitor": "goal_adherence",
+        "flagged": False,
+        "risk": None,
+        "pending": True,
+        "details": {"source": "backend", "status": "classifying"},
+        "actions": [],
+    }
+
+
+def check_late_results(result: dict) -> Optional[str]:
+    """Keeps the valid entries of `late_results` and drops any with the wrong
+    shape, so one bad late result can't break the response it rides on."""
+    late = result.get("late_results")
+    if late is None:
+        return None
+    if not isinstance(late, list):
+        result.pop("late_results")
+        return "late_results was not a list; dropped"
+    kept, problems = [], []
+    for entry in late:
+        try:
+            kept.append(Result.model_validate(entry).model_dump())
+        except ValidationError as exc:
+            entry_id = entry.get("event_id") if isinstance(entry, dict) else None
+            problems.append(f"late result {entry_id}: {exc.errors(include_url=False)}")
+    result["late_results"] = kept
+    return "; ".join(problems) or None
 
 
 def fallback_result(event: dict, error: str) -> dict:
-    """Safe answer when the classifier fails, times out or returns the wrong
-    shape: no flag, no actions, and the reason in details for the Pane."""
+    """Safe answer when the classifier fails or returns the wrong shape:
+    no flag, no actions, and the reason in details for the Pane."""
     return {
         "schema_version": 1,
         "event_id": event["event_id"],
@@ -139,20 +177,19 @@ def mock_classify(event: dict) -> dict:
 
 
 async def classify(event: dict) -> tuple[dict, Optional[str]]:
-    """Returns the result to send to the Mod, and an error string if the
-    classifier could not produce a valid one."""
+    """Returns the result to send to the Mod, and an error or status note
+    for the log."""
     if CLASSIFIER_APP is None:
         raw = mock_classify(event)
     else:
         fn = modal.Function.from_name(CLASSIFIER_APP, "classify")
-        # spawn + get, so a slow call keeps running on David's side (his
-        # history stays complete) while we stop waiting for it.
+        # spawn + get: a slow call keeps running on David's side, which
+        # delivers its result later in late_results.
         call = await fn.spawn.aio(event)
         try:
-            raw = await call.get.aio(timeout=CLASSIFY_TIMEOUT_S)
+            raw = await call.get.aio(timeout=CLASSIFY_WAIT_S)
         except (TimeoutError, modal.exception.TimeoutError):
-            error = f"classifier timed out after {CLASSIFY_TIMEOUT_S}s"
-            return fallback_result(event, error), error
+            return pending_result(event), f"pending after {CLASSIFY_WAIT_S}s"
         except Exception as exc:
             error = f"classifier failed: {type(exc).__name__}: {exc}"
             return fallback_result(event, error), error
@@ -162,7 +199,7 @@ async def classify(event: dict) -> tuple[dict, Optional[str]]:
     except ValidationError as exc:
         error = f"classifier returned the wrong shape: {exc.errors(include_url=False)}"
         return fallback_result(event, error), error
-    return result, None
+    return result, check_late_results(result)
 
 
 def log_event(event: dict, result: dict, error: Optional[str], ms: int) -> None:
@@ -178,6 +215,8 @@ def log_event(event: dict, result: dict, error: Optional[str], ms: int) -> None:
         "risk": result.get("risk"),
         "flagged": result.get("flagged"),
         "actions": [a.get("type") for a in result.get("actions", [])],
+        "pending": result.get("pending", False),
+        "late_results": [r.get("event_id") for r in result.get("late_results", [])],
         "ms": ms,
         "error": error,
     }))

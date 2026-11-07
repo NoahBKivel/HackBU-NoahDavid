@@ -150,6 +150,16 @@ result: dict = await classify.remote.aio(event)                  # event = the d
 | `risk` | 0–1, the probability of a violation (kev's noul) | Pane graph |
 | `details` | Anything else, open-ended | Pane shows it as expandable key/value data |
 | `actions` | An ordered list. Can be empty. | Mod runs them in order |
+| `pending` | Optional, default `false`. Set **only by the backend**, when `classify()` hasn't finished within 8 s. The result then has `risk: null`, no actions, and `details.status: "classifying"`. | Mod keeps the point in a "checking" state |
+| `late_results` | Optional list of full results, same shape, each with its own `event_id`, for **earlier events in this session** that finished after their wait ran out. **Filled by David's side** and attached to the next response it returns for the session. Each late result is delivered once. | Mod applies each one by `event_id`, exactly like a normal result |
+| `drift`, `drift_rate` | Proposed by David (N-001), optional. `drift`: how far off course the whole run is (0 = on track). `drift_rate`: how fast `drift` is changing per event. | Pane graph |
+
+**Slow results (agreed 2026-11-07, David/NOTES-FROM-DAVID-AGENT.md N-001):**
+- The backend waits **8 s** for `classify()`. If the result arrives in time, it's returned as normal.
+- If not, the backend answers `pending` right away. `classify()` keeps running, because the backend uses `spawn`, and David's side delivers the finished result in `late_results` on the next response for that session.
+- The backend stores nothing for this. It passes `late_results` through, dropping any entry with the wrong shape and logging why.
+- **A known gap, accepted for the demo:** a late result for the very last event of a session has nothing to ride on.
+- When `classify()` raises an exception or returns the wrong shape, the backend returns a fallback: `flagged: false`, `risk: null`, no actions, and the error in `details.error`.
 
 ### Actions
 | Type | What the Mod does |
@@ -217,7 +227,7 @@ This is everything the Mod sends, subject to the large-item exception.
   - When a first deployable `classify()` will exist, even without fine-tuning.
   - Whether he agrees to the cold-start proposal below.
   - His agent should update DAVID.md, which is still the version seeded from planning.
-  - **Timeout:** the backend waits about 45 s for `classify()` and then returns a fallback result. Results that arrive later are discarded. `classify()` should normally finish well under that once warm.
+  - The exact set of `details` keys.
 - **Classifier cold starts (needs addressing before the live demo; owners: both).**
   - **Problem:** Modal shuts idle containers down after about a minute.
     - Restarting the backend takes a few seconds, which is harmless.
@@ -244,3 +254,4 @@ This is everything the Mod sends, subject to the large-item exception.
 **Changes:** (date, change, agreed by)
 - 2026-11-07: first version.
 - 2026-11-07: large items: sent raw, with a 5 MB per-event safety cap (Noah's decision, which the contract leaves to him).
+- 2026-11-07: slow results: an 8 s wait, a `pending` result and `late_results` delivery, plus the optional `drift` and `drift_rate` fields (David's N-001, agreed with Noah). The backend side is implemented and deployed. The Mod side is still to do.

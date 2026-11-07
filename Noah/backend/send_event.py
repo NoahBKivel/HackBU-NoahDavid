@@ -47,7 +47,7 @@ def send(url: str, token: str, event: dict) -> None:
     try:
         result = json.loads(text)
         print(json.dumps(
-            {k: result.get(k) for k in ("flagged", "risk", "details", "actions")}
+            {k: result[k] for k in ("flagged", "risk", "drift", "drift_rate", "pending", "details", "actions", "late_results") if k in result}
             if status == 200 else result,
             indent=2,
         ))

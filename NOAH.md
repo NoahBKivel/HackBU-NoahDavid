@@ -94,13 +94,17 @@ The full requirements are in [Noah/MOD_PRD.md](Noah/MOD_PRD.md). This section is
   - `POST /v1/events` checks `Authorization: Bearer <MONITOR_TOKEN>` and returns 401 if it's wrong. It validates the event with a Pydantic model using `extra="allow"`: `session_id`, `event_id` and `type` are required, and any missing one returns 422. Unknown fields pass through. It returns `classify(event)` as JSON.
 - **The classifier switch:** the `CLASSIFIER_APP` constant at the top of `app.py`.
   - `None` uses `mock_classify()`.
-  - Setting it to David's app name calls `modal.Function.from_name(CLASSIFIER_APP, "classify")` with `.spawn.aio(event)`, then waits with `.get.aio(timeout=CLASSIFY_TIMEOUT_S)`.
+  - Setting it to David's app name calls `modal.Function.from_name(CLASSIFIER_APP, "classify")` with `.spawn.aio(event)`, then waits with `.get.aio(timeout=CLASSIFY_WAIT_S)`.
+- **Slow results** (CONTRACT.md section 4, David's N-001):
+  - It waits **8 s** (`CLASSIFY_WAIT_S`) for `classify()`.
+  - If `classify()` isn't done by then, it returns a **pending result**: `pending: true`, `risk: null`, no actions, `details.status: "classifying"`.
+  - The call keeps running on David's side, and his side delivers the finished result in `late_results` on the next response for that session.
+  - The backend stores nothing. It passes `late_results` through, validating each entry against the `Result` model and dropping (and logging) any with the wrong shape.
 - **When the classifier fails:** the backend never returns an error to the Mod for a classifier problem. It returns a **fallback result**: `flagged: false`, `risk: null`, no actions, and `details: {source: "backend", error: "..."}`, so the Pane can show "classifier unavailable". It does this when:
-  - the classifier takes longer than **45 s** (`CLASSIFY_TIMEOUT_S`, under the Mod's 60 s timeout and Modal's 150 s web limit)
   - the classifier raises an exception
   - the result doesn't match the contract's output shape (checked with the `Result` Pydantic model; the error lists the bad fields)
-- **Late results:** `spawn` lets a slow call keep running on David's side, so his history stays complete. Its result arrives after we stopped waiting and is discarded, so that event gets no notice or correction.
-- **Logging:** one JSON line per event in the Modal logs (event ID, session, seq, type, tool, classifier, risk, flagged, action types, ms, error). View them in the Modal dashboard or with `modal app logs alignment-monitor`.
+- **Extra result fields** such as `drift` and `drift_rate` pass through untouched.
+- **Logging:** one JSON line per event in the Modal logs (event ID, session, seq, type, tool, classifier, risk, flagged, action types, pending, late result IDs, ms, error or status note). View them in the Modal dashboard or with `modal app logs alignment-monitor`.
 - **Test tools:**
   - `Noah/backend/samples/`: four hand-written events in the Mod's format (session start, normal edit, a PowerShell command deleting tests, turn end). They follow CONTRACT.md section 3, are not recorded agent output, and are only for testing the backend. David has his own example inputs, so don't produce samples for him.
   - `Noah/backend/send_event.py`: sends samples and prints each result with its size and latency. `--dev` targets the `modal serve` URL, `--pad-mb N` adds filler to test sizes. It uses certifi's certificates (see build notes).
@@ -114,7 +118,11 @@ The full requirements are in [Noah/MOD_PRD.md](Noah/MOD_PRD.md). This section is
   - health 200, no token 401, missing fields 422
   - all four samples: the test deletion flagged with all three actions, the rest unflagged
   - 5 MB and 20 MB events accepted by the deployed endpoint
-  - the real-classifier path, tested against a temporary fake classifier app (since stopped): a normal result, a 5 MB event passed through `spawn`, the wrong shape, an exception and a timeout all behaved as described above
+  - the real-classifier path, tested against a temporary fake classifier app (since stopped): a normal result, a 5 MB event passed through `spawn`, the wrong shape and an exception all behaved as described above
+  - slow results, tested the same way:
+    - a 12 s classification returned `pending` at about 8 s
+    - `late_results` passed through with `drift` and `drift_rate` intact
+    - a malformed late entry was dropped while the valid one was kept
 - **No server-side storage.** David's database holds the history, and the Mod holds the graph data.
 - **Commands** (run from the repo root):
   - `set PYTHONUTF8=1` first in cmd, or prefix `PYTHONUTF8=1` in bash (see build notes).
