@@ -12,6 +12,8 @@ This is the architecture and build guide for `David/`: the alignment classifier 
 
 ## 1. Job
 
+**Deployed now:** app `intent-monitor`, class `Classifier` (`classify` + `warmup`), code in `David/classifier/app.py`, check with `David/classifier/verify_deploy.py`. It runs **stock, un-fine-tuned Kev-4B** as a placeholder: `risk` is P(yes) of one generic question, `actions` are always empty, `drift`/`drift_rate` are null. Not the designed classifier.
+
 Expose `classify(event: dict) -> dict` as a Modal function (CONTRACT.md section 4):
 - It takes the event exactly as the Mod sent it. Pick the fields you need from CONTRACT.md section 5 and ignore the rest.
 - It returns `{event_id, monitor, flagged, risk, details, actions[]}`.

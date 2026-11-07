@@ -119,9 +119,13 @@ This is exactly what `classify()` returns (section 4).
 
 ### How it's called
 ```python
-classify = modal.Function.from_name("<david-app>", "classify")   # David's app name: TBD
-result: dict = await classify.remote.aio(event)                  # event = the dict from section 3
+classifier = modal.Cls.from_name("intent-monitor", "Classifier")()   # look up once, reuse the instance
+result: dict = await classifier.classify.remote.aio(event)            # event = the dict from section 3
+await classifier.warmup.spawn.aio()                                   # boots a cold container; returns at once on a warm one
 ```
+- **Class:** `Classifier` in app `intent-monitor` (David/classifier/app.py). `classify` and `warmup` share one GPU container, which loads Kev once and takes up to 4 calls at a time. It stays up 600 s after its last call.
+  - The backend runs `classify` with `spawn` + `get(timeout=8)` (section 4, slow results).
+  - `warmup()` takes no arguments and returns `{"ok": true}`.
 - **Input:** the event exactly as the Mod sent it (section 3).
   - David picks the fields he needs and ignores the rest.
   - **History:** David's side stores whatever history it needs in **its own database**. Noah's side keeps none.
@@ -212,7 +216,9 @@ This is everything the Mod sends, subject to the large-item exception.
 |---|---|---|
 | Backend app | `alignment-monitor` | Noah |
 | API token secret | `monitor-token` (key `MONITOR_TOKEN`) | Noah |
-| Classifier app | TBD | David |
+| Classifier app | `intent-monitor` (class `Classifier`) | David |
+| Classifier session store | Modal Dict `intent-monitor-sessions` | David |
+| Classifier weights volume | `intent-monitor-hf` | David |
 
 ---
 
@@ -220,40 +226,27 @@ This is everything the Mod sends, subject to the large-item exception.
 
 **Open:**
 - **Needed from David** (to revisit with him):
-  - ~~His Modal app name and how `classify` is exposed~~: answered in c1c5c2b, app `intent-monitor`, class `Classifier` with `classify` and `warmup`. The backend now calls it this way (on the mock until David OKs connecting).
   - **OK to connect the backend to `intent-monitor`.** Noah's side won't call it until David says it won't disrupt his testing.
   - **Late results are lost on a cold start (David's side).** `classify` decides "late" by timing from its own start (`LATE_AFTER_S`). Time spent waiting for a container to boot, or queued behind other calls, isn't counted. So on a cold start the backend answers pending at 8 s, then `classify` runs fast, counts itself on time, and returns its result to a caller that has stopped listening. Proposed fix: the backend adds the time it sent the event (e.g. `backend_sent_at`, Unix seconds) and `classify` measures from that. Needs David's agreement on the field name.
   - Confirmation of the output shape in section 4.
   - **Notice text must not include a source prefix.** The Mod adds "Alignment monitor:" to every notice itself (Noah/MOD_PRD.md FR-23).
   - Which event fields his classifier uses. Everything is sent, so this is for awareness, not trimming.
-  - When a first deployable `classify()` will exist, even without fine-tuning.
-  - Whether he agrees to the cold-start proposal below.
   - His agent should update DAVID.md, which is still the version seeded from planning.
   - The exact set of `details` keys. For the stock model: `source` ("stock-kev"), `placeholder`, `question`, `classify_ms`, and `skipped` for events with no action or text. Still open for the fine-tuned version.
 - **Classifier cold starts (needs addressing before the live demo; owners: both).**
-  - **Problem:** Modal shuts idle containers down after about a minute.
+  - **Problem:** Modal shuts idle containers down after a set idle time (the classifier's is 600 s).
     - Restarting the backend takes a few seconds, which is harmless.
-    - Restarting David's GPU classifier means booting a GPU container and loading kev's weights, likely tens of seconds or more.
+    - Restarting David's GPU classifier means booting a GPU container and loading kev's weights: 23 to 27 s measured (3 trials, L40S, weights cached on the volume).
     - During that time, results arrive late: notices and corrections land several tool calls after the action. If FastAPI's wait outlasts the HTTP request, the result is lost.
     - It's most likely at the start of a session. In a live demo, the presenter talks and types the prompt before the agent acts, so a warm-up at session start goes cold again before the first event.
   - **Simplest fix (for the live demo and recording):**
     - Set `min_containers=1` on David's `classify` and on the backend's API function.
     - Send one test event to confirm both are warm.
     - Turn them back off afterward: an idle GPU container costs credits every hour it runs.
-  - **Proposed fix for normal use (contract change, needs both to agree):**
-    - **David:** expose the classifier as a Modal class, e.g. `Classifier`.
-      - The weights load once per container in `@modal.enter()`.
-      - Two methods: `classify(event)` and a no-op `warmup()`.
-      - They must share a container. Two separate functions wouldn't warm each other.
-      - Allow a few concurrent calls (`@modal.concurrent`), so a warm-up arriving during a classification doesn't start a second GPU container.
-      - Optionally raise `scaledown_window` to about 10 to 20 minutes, so it stays warm between bursts of activity.
-    - **Noah:**
-      - The backend calls `modal.Cls.from_name("<david-app>", "Classifier")` and then `.classify.remote.aio(event)` on an instance.
-      - `GET /health` fires `.warmup.spawn()` without waiting.
-      - The Mod calls `/health` on session start **and on every user prompt**, so the GPU starts booting the moment a task is given.
-    - **Behavior:** warming a cold classifier boots it, and warming one that's already running returns instantly with no effect.
+  - **Fix for normal use (agreed, in place):** the `Classifier` class with `warmup` (section 4). `GET /health` fires `warmup.spawn()` without waiting, and the Mod calls `/health` on session start and on every user prompt, so the GPU starts booting the moment a task is given.
 
 **Changes:** (date, change, agreed by)
 - 2026-11-07: first version.
 - 2026-11-07: large items: sent raw, with a 5 MB per-event safety cap (Noah's decision, which the contract leaves to him).
 - 2026-11-07: slow results: an 8 s wait, a `pending` result and `late_results` delivery, plus the optional `drift` and `drift_rate` fields (David's N-001, agreed with Noah). The backend side is implemented and deployed. The Mod side is still to do.
+- 2026-11-07: Classifier exposed as Modal class `Classifier` in app `intent-monitor` (classify + warmup), stock Kev placeholder deployed (David, agreed with Noah's proposal).
