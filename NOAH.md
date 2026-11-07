@@ -102,7 +102,7 @@ The full requirements are in [Noah/MOD_PRD.md](Noah/MOD_PRD.md). This section is
 - **Late results:** `spawn` lets a slow call keep running on David's side, so his history stays complete. Its result arrives after we stopped waiting and is discarded, so that event gets no notice or correction.
 - **Logging:** one JSON line per event in the Modal logs (event ID, session, seq, type, tool, classifier, risk, flagged, action types, ms, error). View them in the Modal dashboard or with `modal app logs alignment-monitor`.
 - **Test tools:**
-  - `Noah/backend/samples/`: four hand-written events in the Mod's format (session start, normal edit, a PowerShell command deleting tests, turn end). They follow CONTRACT.md section 3 and are not recorded agent output. David can use them to test `classify()`.
+  - `Noah/backend/samples/`: four hand-written events in the Mod's format (session start, normal edit, a PowerShell command deleting tests, turn end). They follow CONTRACT.md section 3, are not recorded agent output, and are only for testing the backend. David has his own example inputs, so don't produce samples for him.
   - `Noah/backend/send_event.py`: sends samples and prints each result with its size and latency. `--dev` targets the `modal serve` URL, `--pad-mb N` adds filler to test sizes. It uses certifi's certificates (see build notes).
 - **Mock behavior:**
   - Flags deleting test files: `rm`, `Remove-Item` or `del` on a path containing "test", or a `file_changes` delete of one. Returns risk 0.93 with the actions `notify_user` (detected), `inject_agent` and `notify_user` (intervened).

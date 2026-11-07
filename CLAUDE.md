@@ -22,6 +22,10 @@ The docs are the only memory shared across chats, agents and both teammates. Tre
 - **If a doc is wrong, fix it.** Don't work around it.
 - **Commit and push doc updates promptly.** Other agents and the other teammate can't see uncommitted changes.
 
+## 2a. When to push code
+
+**Push only once the change is verified**: it actually works when run, or it has at least been confirmed as the intended behavior. Commit locally as you go if useful, but don't push untested or unconfirmed work. Say what was verified, and how, when you push.
+
 ## 3. Repo and git
 
 - **Stay in your own folder:** Noah's agents touch only `Noah/`, and David's agents touch only `David/`. The root files are shared: README.md, CLAUDE.md, CONTRACT.md, NOAH.md and DAVID.md.
