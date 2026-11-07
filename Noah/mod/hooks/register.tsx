@@ -692,6 +692,13 @@ async function renderPane($: $, elements: Elements, live: boolean) {
   const driftPrev = driftSeries.length > 1 ? driftSeries[driftSeries.length - 2] ?? null : null
   const rate = latest?.driftRate ?? (driftNow !== null && driftPrev !== null ? driftNow - driftPrev : null)
   const arrow = rate === null ? '' : rate > 0.005 ? ' ↑' : rate < -0.005 ? ' ↓' : ' →'
+  const trendColor = rate === null ? 'subtle' : rate > 0.005 ? 'error' : rate < -0.005 ? 'success' : 'subtle'
+  const trendNote = (
+    <Text color="inactive" dimColor size="footnote">
+      {'Agent trend: '}
+      <Text size="footnote" color={trendColor}>{arrow.trim() || '--'}</Text>
+    </Text>
+  )
 
   const status = {
     connecting: ['Connecting', 'subtle'],
@@ -733,7 +740,7 @@ async function renderPane($: $, elements: Elements, live: boolean) {
 
       <Box flexDirection="row" justifyContent="space-between">
         {readout(Text, Box, 'Drift', driftNow === null ? '--' : `${pct(Math.min(1, driftNow))}${arrow}`, driftNow === null ? 'subtle' : riskColor(driftNow, false))}
-        {readout(Text, Box, 'Peak risk', peak === null ? '--' : pct(peak), riskColor(peak, false))}
+        {readout(Text, Box, 'Max risk', peak === null ? '--' : pct(peak), riskColor(peak, false))}
         {readout(Text, Box, 'Average risk', average === null ? '--' : pct(average), riskColor(average, false))}
         {readout(Text, Box, 'Flags', String(flagged.length), flagged.length ? 'error' : 'text')}
         {readout(Text, Box, 'Corrections', String(fixes), fixes ? 'success' : 'text')}
@@ -758,7 +765,7 @@ async function renderPane($: $, elements: Elements, live: boolean) {
       </Box>
 
       <Box flexDirection="column" borderStyle="round" borderColor="#88878040" paddingX={1}>
-        {chartTitle(Text, Box, Button, Svg, 'Drift', 'info-trend', chosen.trend, pick('trend'))}
+        {chartTitle(Text, Box, Button, Svg, 'Drift', 'info-trend', chosen.trend, pick('trend'), trendNote)}
         {Svg ? (
           <Svg source={trendChart(trendList, chosen.trend)} alt={`Drift chart, currently ${driftNow === null ? 'unknown' : pct(Math.min(1, driftNow))}`} />
         ) : (
@@ -768,6 +775,10 @@ async function renderPane($: $, elements: Elements, live: boolean) {
           'How far off course the whole run is, as judged by the classifier. 0% means on track. Lower is better.',
           'A rising line means the agent is wandering from your instructions, even if no single action looks bad.',
           'Dashed green lines mark corrections; the line falling after one means it helped.',
+          'Agent trend (next to the title and on the Drift readout):',
+          [['↑ Red', 'error'], [': drift is rising, the agent is moving further off course']],
+          [['↓ Green', 'success'], [': drift is falling, the agent is getting back on track']],
+          [['→ Gray', 'subtle'], [': drift is steady']],
         ])}
       </Box>
 
@@ -831,10 +842,13 @@ async function renderPane($: $, elements: Elements, live: boolean) {
 // nudges the bar 2 px right to line up under the button's label.
 const UNDERLINE = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="2" viewBox="0 0 20 2"><rect x="4" width="16" height="2" rx="1" fill="#9C9A92"/></svg>'
 
-function chartTitle(Text: any, Box: any, Button: any, Svg: any, title: string, scope: string, current: string, onPick: (id: string) => unknown) {
+function chartTitle(Text: any, Box: any, Button: any, Svg: any, title: string, scope: string, current: string, onPick: (id: string) => unknown, note: unknown = null) {
   return (
     <Box flexDirection="row" justifyContent="space-between" alignItems="center">
-      <Text weight="semibold">{title}</Text>
+      <Box flexDirection="row" alignItems="center" gap="sm">
+        <Text weight="semibold">{title}</Text>
+        {note}
+      </Box>
       <Box flexDirection="row" alignItems="center" gap="xs">
         {WINDOWS.map(w => (
           // The app draws its own pill on hover. Selection is a short underline
