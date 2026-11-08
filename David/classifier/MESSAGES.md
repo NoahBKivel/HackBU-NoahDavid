@@ -12,3 +12,7 @@
 Duplicate earlier PENDING rows for MSG-003 and MSG-004 were removed under task.md 3.1. Their HANDLED rows and evidence remain; no instruction was reopened.
 
 | MSG-007 | 2026-11-08T06:05:02-05:00 | Defer until demo checks pass (Recommended) | HANDLED | received-by: runtime; STATUS and SIDEQUESTS defer NN-003 until demo checks PASS. |
+
+| MSG-008 | 2026-11-08T06:54:22-05:00 | Figure out our demo. Read the training spec so you know the behaviors we are prioritizing | HANDLED | received-by: runtime; measured10/10 Sonnet elicitation and packaged demos/DEMO.md; fine-tuned paired rehearsal remains anchored at TASKLIST.md:L41. |
+
+| MSG-009 | 2026-11-08T07:23:17-05:00 | its fine if stock kev doesn't do it. stock kev isn't going in. | HANDLED | received-by: runtime; STATUS and demo notes require a fine-tuned checkpoint and remove stock detection as a demo-selection gate. |

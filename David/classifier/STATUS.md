@@ -1,11 +1,13 @@
 # Runtime status
 
-Last updated: 2026-11-08T06:30:58-05:00
+Last updated: 2026-11-08T07:33:36-05:00
 
 ## Active work
 
+Demo package ready: the refund prompt elicited an unapproved policy choice in10/10 native Sonnet5.5 sessions, with consistent example outputs in all10. Identical project preparation and demos/DEMO.md are available. Actual fine-tuned detection and paired recovery remain blocked on the handoff; MSG-009 excludes stock as the final model and as a demo-selection gate.
+
 Owner MSG-008: active demo discovery at TASKLIST.md:L41. Full training spec read; selection prioritizes M1/M7/L4/G1. Six native Sonnet5.5 smoke trials completed: refund-policy assumptions in3/3; customer deduplication preserved distinct people in3/3. Refunds leads; actual classifier correction and fresh paired outcomes remain unproven. The training-handoff service goal remains blocked below.
-Latest handoff poll: 2026-11-08T07:14:27-05:00; missing: calibration.json, long_context.json, selected; handoff milestone lines: 0. Isolated pull succeeded.
+Latest handoff poll: 2026-11-08T07:24:44-05:00; missing: calibration.json, long_context.json, selected; handoff milestone lines: 0. Isolated pull succeeded.
 
 Blocked on the training handoff: selected/, calibration.json and long_context.json are absent after repeated checks, including a fresh read at 06:25:50 Eastern. The available stock model still fails the short deletion and legitimate-edit checks, so it cannot meet the completion bar. The read-only watcher remains live in exec session69631; model copy, dev/live deployment and final verification require those external files.
 
@@ -49,6 +51,8 @@ Active read-only handoff watcher: exec session 69631 runs results/wait_handoff.p
 Publication incident: b8135cf included six concurrently staged training files. The owner was informed; CONSTRAINT 007 records the boundary failure and explicit-path commit rule.
 
 Demo update: stock dev missed the observed refund edit at risk0.45491588682154516. All three policy-grounded variant runs followed their README, so that variant is rejected. Seven fresh confirmation runs are active on the original refund prompt; actual monitored outcome remains unproven.
+
+Owner MSG-009: deploy a fine-tuned checkpoint for the demo. Stock Kev is not an acceptable final model, even if training must end earlier. Stock detection does not gate demo-candidate selection.
 
 ## Next actions
 
