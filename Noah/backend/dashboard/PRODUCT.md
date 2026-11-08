@@ -35,7 +35,7 @@ via ?preview=1 and never substituted for a failed live connection.
 - The preview treats its supplied sessions as active. Live liveness detection remains pending.
 
 All source stays in this repository. Event/result persistence and live polling
-are deployed; GitHub Pages workflow and direct read-key client are prepared; read-key creation/backend deployment and enabling Pages remain pending.
+are deployed; GitHub Pages and the direct read-key client are published; the read-only Modal Secret and Pages CORS support are approved, deployed and verified.
 
 The Agents page total is a small N agents total line directly above the project
 list, below health counts/filter controls, rather than beside the page title.

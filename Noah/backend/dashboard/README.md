@@ -151,6 +151,8 @@ Noah/backend/dashboard/model.test.mjs Noah/backend/dashboard/live-data.test.mjs.
 See [PAGES-SETUP.md](PAGES-SETUP.md). The workflow publishes the static build from
 main. Localhost keeps its server-side proxy; hosted browsers directly read Modal
 with a separate read-only key entered at runtime. No key is bundled in Pages.
-The prepared read-key Secret/CORS backend deployment awaits explicit approval
-because automatic review blocked creating the persistent credential. Pages is
-not yet enabled on GitHub. Local operation is unchanged.
+The read-key Secret/CORS backend deployment was explicitly approved and is live.
+Pages is published at https://noahbkivel.github.io/HackBU-NoahDavid/ . Local
+operation is unchanged. Open the ignored local dashboard-access.local.json file
+to copy DASHBOARD_TOKEN for first use on your phone. The read key was verified
+to return saved sessions and to reject event submission.

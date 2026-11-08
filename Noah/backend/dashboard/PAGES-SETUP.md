@@ -10,19 +10,21 @@ DASHBOARD_TOKEN for GET /v1/dashboard/sessions and enables GET/Authorization COR
 for https://noahbkivel.github.io. The key cannot POST Mod events. The Mod's existing
 token and localhost proxy continue to work as before.
 
-Creation of the persistent read-only key was blocked by automatic approval review.
-Explicit user approval is required before the agent can create Modal Secret
-vision-dashboard-read and redeploy the backend. That step is NOT complete yet.
-Do not redeploy this prepared backend until the Secret exists. No production
-access was changed by the blocked attempt; the existing deployed API still works.
+The user explicitly approved persistent read-only phone access after the initial
+automatic approval rejection. Modal Secret vision-dashboard-read now exists and
+the backend has been deployed with the key and Pages CORS support. Live checks:
+read 200, expected CORS origin, event submission with read key rejected 401.
 
-After approval, the key is saved only in ignored Noah/backend/dashboard-access.local.json
+The key is saved only in ignored Noah/backend/dashboard-access.local.json
 and Modal Secret vision-dashboard-read. It is never placed in the repo, Pages
 build, workflow variables, URL, or browser request to GitHub. The hosted app asks
 for it at first open and remembers it for that tab via sessionStorage. Wrong key:
 reload and try again. Closing the tab may require entering it again.
 
-## Enable Pages
+## Pages configuration (already enabled)
+
+The workflow has succeeded and the published site returned HTTP 200. The
+following steps reproduce the configuration; no additional setup is needed now.
 
 1. Open https://github.com/NoahBKivel/HackBU-NoahDavid/settings/pages .
 2. Under Build and deployment, set Source to GitHub Actions.
