@@ -48,6 +48,9 @@ def prefix_sdpa(module: Any, query: Any, key: Any, value: Any, attention_mask: A
     from torch.nn.attention.bias import causal_lower_right
     if not isinstance(attention_mask, PrefixMask):
         raise TypeError("The specialized attention path requires a shared-prefix mask.")
+    if torch.is_autocast_enabled('cuda'):
+        dtype = torch.get_autocast_dtype('cuda')
+        query, key, value = query.to(dtype), key.to(dtype), value.to(dtype)
     mask = attention_mask
     result = None
     for length, indices in mask.groups:

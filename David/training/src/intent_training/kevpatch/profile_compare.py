@@ -52,14 +52,16 @@ def attention_check() -> dict[str, Any]:
                        'input_gradient_max_abs': gradient_gap,
                        'status': 'PASS' if output_gap < 2e-5 and gradient_gap < 2e-5 else 'FAIL'})
         with torch.autocast('cuda', dtype=torch.bfloat16):
-            mixed, _ = prefix_sdpa(None, *source, prefix_mask(allow, source[0].dtype, 'sdpa'))
+            mixed, _ = prefix_sdpa(None, source[0], source[1], source[2].to(torch.bfloat16),
+                                   prefix_mask(allow, source[0].dtype, 'sdpa'))
         checks.append({'state': state, 'mixed_precision_dtype': str(mixed.dtype),
                        'status': 'PASS' if mixed.dtype == torch.bfloat16 else 'FAIL'})
     return {'status': 'PASS' if all(row['status'] == 'PASS' for row in checks) else 'FAIL', 'checks': checks}
 
 
 def compare(records_path: str, output: str, config: dict[str, Any], pass_tokens: int,
-            projection_records: int, volume: Any, prior_output: str = '') -> dict[str, Any]:
+            projection_records: int, volume: Any, prior_output: str = '',
+            native_only: bool = False) -> dict[str, Any]:
     """Measure production grouping, padding-free attention and checkpointing on fixed records."""
     import torch
     from .batched_measure import _arguments, _optimizer, _seed, _step
@@ -75,9 +77,9 @@ def compare(records_path: str, output: str, config: dict[str, Any], pass_tokens:
         volume.commit()
         print(json.dumps({'event': name, 'path': output}), flush=True)
 
-    mini = attention_check()
+    mini = attention_check() if not native_only else {'status': 'NOT_REQUIRED_FOR_NATIVE_PATH'}
     save('attention-check', mini)
-    if mini['status'] != 'PASS':
+    if not native_only and mini['status'] != 'PASS':
         return {'status': 'ATTENTION_CHECK_FAIL', 'path': output, 'check': mini}
     _seed(1)
     torch.backends.cuda.matmul.allow_tf32 = True
@@ -106,10 +108,11 @@ def compare(records_path: str, output: str, config: dict[str, Any], pass_tokens:
 
     args = _arguments(8192, pass_tokens)
     args.batch, args.accum = 16, 1
-    parity = json.loads((Path(prior_output) / 'parity-progress.json').read_text()) if prior_output else []
+    parity = json.loads((Path(prior_output) / 'parity-progress.json').read_text()) if prior_output and not native_only else []
     if parity and [row['name'] for row in parity] != ['reference', 'repeat']:
         raise ValueError('Only the two immutable reference runs may be reused.')
-    for name in (('padding_free',) if parity else ('reference', 'repeat', 'padding_free')):
+    names = () if native_only else (('padding_free',) if parity else ('reference', 'repeat', 'padding_free'))
+    for name in names:
         context = padding_free_attention if name == 'padding_free' else nullcontext
         with context():
             optimizer, scheduler = reset(True)
@@ -128,14 +131,17 @@ def compare(records_path: str, output: str, config: dict[str, Any], pass_tokens:
             parity.append({'name': name, 'steps': rows})
             del optimizer, scheduler
             save('parity-progress', parity)
-    reference, repeat, candidate = (row['steps'] for row in parity)
-    floor = max(abs(a['loss'] - b['loss']) / max(abs(a['loss']), 1e-12) for a, b in zip(reference, repeat))
-    gap = max(abs(a['loss'] - b['loss']) / max(abs(a['loss']), 1e-12) for a, b in zip(reference, candidate))
-    gate = {'status': 'PASS' if gap <= max(floor, 1e-3) else 'FAIL',
-            'max_relative_loss_difference': gap, 'same_seed_relative_noise_floor': floor,
-            'runs': parity}
+    gate = {'status': 'NOT_ATTEMPTED', 'runs': []}
+    if not native_only:
+        reference, repeat, candidate = (row['steps'] for row in parity)
+        floor = max(abs(a['loss'] - b['loss']) / max(abs(a['loss']), 1e-12) for a, b in zip(reference, repeat))
+        gap = max(abs(a['loss'] - b['loss']) / max(abs(a['loss']), 1e-12) for a, b in zip(reference, candidate))
+        gate = {'status': 'PASS' if gap <= max(floor, 1e-3) else 'FAIL',
+                'max_relative_loss_difference': gap, 'same_seed_relative_noise_floor': floor,
+                'runs': parity}
     save('attention-parity', gate)
-    scenarios = [('reference', True, pass_tokens)]
+    scenarios = [('reference', True, pass_tokens), ('reference', False, pass_tokens // 2),
+                 ('reference', False, pass_tokens * 3 // 4)]
     if gate['status'] == 'PASS':
         scenarios += [('padding_free', True, pass_tokens),
                       ('padding_free', False, pass_tokens // 2),

@@ -17,6 +17,7 @@ def main() -> None:
     parser.add_argument('--projection-records', type=int, required=True)
     parser.add_argument('--compare', action='store_true')
     parser.add_argument('--prior-output', default='')
+    parser.add_argument('--native-only', action='store_true')
     args = parser.parse_args()
     sys.path.insert(0, str(Path(__file__).resolve().parent))
     from kev_prepare_upload import available_memory_gib
@@ -30,7 +31,7 @@ def main() -> None:
     from intent_training.modal_app import profile_training as module
     with module.app.run(detach=True):
         call = module.profile.spawn(args.records, args.cap, args.projection_records,
-                                    args.compare, args.prior_output)
+                                    args.compare, args.prior_output, args.native_only)
         output = root / 'results/profiling'
         output.mkdir(parents=True, exist_ok=True)
         result = {'function_call_id': call.object_id, 'app_id': module.app.app_id,
