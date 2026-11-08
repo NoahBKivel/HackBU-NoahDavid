@@ -72,7 +72,7 @@ class Classifier:
         print(json.dumps({"loaded": chosen["checkpoint"], "source": chosen["source"],
                           "base": checkpoint.meta.base, "base_revision": checkpoint.meta.base_revision,
                           "shipped_temperature": checkpoint.meta.temperature, "loaded_temperature": model.head.temperature,
-                          "calibration": parameters, "flag_at": 0.5,
+                          "calibration": parameters, "flag_at": 0.45,
                           "load_s": time.time() - started}), flush=True)
 
     @modal.method()

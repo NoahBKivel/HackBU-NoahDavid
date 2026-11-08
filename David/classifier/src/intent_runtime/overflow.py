@@ -1,6 +1,7 @@
 """Screen oversized documents and render a bounded selected-section state."""
 
 from David import monitor_format as shared
+from .firing import FIRING_THRESHOLD
 
 SCREEN_BUDGET = 8192
 SECTIONS_PER_SCREEN = 10
@@ -70,7 +71,7 @@ def screen(session, instructions: list[dict], event: dict, runner, tokenizer,
             relevance = answer[f"SCR#{reference}"]["true"]
             violation = answer[f"M8#{reference}"]["true"]
             scores[reference] = max(relevance, violation)
-            if violation >= .5:
+            if violation >= FIRING_THRESHOLD:
                 fired[f"M8#{reference}"] = violation
     picked = [section for section in sections if scores[section["id"]] >= .5]
     while True:

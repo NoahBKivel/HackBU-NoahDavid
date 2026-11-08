@@ -4,7 +4,7 @@ import time
 
 from .actions import compose
 from .findings import change_status, diagnostics_needed, open_or_upgrade
-from .firing import fired, status
+from .firing import FIRING_THRESHOLD, fired, status
 from .intake import skipped
 from .pane import readings
 from .rows import initial
@@ -80,7 +80,7 @@ class Runtime:
         base.update(readings(answers, header["drift_history"]))
         if context.get("screen_fired"):
             base["risk"] = max(base["risk"], max(context["screen_fired"].values()))
-            base["flagged"] = base["risk"] >= 0.5
+            base["flagged"] = base["risk"] >= FIRING_THRESHOLD
         details.update(fired=triggered, open_findings=self._open_count(header))
         if context.get("overflow"):
             details["overflow"] = True

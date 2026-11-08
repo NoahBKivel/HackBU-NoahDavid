@@ -1,6 +1,6 @@
 """Compute the Pane readings without rounding probabilities."""
 
-from .firing import problem_scores
+from .firing import FIRING_THRESHOLD, problem_scores
 
 
 def readings(answers: dict, history: list[float]) -> dict:
@@ -14,4 +14,4 @@ def readings(answers: dict, history: list[float]) -> dict:
         if window:
             rate = (drift - history[-window]) / window
         history.append(drift)
-    return {"risk": risk, "flagged": risk >= 0.5, "drift": drift, "drift_rate": rate}
+    return {"risk": risk, "flagged": risk >= FIRING_THRESHOLD, "drift": drift, "drift_rate": rate}
