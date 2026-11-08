@@ -99,7 +99,7 @@ The field layout is provisional.
     "file_changes": [{ "path": "tests/test_slow.py", "op": "delete", "patch": "..." }]
   },
   "agent_text": "visible response / final message",
-  "agent_thinking": "displayed thinking, may be summarized",
+  "agent_thinking": "displayed thinking; usually empty (see section 5)",
   "todos": []
 }
 ```
@@ -197,7 +197,14 @@ This is everything the Mod sends, subject to the large-item exception.
 - **Results:** the result text as the agent sees it, is_error, Edit/Write diffs and the file's original contents, shell stdout and stderr, interrupted or timed out, and blocked calls.
 - **What the agent says:**
   - its visible response text
-  - **displayed** thinking, which may be summarized and isn't the full internal reasoning
+  - **displayed** thinking (`agent_thinking`): treat it as **usually empty**. Don't rely on it for classification. Details below.
+
+  **Agent thinking, as far as the Mod can see it (checked 2026-11-07):**
+  - **What the Mod gets:** only the thinking the person sees live, via `turn.step` thinking chunks. The Mod never gets the model's full internal reasoning. At best it's a summary the app chooses to show.
+  - **What actually arrives:** in Noah's desktop-app sessions, almost all thinking blocks come through **empty**, with the text withheld and only a signature kept. Out of 644 thinking blocks across three recent sessions, **7 had any text**. So `agent_thinking` is an empty string on nearly every event.
+  - **Why:** Claude Code shows thinking summaries only when its `showThinkingSummaries` setting is on, which it isn't here. Even then, they're summaries, not the reasoning itself.
+  - **What to use instead:** the agent's visible text (`agent_text`, everything it wrote since the previous event), its todo list (`todos`), its plan-mode plans, and the actions themselves. These reliably say what the agent intends and does.
+  - If a field is useful when present, treat a non-empty `agent_thinking` as a bonus signal, never as required input.
   - each turn's final message and why the turn ended (answer, aborted, refusal, error)
   - token usage per step
 - **Plan:** TodoWrite lists, the plan-mode plan, turn and step counts.
@@ -248,5 +255,6 @@ This is everything the Mod sends, subject to the large-item exception.
 **Changes:** (date, change, agreed by)
 - 2026-11-07: first version.
 - 2026-11-07: large items: sent raw, with a 5 MB per-event safety cap (Noah's decision, which the contract leaves to him).
-- 2026-11-07: slow results: an 8 s wait, a `pending` result and `late_results` delivery, plus the optional `drift` and `drift_rate` fields (David's N-001, agreed with Noah). The backend side is implemented and deployed. The Mod side is still to do.
+- 2026-11-07: slow results: an 8 s wait, a `pending` result and `late_results` delivery, plus the optional `drift` and `drift_rate` fields (David's N-001, agreed with Noah). The backend side is implemented and deployed. The Mod side is done (pending and late results handled, every tool call sent, drift drawn) but not yet tested against a slow classifier.
 - 2026-11-07: Classifier exposed as Modal class `Classifier` in app `intent-monitor` (classify + warmup), stock Kev placeholder deployed (David, agreed with Noah's proposal).
+- 2026-11-07: clarified what `agent_thinking` holds: displayed thinking only, empty on nearly every event in practice (Noah, a clarification with no interface change).
