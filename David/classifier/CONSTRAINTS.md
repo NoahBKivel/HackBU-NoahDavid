@@ -5,3 +5,5 @@ CONSTRAINT 003: Deployment cutover / Modal dev deployments / Rolling deployment 
 CONSTRAINT 004: Log fetching / serving verifier / The installed modal app logs command fetches recent entries and exits by default. / Fetch logs after fixture calls with an explicit time range, and require loaded calibration parameters when testing a selected file. / 2026-11-08 04:09
 
 CONSTRAINT 005: Sample literal newline markers / verification fixtures / Noah sample project documents contain /n markers, while register.tsx passes direct fs.read text. / Normalize only those static sample markers before Mod-fidelity checks; preserve earlier evidence as sample-specific rather than claiming it proves realistic document input. / 2026-11-08T05:53:26-05:00
+
+CONSTRAINT 006: Failed-run raw evidence / burst verifier / The earlier failed assertion kept backend responses but lost completed-pending raw results, making its near-deadline cause unprovable. / Persist raw completions, event inputs and call timing in finally; a later successful run does not establish the earlier failure cause. / 2026-11-08T06:00:07-05:00

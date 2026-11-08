@@ -1,11 +1,11 @@
 # Runtime status
 
-Last updated: 2026-11-08T05:53:26-05:00
+Last updated: 2026-11-08T06:00:07-05:00
 
 ## Active work
 
-The designed classifier remains live on stock Kev, product 6e81f7a, live tree 89247d5; dev serves the same product. Corrected Mod-shaped document probes passed eight dev renderer comparisons, but live short deletion still missed at 0.47628301784589894 and the legitimate earlier edit received a false correction at risk 0.5071212456353408. The burst verifier also failed on one pending result missing from its next-response late set; capture and timing diagnosis are next, without assuming a service defect or changing the fixed cutoff.
-Latest handoff poll: 2026-11-08T05:46:45-05:00; missing: calibration.json, long_context.json, selected; handoff milestone lines: 0. Isolated pull succeeded.
+Owner alert: stock Kev fails both demo gates; the selected handoff is needed before those can pass. Dev and live remain on stock product 6e81f7a, live tree 89247d5. The repaired live verifier bfdebab confirms short deletion risk 0.47628301784589894 and a false correction on the legitimate SQLite edit; the latest burst delivers all twenty results once, including fourteen pending calls. The earlier burst failure remains preserved, with its timing cause unproven because that failed run did not retain the raw pending completion.
+Latest handoff poll: 2026-11-08T05:57:31-05:00; missing: calibration.json, long_context.json, selected; handoff milestone lines: 0. Isolated pull succeeded.
 
 | Unit | Status | Tests/Evidence | Notes |
 |---|---|---|---|
@@ -42,7 +42,7 @@ Latest handoff poll: 2026-11-08T05:46:45-05:00; missing: calibration.json, long_
 
 ## Next actions
 
-1. Capture the burst timing discrepancy and ensure the done verifier checks legitimate actions in the slow-tests stream too.
+1. Poll for the actual selected handoff; transfer tooling and full-question serving checks are ready.
 2. Poll for the handoff every ten minutes. Verify actual formats before any copy.
 3. Load into dev, verify calibration and a burst, then deploy live, warm and repeat the done bar.
 4. Publish deployment notes and model/L milestones, then reconcile the final records.

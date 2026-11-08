@@ -37,3 +37,5 @@ As of 2026-11-08 02:57:17, setup passed. The core fixture suite passed 23 tests 
 [2026-11-08T05:45:53-05:00] [selected-calibration] | TESTED | Tests/Evidence: 1/1 | Full-question verifier e24794c passed the real stock path. The instrument is ready to require the copied calibration and expected checkpoint/source after the swap. Shared main integration and runtime publication succeeded at 48a2c51. Active task anchor: TASKLIST.md:L25
 
 [2026-11-08T05:53:26-05:00] [demo-input-validity] | TESTED | Tests/Evidence: 1/2 | Sample newline adapter corrected at f60dd99; actual dev parity passed. Live evidence exposes model quality misses and a burst verification discrepancy. See VALIDATION-LOG.md. One bounded capture repair is next. Active task anchor: TASKLIST.md:L25
+
+[2026-11-08T06:00:07-05:00] [burst-evidence] | TESTED | Tests/Evidence: 1/1 | Verifier bfdebab now preserves raw pending completions, timing and call identifiers even when assertions fail, and includes the legitimate slow-tests prefix. The bounded live repeat completed and its model failures are recorded in VALIDATION-LOG.md. Return to actual handoff polling. Active task anchor: TASKLIST.md:L25
