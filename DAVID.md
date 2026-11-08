@@ -23,6 +23,17 @@ Expose `classify(event: dict) -> dict` as a Modal function (CONTRACT.md section 
 
 ## 2. Model: kev
 
+**Training handoff milestone, 2026-11-08:** The shared module
+`David/monitor_format/` is available at commit `1c77479`. It exports
+`build_instructions`, `render_state`, `render_screen`, `split_sections`,
+`split_units`, `rf_window`, question-row fillers, finding and correction
+formatting, schema validation, and the exact question and short-name tables.
+Budgeted functions take the caller's loaded tokenizer as a keyword argument.
+The interface is frozen after 23 tests passed on the pinned base tokenizer,
+including golden event bytes and a deliberate mutation that failed before
+restoration. See `David/training/notes/renderer.md` for caller field contracts.
+Training checkpoints and calibration files are not available yet.
+
 - **What it is:** kev, github.com/jaredpalmer/kev, Apache-2.0. Jared Palmer's open-source clone of TypeSafe AI's closed "Jev" System One decision model. It's a LoRA adapter plus a pointer head on a frozen Qwen3.5 base. It returns probabilities, never generated text.
 - **API:** `POST /v1/systemone` with `{state, model, questions}`. Each question has a type:
   - `noul`: a yes/no question. Returns `{type: "noul", noul: p_yes}`, with no confidence field.
