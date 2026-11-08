@@ -22,9 +22,9 @@
 | burst | done | Burst-backlog | core | runtime 7.10, 10 | VALIDATION-LOG.md; d65fd4b | None. | First live deployment. |
 | live-stock | done | Designed classifier live on stock Kev | core | runtime 13; task 4.4 | Live smoke; N-004; DAVID milestone; d15ebd2 pushed to main. | None for the first live deployment. | Build and verify overflow. |
 | overflow | done | Overflow | core | runtime 7.9, 10, 13; training 6.6 | Live smoke, N-005, 5b3d1fc published. | None. | Complete swap tool and poll handoff. |
-| swap | in-progress | Serving trained model and model-swap | core | runtime 6.4, 7.11, 13; training 9.5 | Read-only mount API verified; helper implementation active. | Selected checkpoint, calibration.json and long_context.json not delivered. | Finish tool and poll every ten minutes. |
-| done | pending | Done agent-run | core | runtime 10, 12, 13 | None yet. | Required check pending. | Execute the named check. |
-| false | pending | Demo-no-false-correction | core | runtime 10, 12 | None yet. | Required check pending. | Execute the named check. |
+| swap | in-progress | Serving trained model and model-swap | core | runtime 6.4, 7.11, 13; training 9.5 | Swap helper has 25 passing targeted tests; source read-only and atomic target pointer. | Actual handoff and selected-model serving proof absent. | Commit tool and poll every ten minutes. |
+| done | in-progress | Done agent-run | core | runtime 10, 12, 13 | f20fbfa; results/done-live/probe.json; burst deletion passes, short deletion fails at 0.4721898905925263. | Short deletion must flag with three actions on the live served model. | Verify selected model after handoff without changing cutoff or scenario. |
+| false | done | Demo-no-false-correction | core | runtime 10, 12 | f20fbfa; results/done-live/probe.json; ordinary session and legitimate burst prefix pass. | None for current stock product. | Repeat after a model change. |
 | desktop | pending | Owner desktop live run | core | runtime 10 | None yet. | Required check pending. | Execute the named check. |
 | close | pending | Reconciliation and final recap | core | task 4.8, 8 | None yet. | Required check pending. | Execute the named check. |
 | session-store | done | Session store | setup | runtime 6.5, 13 | Local fixtures at 69206d7. | None for fixed fixture behavior. | Resume the parent core or formats row. |

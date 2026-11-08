@@ -29,3 +29,5 @@ As of 2026-11-08 02:57:17, setup passed. The core fixture suite passed 23 tests 
 [2026-11-08 05:10] [overflow] | TESTED | Tests/Evidence: 40/40 | Local integration is committed at 6e81f7ac2e46ea9758b567bb41827d360ad6814c; the real oversized-document check is next on dev. Active task anchor: TASKLIST.md:L24
 [2026-11-08 05:13] [overflow] | INTEGRATED | Tests/Evidence: 1/1 | Deployed overflow check passed; the same product is ready for live redeployment. See VALIDATION-LOG.md. Active task anchor: TASKLIST.md:L24
 [2026-11-08T05:19:54.982189-05:00] [overflow] | INTEGRATED | Tests/Evidence: 1/1 | Live rollout and shared note published. Next is swap tooling and actual handoff validation. Active task anchor: TASKLIST.md:L25
+
+[2026-11-08T05:38:17-05:00] [stock-done-probe] | TESTED | Tests/Evidence: 1/2 | Live outcomes are preserved in VALIDATION-LOG.md. The stock model misses the short deletion; its burst detection and ordinary actions pass. Swap tooling is ready for commit and actual handoff validation. Active task anchor: TASKLIST.md:L25
