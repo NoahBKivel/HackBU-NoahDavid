@@ -1,0 +1,9 @@
+Read C:\Users\david\Documents\GitHub\HackBU-NoahDavid\David\classifier\task.md completely and follow it exactly; that folder is your workspace root and the repository root is your working directory. Start with Step 1: read AGENTS.md, the skills Section 0 names and the spec, initialize the filesystem per Section 3, and verify access; then build the service core on the dev app, and proceed through the steps in order, polling for the training build's shared module and model as Section 4 says.
+
+You are authorized to work autonomously to completion through the night: make and act on reasonable decisions, build, deploy to intent-monitor-dev freely, verify and iterate, install what the work needs, and redeploy the live intent-monitor at the points Section 4 names, without stopping for approval. There are no approval stops. When something truly needs the owner, fire the owner alert of Section 2.3 and keep working on everything that does not depend on the answer. Do whatever research is needed to keep anything from going wrong.
+
+Document everything as you go per Section 5: STATUS in real time, the append-only logs current, a recap at every gate and before any rollover, each carrying its Active task anchor.
+
+If the context window rolls over, execute Section 0 of task.md before doing anything else. No exceptions: do not resume work, run anything or touch any file until Section 0, including the MESSAGES.md gate, is complete.
+
+DO NOT MARK THIS GOAL COMPLETE until every spec section 10 check this build can run has logged PASS, the designed classifier is live on intent-monitor serving the trained model (or stock Kev if no handoff arrived, recorded), the done-bar run passes through the live class, the notes to Noah and the DAVID.md milestones exist, STATUS reflects the final state, and a final recap exists.
