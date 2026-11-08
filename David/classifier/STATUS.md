@@ -44,6 +44,8 @@ Owner decision MSG-007: defer NN-003 intervention state until demo checks pass. 
 
 Active read-only handoff watcher: exec session 69631 runs results/wait_handoff.py. Resume observation with write_stdin on that session; do not start a duplicate watcher. It exits with HANDOFF_PATHS_READY when the three paths arrive.
 
+Publication incident: b8135cf included six concurrently staged training files. The owner was informed; CONSTRAINT 007 records the boundary failure and explicit-path commit rule.
+
 ## Next actions
 
 1. Poll for the actual selected handoff; transfer tooling and full-question serving checks are ready.

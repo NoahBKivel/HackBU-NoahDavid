@@ -27,3 +27,9 @@ Active task anchor: TASKLIST.md:L25
 MSG-007 explicitly defers NN-003 until demo checks pass. STATUS and SIDEQUESTS record that timing. No intervention-state implementation is active; continue the required model handoff work.
 
 Active task anchor: TASKLIST.md:L25
+
+## Publication incident
+
+Commit b8135cf accidentally included six training files staged concurrently by another worker, and it was pushed. The credential scan covered all eleven staged files and found no secrets. No verification of the foreign files is claimed. The owner was informed. CONSTRAINT 007 requires explicit git commit --only paths for future ordinary slices, preserving foreign staged work. Published history and source files remain preserved.
+
+Active task anchor: TASKLIST.md:L25
