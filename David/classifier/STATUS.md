@@ -1,6 +1,6 @@
 # Runtime status
 
-Last updated: 2026-11-08T06:00:07-05:00
+Last updated: 2026-11-08T06:03:01-05:00
 
 ## Active work
 
@@ -39,6 +39,8 @@ Latest handoff poll: 2026-11-08T05:57:31-05:00; missing: calibration.json, long_
 | model-swap | pending | Handoff absent; pure validation and copy tests pass. |
 | demo-no-false-correction | FAIL | Corrected slow-tests stream has a false correction on its legitimate SQLite edit; separate ordinary session passes. |
 | done | FAIL | Corrected short deletion risk 0.47628301784589894; latest composite run stopped on burst delivery assertion. |
+
+Pending scope decision: NN-003 dashboard intervention-state proposal is outside the frozen spec. An asynchronous question asks whether to defer it until the demo checks pass. Required handoff work continues.
 
 ## Next actions
 
