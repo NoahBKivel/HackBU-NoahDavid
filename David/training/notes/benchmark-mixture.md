@@ -1,0 +1,11 @@
+# Shared real-record benchmark mixture
+
+The benchmark population has122 admitted records:30 original replay records (25 Kev and5 tasksource),90 source-weighted task records, and one complete two-record overflow-screen pair. Every task source uses its canonical planned_quota in results/positive-plan.json. Construction provenance takes precedence over the underlying source. Sliced sources match their declared slice or objective. A missing nonzero source raises a coverage error rather than renormalizing weights onto the construction-heavy pool.
+
+Linked pair and explicit packing-sibling units remain intact. Source draws correct for average unit size, preventing two-record pairs from doubling their intended source weight. The sampler uses completed JSONL lines, deduplicates stable record IDs and records the random seed. It preserves input states and existing native labels. Missing task labels become geometry-only measurement targets, never training votes. Only the selected122 records pass through the pinned encoder's actual fit predicate. A changed admitted record count stops publication.
+
+The real screen budget is8192, separately from B_state8191. Its value comes from the prepared namespace's declaration; the sampler never infers it from the directory name. Screen records must carry only SCR and M8 question rows and retain their pair. No old8191-budget screen output qualifies.
+
+A successful job writes one exclusively created immutable records.jsonl, its SHA256 and the role/source/admission manifest. The same bytes are shared by the single-device and distributed throughput paths. No successful payload has been published yet. Current dependencies are the broad source namespaces and safe AgentIF packet; source/quota gaps remain visible in the canonical plan and source owner's report.
+
+Codefd670be passed four focused tests in0.003seconds. Tests cover construction precedence, objective-based slice matching, linked-unit closure without duplicate records, and a planted missing-source case that must reject sampling. Four named files passed the credential scan. The module and two entry points compiled. No existing gate was rerun and no local model loaded. Heavy sampling and admission run on the dedicated Modal CPU volume.
