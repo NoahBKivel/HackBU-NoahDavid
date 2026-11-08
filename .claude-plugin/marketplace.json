@@ -1,0 +1,5 @@
+{
+  "name": "hackbu-vision",
+  "owner": { "name": "Noah Kivel" },
+  "plugins": [{ "name": "vision", "source": "./Noah/mod", "description": "VISION: watches a coding agent for drift from your instructions" }]
+}
