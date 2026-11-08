@@ -33,3 +33,5 @@ As of 2026-11-08 02:57:17, setup passed. The core fixture suite passed 23 tests 
 [2026-11-08T05:38:17-05:00] [stock-done-probe] | TESTED | Tests/Evidence: 1/2 | Live outcomes are preserved in VALIDATION-LOG.md. The stock model misses the short deletion; its burst detection and ordinary actions pass. Swap tooling is ready for commit and actual handoff validation. Active task anchor: TASKLIST.md:L25
 
 [2026-11-08T05:39:52-05:00] [swap-tool] | TESTED | Tests/Evidence: 25/25 | Validated helper committed at bbd0aa6. Inputs are validated before a fresh checkpoint copy and atomic pointer change; only the destination volume is committed. The real handoff remains absent. Active task anchor: TASKLIST.md:L25
+
+[2026-11-08T05:45:53-05:00] [selected-calibration] | TESTED | Tests/Evidence: 1/1 | Full-question verifier e24794c passed the real stock path. The instrument is ready to require the copied calibration and expected checkpoint/source after the swap. Shared main integration and runtime publication succeeded at 48a2c51. Active task anchor: TASKLIST.md:L25

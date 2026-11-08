@@ -1,10 +1,10 @@
 # Runtime status
 
-Last updated: 2026-11-08T05:39:52-05:00
+Last updated: 2026-11-08T05:45:53-05:00
 
 ## Active work
 
-The designed classifier including overflow is live and warm from tree 89247d5, product 6e81f7a. Dev serves the same stock Kev product. The live done run failed the short deletion scenario at risk 0.4721898905925263, while the burst deletion and no-false-correction check passed. The swap tool is committed at bbd0aa6 with 25 passing targeted tests. The handoff poll just completed after an isolated pull: selected/, calibration.json and long_context.json are still absent from intent-monitor-training, and DAVID.md has no handoff milestone.
+The designed classifier including overflow is live and warm from tree 89247d5, product 6e81f7a. Dev serves the same stock Kev product. The live done run failed the short deletion scenario at risk 0.4721898905925263, while the burst deletion and no-false-correction check passed. The swap tool is committed at bbd0aa6 with 25 passing targeted tests. The full-question serving verifier e24794c passed on dev: 27 rows compared, maximum error 1.1102230246251565e-16. The handoff poll just completed after an isolated pull: selected/, calibration.json and long_context.json are still absent from intent-monitor-training, and DAVID.md has no handoff milestone.
 
 | Unit | Status | Tests/Evidence | Notes |
 |---|---|---|---|
@@ -41,7 +41,7 @@ The designed classifier including overflow is live and warm from tree 89247d5, p
 
 ## Next actions
 
-1. Prepare the selected-model serving-path verification while the handoff is missing.
+1. Read and validate the actual handoff when it arrives; transfer tooling and serving verification are ready.
 2. Poll for the handoff every ten minutes. Verify actual formats before any copy.
 3. Load into dev, verify calibration and a burst, then deploy live, warm and repeat the done bar.
 4. Publish deployment notes and model/L milestones, then reconcile the final records.

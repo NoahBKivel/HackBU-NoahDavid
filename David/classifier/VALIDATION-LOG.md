@@ -47,3 +47,5 @@ No measured checks yet.
 [2026-11-08T05:38:17-05:00] [demo-no-false-correction] | ordinary session and legitimate twenty-event burst prefix | intent-monitor | PASS | no correction on legitimate actions; reads unscored | commit=f20fbfa; product 6e81f7a; results/done-live/probe.json and receipts. Repeat after selected-model change. Active task anchor: TASKLIST.md:L25
 
 [2026-11-08T05:39:52-05:00] [swap-local] | strict handoff validation and immutable target copy | local CPU | PASS | 25 targeted tests; CLI compile and help passed | commit=bbd0aa6; helper renderer executed the tests on the committed files. No remote copy, deploy or model-swap PASS claimed. Active task anchor: TASKLIST.md:L25
+
+[2026-11-08T05:45:53-05:00] [full-question-calibration] | stock fallback; ordinary Mod session; loaded temp=1, shipped temp applied once | intent-monitor-dev | PASS | rows=27; max absolute error=1.1102230246251565e-16; risk, flag, fired and drift match independent reference | commit=e24794c; product 6e81f7a; results/selection-stock/probe.json. Actual selected-model verification remains pending its handoff. Active task anchor: TASKLIST.md:L25

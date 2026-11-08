@@ -1,0 +1,5 @@
+# Selected-model serving checks
+
+After swap_model.py completes, retain its receipt and fetch the original calibration.json from the read-only training volume into results/. The helper copies that file byte for byte. Run verify_selection.py with --target dev, --receipt pointing to the dev swap receipt, --calibration pointing to that actual file, and --output naming a fresh evidence directory. The verifier calls warmup.spawn and classify.spawn/get(8), requires loaded source and checkpoint to match the receipt, requires loaded calibration to equal the supplied file, compares every logged raw/calibrated row to independent normalized power weights, and checks acted risk, firing and drift.
+
+Run verify_burst.py on dev before switching live. After the live swap, run verify_selection.py with the live receipt and then verify_done.py against live. Preserve failed runs. The stock readiness run is results/selection-stock/probe.json under e24794c; it compared 27 rows with maximum absolute error 1.1102230246251565e-16. It is not evidence that a selected model has loaded.
