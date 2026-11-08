@@ -232,7 +232,7 @@ This is everything the Mod sends, subject to the large-item exception.
 ## 7. Open contract items and change log
 
 **Open:**
-- **Notes between the sides:** David's agent writes to Noah in `David/NOTES-FROM-DAVID-AGENT.md`, and Noah's agent writes to David in `Noah/NOTES-FROM-NOAH-AGENT.md`. NN-001 there explains each item below in full.
+- **Notes between the sides:** David's agent writes to Noah in `David/NOTES-FROM-DAVID-AGENT.md`, and Noah's agent writes to David in `Noah/NOTES-FOR-DAVID-AGENT.md`. NN-001 there explains each item below in full.
 - **Needed from David** (to revisit with him):
   - **OK to connect the backend to `intent-monitor`.** Noah's side won't call it until David says it won't disrupt his testing.
   - **Late results are lost on a cold start (David's side).** `classify` decides "late" by timing from its own start (`LATE_AFTER_S`). Time spent waiting for a container to boot, or queued behind other calls, isn't counted. So on a cold start the backend answers pending at 8 s, then `classify` runs fast, counts itself on time, and returns its result to a caller that has stopped listening. Proposed fix: the backend adds the time it sent the event (e.g. `backend_sent_at`, Unix seconds) and `classify` measures from that. Needs David's agreement on the field name.
