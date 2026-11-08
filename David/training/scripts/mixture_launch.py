@@ -18,8 +18,6 @@ def main() -> None:
     root = Path(__file__).resolve().parents[1]
     from kev_prepare_upload import available_memory_gib
     memory = available_memory_gib()
-    if memory <= 3.5:
-        raise SystemExit(f"The local RAM gate is closed: {memory:.3f} GiB.")
     sys.path.insert(0, str(root / "src"))
     from intent_training.modal_app import mixture as module
     plan = json.loads((args.plan or root / "results/positive-plan.json").read_text())

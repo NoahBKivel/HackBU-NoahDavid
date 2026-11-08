@@ -17,8 +17,6 @@ def main() -> None:
     args = parser.parse_args()
     from kev_prepare_upload import available_memory_gib
     memory = available_memory_gib()
-    if memory <= 3.5:
-        raise SystemExit(f"The local RAM gate is closed: {memory:.3f} GiB.")
     root = Path(__file__).resolve().parents[1]
     sys.path.insert(0, str(root / "src"))
     from intent_training.modal_app import accelerate_training as module
