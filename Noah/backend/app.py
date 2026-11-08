@@ -22,7 +22,7 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError
 # David's classifier: a Modal class with classify(event) and warmup() methods
 # sharing one container (CONTRACT.md section 7, cold starts). His app is
 # "intent-monitor". While CLASSIFIER_APP is None, the mock below is used.
-CLASSIFIER_APP: Optional[str] = None
+CLASSIFIER_APP: Optional[str] = "intent-monitor"
 CLASSIFIER_CLASS = "Classifier"
 
 # How long to wait for the classifier before answering "pending". A warm
