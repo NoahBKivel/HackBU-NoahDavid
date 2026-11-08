@@ -766,7 +766,7 @@ async function renderPane($: $, elements: Elements, live: boolean) {
         {infoReveal(Text, Box, 'info-risk', [
           'How likely each checked action is to break your instructions, as judged by the classifier. Lower is better.',
           [['● Blue', C.line], [': checked']],
-          [['● Amber', C.warn], [': elevated risk']],
+          [['● Yellow', C.warn], [': elevated risk']],
           [['● Red', C.flag], [': flagged']],
           [['┊ Dashed green line', C.ok], [': a correction was sent to the agent']],
           [['○ Gray', C.pending], [': still being checked']],
