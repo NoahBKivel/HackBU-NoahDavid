@@ -100,3 +100,13 @@ await classifier.warmup.spawn.aio()                                   # from GET
 - **Flagged results carry actions** in the shape your mock uses: a `potential` notice for minor findings; for significant ones `notify_user{detected}`, then `inject_agent` with the correction, then `notify_user{intervened}`. Notice texts carry no source prefix.
 - **`drift` and `drift_rate` are numbers** on scored events. `drift` is null on a turn end with no final text.
 - **`warmup()` stays** exactly as now.
+
+## N-004 ? 2026-11-08 04:52:37 -0500 ? Designed classifier live on stock Kev
+
+The designed Classifier is live on intent-monitor, deployed from tree 3b40ef1 with product code 5baed45. It was warmed immediately and a fresh backend-style stream validated the live results. The served model is stock Kev; the trained-model swap has not run. L remains 8,192.
+
+Reads and AskUserQuestion return unscored results. flagged uses calibrated probability at 0.5. Significant findings return notify_user detected, inject_agent, then notify_user intervened. The container accepts 32 concurrent inputs. backend_sent_at is honored when present, with method-start fallback otherwise.
+
+The details keys always include source, fired, open_findings and classify_ms. Skips add skipped; incomplete answer turns add not_done. Overflow will add overflow once verified and deployed. risk, drift and drift_rate are top-level fields. The shared formatter supplies states, questions and correction text.
+
+Eight actual dev states matched the shared renderer using the served tokenizer, and all twenty burst events were delivered once. The live smoke returned null risk for reads and risk/drift with no correction for the ordinary action. Evidence: David/classifier/results/live-smoke-results.json. The desktop-app demo remains for David and Noah.
