@@ -1,12 +1,30 @@
 """Prove source precedence and immutable linked-unit sampling."""
 
 import random
+import json
+from pathlib import Path
+import tempfile
 import unittest
 
-from intent_training.kevpatch.mixture import sample_units, source_candidates
+from intent_training.kevpatch.mixture import load_prepared, sample_units, source_candidates
 
 
 class BenchmarkMixtureTests(unittest.TestCase):
+    def test_completed_context_required_before_main_admission(self):
+        directory = Path(__file__).resolve().parents[1] / "results/test-temp"
+        directory.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=directory) as temporary:
+            root = Path(temporary)
+            records = [{"record_id": "ordinary", "state": "a", "questions": {}, "_meta": {}},
+                       {"record_id": "native", "state": "b", "questions": {}, "_meta": {"native_record": True}}]
+            (root / "main.jsonl").write_text("".join(json.dumps(record) + "\n" for record in records))
+            (root / "context.jsonl").write_text("")
+            selected, _, _ = load_prepared([str(root)])
+            self.assertEqual([record["record_id"] for record in selected], ["native"])
+            (root / "context.jsonl").write_text(json.dumps({"record_id": "ordinary"}) + "\n")
+            selected, _, _ = load_prepared([str(root)])
+            self.assertEqual([record["record_id"] for record in selected], ["ordinary", "native"])
+
     def test_construction_overrides_underlying_source(self):
         plan = [{"id": "goal_flip", "source": "goal_flip", "slice": None},
                 {"id": "swe_chat:claim", "source": "swe_chat", "slice": "claim"}]

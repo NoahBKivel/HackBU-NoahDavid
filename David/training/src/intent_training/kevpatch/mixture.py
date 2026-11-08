@@ -76,6 +76,7 @@ def load_prepared(directories: list[str]) -> tuple[list[dict], dict[str, str], d
         info = {}
         manifest_path = root / "manifest.json"
         declaration = json.loads(manifest_path.read_text()) if manifest_path.exists() else {}
+        context_ids = set()
         context = root / "context.jsonl"
         if context.exists():
             with context.open(encoding="utf-8") as stream:
@@ -83,6 +84,7 @@ def load_prepared(directories: list[str]) -> tuple[list[dict], dict[str, str], d
                     if not line.endswith("\n"):
                         continue
                     value = json.loads(line)
+                    context_ids.add(value["record_id"])
                     construction = value.get("side", {}).get("construction", {})
                     if isinstance(construction, dict) and construction.get("type"):
                         construction_by_id[value["record_id"]] = construction["type"]
@@ -96,6 +98,8 @@ def load_prepared(directories: list[str]) -> tuple[list[dict], dict[str, str], d
                             continue
                         value = json.loads(line)
                         identity = value.get("record_id") or value.get("_meta", {}).get("id")
+                        if name == "main.jsonl" and not value.get("_meta", {}).get("native_record") and identity not in context_ids:
+                            continue
                         if identity is None:
                             identity = hashlib.sha256(line.encode()).hexdigest()
                         if identity in seen:
