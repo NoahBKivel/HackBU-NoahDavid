@@ -14,8 +14,8 @@
 | dismissal | done | No-reopen-after-dismissal | setup | runtime 7.6, 10 | VALIDATION-LOG.md; 69206d7 | None for the recorded local scope. | Continue the service-core serving checks. |
 | upgrade | done | Minor upgrade | setup | runtime 7.5-7.7, 10 | VALIDATION-LOG.md; 69206d7 | None for the recorded local scope. | Continue the service-core serving checks. |
 | no-nag | done | Turn-end-no-nag | setup | runtime 7.3-7.7, 10 | VALIDATION-LOG.md; 69206d7 | None for the recorded local scope. | Continue the service-core serving checks. |
-| interface | in-progress | Interface-check | core | runtime 6.3; training 4.2, 6.1, 6.3-6.7 | None yet. | Required check pending. | Poll the training milestones and map the frozen exports. |
-| formats | pending | Shared formats and requirement filter | core | runtime 6.3, 7.2-7.3, 7.7, 13; training 4.2, 6.1, 6.3-6.7 | None yet. | Required check pending. | Execute the named check. |
+| interface | done | Interface-check | core | runtime 6.3; training 4.2, 6.1, 6.3-6.7 | notes/monitor-format-interface.md; 51dd732 | None. | Bind the shared formats. |
+| formats | in-progress | Shared formats and requirement filter | core | runtime 6.3, 7.2-7.3, 7.7, 13; training 4.2, 6.1, 6.3-6.7 | None yet. | Required check pending. | Implement the shared format adapter and requirement filter. |
 | renderer | pending | Shared renderer | core | runtime 6.3, 10; training 6.4 | None yet. | Required check pending. | Execute the named check. |
 | numbering | pending | Instruction numbering | core | runtime 6.3, 10; training 6.1, 6.4 | None yet. | Required check pending. | Execute the named check. |
 | turns | pending | Turn ends | core | runtime 7.1, 7.3, 10 | None yet. | Required check pending. | Execute the named check. |
