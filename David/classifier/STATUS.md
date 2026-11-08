@@ -4,7 +4,7 @@ Last updated: 2026-11-08 04:09
 
 ## Active work
 
-The designed classifier is live and warm on intent-monitor from tree 3b40ef1 with product code 5baed45, serving stock Kev; dev serves the same restored product. The first live smoke passed and N-004 plus the DAVID milestone are published through d15ebd2; overflow passed through dev on 6e81f7a and is ready for live redeployment. Stock Kev missed the corrected Noah deletion sample at risk 0.4622987669655692, so the trained-model handoff and final live demo checks remain necessary; the last training poll confirmed the frozen shared module.
+The designed classifier including overflow is live and warm from tree 89247d5, product 6e81f7a; dev runs the same product. N-005 is published through 5b3d1fc, and the swap helper is active. Handoff poll at 2026-11-08T05:19:54.982189-05:00 found missing artifacts: calibration.json, long_context.json, selected; stock fallback remains live and the final live demo checks are pending.
 
 | Unit | Status | Tests/Evidence | Notes |
 |---|---|---|---|
@@ -33,4 +33,4 @@ The designed classifier is live and warm on intent-monitor from tree 3b40ef1 wit
 2. Add the shared module and pysbd to the dev image.
 3. Run parity, numbering, turn-end and burst checks before any live deployment.
 
-Active task anchor: TASKLIST.md:L24
+Active task anchor: TASKLIST.md:L25

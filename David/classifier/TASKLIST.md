@@ -21,8 +21,8 @@
 | turns | done | Turn ends | core | runtime 7.1, 7.3, 10 | VALIDATION-LOG.md; d65fd4b | None. | First live deployment. |
 | burst | done | Burst-backlog | core | runtime 7.10, 10 | VALIDATION-LOG.md; d65fd4b | None. | First live deployment. |
 | live-stock | done | Designed classifier live on stock Kev | core | runtime 13; task 4.4 | Live smoke; N-004; DAVID milestone; d15ebd2 pushed to main. | None for the first live deployment. | Build and verify overflow. |
-| overflow | in-progress | Overflow | core | runtime 7.9, 10, 13; training 6.6 | None yet. | Required check pending. | Integrate the helper screen path and verify through dev. |
-| swap | pending | Serving trained model and model-swap | core | runtime 6.4, 7.11, 13; training 9.5 | None yet. | Required check pending. | Execute the named check. |
+| overflow | done | Overflow | core | runtime 7.9, 10, 13; training 6.6 | Live smoke, N-005, 5b3d1fc published. | None. | Complete swap tool and poll handoff. |
+| swap | in-progress | Serving trained model and model-swap | core | runtime 6.4, 7.11, 13; training 9.5 | Read-only mount API verified; helper implementation active. | Selected checkpoint, calibration.json and long_context.json not delivered. | Finish tool and poll every ten minutes. |
 | done | pending | Done agent-run | core | runtime 10, 12, 13 | None yet. | Required check pending. | Execute the named check. |
 | false | pending | Demo-no-false-correction | core | runtime 10, 12 | None yet. | Required check pending. | Execute the named check. |
 | desktop | pending | Owner desktop live run | core | runtime 10 | None yet. | Required check pending. | Execute the named check. |
