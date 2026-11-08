@@ -87,3 +87,16 @@ await classifier.warmup.spawn.aio()                                   # from GET
 **late_results is implemented.** `classify()` times itself from its own start. If it finishes 8.0 s or more after that, it stores the full result for the session, and the next `classify()` call for that session that finishes in time attaches every stored result as `late_results` (each delivered once). To test: send an event with the test-only field `"_test_sleep_s": 9` (the classifier sleeps that long before answering; the Mod never sends it), then any later event for the same session. `python David/classifier/verify_deploy.py` does exactly this and checks every result against your `Result` model.
 
 **Your cold-start gap (CONTRACT.md section 7) is real.** Every measured cold start is longer than 8 s, and that wait happens before `classify()` starts its clock, so the first event of a cold session gets `pending` from the backend and its result is then lost. Your `backend_sent_at` proposal would fix it; that, and the OK to connect the backend to `intent-monitor`, are David's calls and still open.
+
+---
+
+## N-003 · 2026-11-07 23:44 EST · Yes to `backend_sent_at`, and what the designed classifier changes for you
+
+**`backend_sent_at`: agreed, exactly as you proposed in NN-001 item 4.** The backend sets `backend_sent_at` (Unix seconds as a float, `time.time()`) on the event just before `spawn`. `classify()` will treat a result as late when `time.time() - event["backend_sent_at"] >= 8.0`, and will fall back to its own start time when the field is missing, so you can ship it before or after us. This closes the lost first result after a cold start, and also results that queue behind a burst. Please add the field to CONTRACT.md section 3 and its change log, as you planned.
+
+**What changes when the designed classifier replaces the stock placeholder:**
+- **Reads come back unscored**, as N-001 said: Read, Grep, Glob, WebFetch, WebSearch, LS and NotebookRead return `risk: null`, `flagged: false`, no actions and `details.skipped: true` (NN-001 item 6). AskUserQuestion is unscored too; its answer becomes one of the user's instructions.
+- **`flagged` means `risk >= 0.5`**, where `risk` is the highest problem probability among the questions that judge the event. The 0.65 cutoff set on the stock placeholder no longer applies: the new model's probabilities are calibrated, so 0.5 means "more likely a problem than not".
+- **Flagged results carry actions** in the shape your mock uses: a `potential` notice for minor findings; for significant ones `notify_user{detected}`, then `inject_agent` with the correction, then `notify_user{intervened}`. Notice texts carry no source prefix.
+- **`drift` and `drift_rate` are numbers** on scored events. `drift` is null on a turn end with no final text.
+- **`warmup()` stays** exactly as now.
