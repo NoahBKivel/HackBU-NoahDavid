@@ -26,12 +26,17 @@ from intent_training.kevpatch.distributed_accelerate import compare_losses
 @app.function(image=image, gpu="B200:4", cpu=16, memory=196608,
               timeout=10800, startup_timeout=600, volumes={"/training": volume})
 def run_accelerate(records_path: str, mode: str = "parity", pass_tokens: int = 115200,
-                   fixed_records: int = 16) -> dict[str, Any]:
+                   fixed_records: int = 16, expected_sha256: str | None = None,
+                   expected_records: int | None = None) -> dict[str, Any]:
     """Execute isolated reference and distributed workers with the same pinned inputs."""
     volume.reload()
     source = Path(records_path)
     if not source.is_relative_to("/training") or not source.is_file():
         raise ValueError("The records must exist on the training volume.")
+    if mode == "train":
+        from intent_training.kevpatch.distributed_accelerate import verify_frozen_input
+        verification = verify_frozen_input(source, expected_sha256 or "", expected_records or 0)
+        print(json.dumps({"frozen_input_verified": verification}), flush=True)
     root = Path("/training/accelerate") / datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%fZ")
     root.mkdir(parents=True)
     import importlib.metadata

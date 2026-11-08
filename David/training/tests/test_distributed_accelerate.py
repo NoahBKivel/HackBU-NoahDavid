@@ -3,11 +3,30 @@
 from copy import deepcopy
 from types import SimpleNamespace
 import unittest
+import hashlib
+from pathlib import Path
+import tempfile
 
-from intent_training.kevpatch.distributed_accelerate import compare_losses, local_passes, rank_records
+from intent_training.kevpatch.distributed_accelerate import compare_losses, local_passes, rank_records, verify_frozen_input
 
 
 class AcceleratePlanningTests(unittest.TestCase):
+    def test_frozen_input_rejects_changed_bytes_and_count(self):
+        directory = Path(__file__).resolve().parents[1] / "results/test-temp"
+        directory.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=directory) as temporary:
+            path = Path(temporary) / "frozen.jsonl"
+            raw = b'{"a":1}\n{"a":2}\n'
+            path.write_bytes(raw)
+            digest = hashlib.sha256(raw).hexdigest()
+            self.assertEqual(verify_frozen_input(path, digest, 2)["records"], 2)
+            for sha, count in ((digest, 3), ("0" * 64, 2), ("", 2)):
+                with self.assertRaises(ValueError):
+                    verify_frozen_input(path, sha, count)
+            path.write_bytes(raw + b'{}\n')
+            with self.assertRaises(ValueError):
+                verify_frozen_input(path, digest, 2)
+
     def test_linked_units_are_owned_once(self):
         records = [{"_meta": {"id": str(index), "pair_id": str(index // 2)}} for index in range(16)]
         owners = [rank_records(records, 4, rank) for rank in range(4)]

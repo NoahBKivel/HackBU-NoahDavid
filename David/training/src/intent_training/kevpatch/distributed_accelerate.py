@@ -9,6 +9,21 @@ import time
 from typing import Any
 
 
+def verify_frozen_input(path: Path, expected_sha256: str, expected_records: int) -> dict:
+    """Reject a changed frozen artifact before allocating model state."""
+    import re
+    if not re.fullmatch(r"[0-9a-fA-F]{64}", expected_sha256 or "") or expected_records < 1:
+        raise ValueError("Training requires its frozen SHA256 and positive record count.")
+    digest, count = hashlib.sha256(), 0
+    with path.open("rb") as source:
+        for line in source:
+            digest.update(line)
+            count += bool(line.strip())
+    if digest.hexdigest() != expected_sha256.lower() or count != expected_records:
+        raise ValueError("The frozen training artifact changed after admission.")
+    return {"records_sha256": digest.hexdigest(), "records": count}
+
+
 def compare_losses(reference: dict, repeat: dict, distributed: dict) -> dict:
     """Require matched work and loss gaps bounded by measured noise or relative tolerance."""
     for other in (repeat, distributed):
