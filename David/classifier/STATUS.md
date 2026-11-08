@@ -4,7 +4,7 @@ Last updated: 2026-11-08 04:09
 
 ## Active work
 
-Shared-format checks passed on dev: eight real-tokenizer states matched, numbering and turn ends passed, and every original event in the twenty-event burst arrived once. Dev is restored and warmed on product commit 5baed45; the first live deployment is next, while live still runs the original placeholder. The last training poll confirmed the frozen shared module; the model handoff is not yet requested, and main publication remains pending approval after automatic review rejected it.
+The designed classifier is live and warm on intent-monitor from tree 3b40ef1 with product code 5baed45, serving stock Kev; dev serves the same restored product. The first live smoke passed and N-004 plus the DAVID milestone are published through d15ebd2; overflow is being implemented by the renderer helper. Stock Kev missed the corrected Noah deletion sample at risk 0.4622987669655692, so the trained-model handoff and final live demo checks remain necessary; the last training poll confirmed the frozen shared module.
 
 | Unit | Status | Tests/Evidence | Notes |
 |---|---|---|---|
@@ -33,4 +33,4 @@ Shared-format checks passed on dev: eight real-tokenizer states matched, numberi
 2. Add the shared module and pysbd to the dev image.
 3. Run parity, numbering, turn-end and burst checks before any live deployment.
 
-Active task anchor: TASKLIST.md:L23
+Active task anchor: TASKLIST.md:L24
