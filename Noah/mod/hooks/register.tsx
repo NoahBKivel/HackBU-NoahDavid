@@ -759,7 +759,7 @@ async function renderPane($: $, elements: Elements, live: boolean) {
       </Box>
 
 
-      <Box flexDirection="column" borderStyle="round" borderColor="#88878040" paddingX={1}>
+      <Box flexDirection="column" width="100%" borderStyle="round" borderColor="#88878040" paddingX={1}>
         {chartTitle(Text, Box, Button, Svg, 'Risk per action', 'info-risk', chosen.risk, pick('risk'))}
         {Svg ? (
           <Svg source={riskChart(riskList, chosen.risk)} alt={chartAlt(riskList)} />
@@ -776,7 +776,7 @@ async function renderPane($: $, elements: Elements, live: boolean) {
         ])}
       </Box>
 
-      <Box flexDirection="column" borderStyle="round" borderColor="#88878040" paddingX={1}>
+      <Box flexDirection="column" width="100%" borderStyle="round" borderColor="#88878040" paddingX={1}>
         {chartTitle(Text, Box, Button, Svg, 'Drift', 'info-trend', chosen.trend, pick('trend'), trendNote)}
         {Svg ? (
           <Svg source={trendChart(trendList, chosen.trend)} alt={`Drift chart, currently ${driftNow === null ? 'unknown' : pct(Math.min(1, driftNow))}`} />
@@ -802,13 +802,13 @@ async function renderPane($: $, elements: Elements, live: boolean) {
         {flagged.length === 0 && <Text dimColor>Nothing flagged so far.</Text>}
         {(lists.flags ? flagged : flagged.slice(0, FLAGS_SHOWN)).map(p => (
           <Box flexDirection="column" key={`flag-${p.eventId}`}>
-            <Box flexDirection="row" gap="sm">
+            <Box flexDirection="row" gap="sm" width="100%" overflow="hidden">
               <Box flexShrink={0}>
                 <Button key={`btn-${p.eventId}`} plain onPress={() => toggle(p.eventId)}>
                   {`${open === p.eventId ? '▾' : '▸'} ${pct(p.risk)}`}
                 </Button>
               </Box>
-              <Box flexShrink={1}>
+              <Box flexShrink={1} flexGrow={1} minWidth={0} overflow="hidden">
                 <Text dimColor wrap="truncate">
                   {`${p.summary}  ${clock(p.ts)}${p.corrected ? ', corrected' : p.correction ? ', correction queued' : ''}`}
                 </Text>
@@ -828,7 +828,7 @@ async function renderPane($: $, elements: Elements, live: boolean) {
         {list.length === 0 && <Text dimColor>Waiting for the agent to act.</Text>}
         {(lists.recent ? recent.slice(0, 50) : recent.slice(0, RECENT_SHOWN)).map(p => (
           <Box key={`recent-${p.eventId}`} flexDirection="column">
-            <Box flexDirection="row" gap="sm">
+            <Box flexDirection="row" gap="sm" width="100%" overflow="hidden">
               <Box flexShrink={0}>
                 <Button key={`recent-btn-${p.eventId}`} plain onPress={() => toggle(`recent-${p.eventId}`)}>
                   {`${open === `recent-${p.eventId}` ? '▾' : '▸'} ${clock(p.ts)}`}
@@ -837,7 +837,7 @@ async function renderPane($: $, elements: Elements, live: boolean) {
               <Box flexShrink={0} width={5}>
                 <Text color={p.flagged ? 'error' : 'text'} wrap="truncate">{p.risk === null ? '' : pct(p.risk)}</Text>
               </Box>
-              <Box flexShrink={1}>
+              <Box flexShrink={1} flexGrow={1} minWidth={0} overflow="hidden">
                 <Text dimColor wrap="truncate">{`${p.tool}: ${p.summary}`}</Text>
               </Box>
             </Box>
@@ -984,9 +984,9 @@ const C = {
   pending: '#B4B2A9',
   trend: '#7F77DD',
 }
-const W = 640
-const H = 220
-const PAD = { left: 54, right: 22, top: 14, bottom: 28 }
+const W = 900
+const H = 290
+const PAD = { left: 62, right: 26, top: 16, bottom: 32 }
 
 function frame(inner: string, yLabels: [number, string][], times: number[] = []) {
   const plotH = H - PAD.top - PAD.bottom
@@ -994,7 +994,7 @@ function frame(inner: string, yLabels: [number, string][], times: number[] = [])
     .map(([v, text]) => {
       const y = PAD.top + plotH * (1 - v)
       return `<line x1="${PAD.left}" y1="${y}" x2="${W - PAD.right}" y2="${y}" stroke="${C.grid}" stroke-width="1"/>` +
-        `<text x="${PAD.left - 6}" y="${y + 6}" text-anchor="end" font-size="16" fill="${C.axis}" font-family="sans-serif">${text}</text>`
+        `<text x="${PAD.left - 6}" y="${y + 7}" text-anchor="end" font-size="19" fill="${C.axis}" font-family="sans-serif">${text}</text>`
     })
     .join('')
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">${grid}${timeAxis(times)}${inner}</svg>`
@@ -1028,7 +1028,7 @@ function timeAxis(times: number[]) {
   const span = last - first
   const y = H - 6
   const label = (x: number, text: string, anchor = 'middle') =>
-    `<text x="${x.toFixed(1)}" y="${y}" text-anchor="${anchor}" font-size="16" fill="${C.axis}" font-family="sans-serif">${text}</text>`
+    `<text x="${x.toFixed(1)}" y="${y}" text-anchor="${anchor}" font-size="19" fill="${C.axis}" font-family="sans-serif">${text}</text>`
   if (span <= 0) return label(PAD.left + plotW / 2, timeLabel(first, MINUTE, false))
 
   const step = STEPS.find(s => span / s <= 5) ?? 30 * DAY
