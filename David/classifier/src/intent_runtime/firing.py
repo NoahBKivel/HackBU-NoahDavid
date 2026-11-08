@@ -2,7 +2,7 @@
 
 from David.monitor_format import EVERY_EVENT
 FIREABLE = frozenset(EVERY_EVENT) | {"G2", "G5", "M8"}
-FIRING_THRESHOLD = 0.45
+FIRING_THRESHOLD = 0.70
 
 
 def problem_scores(answers: dict[str, dict[str, float]]) -> dict[str, float]:
