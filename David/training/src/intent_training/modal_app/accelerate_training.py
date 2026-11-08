@@ -86,3 +86,35 @@ def run_accelerate(records_path: str, mode: str = "parity", pass_tokens: int = 1
     (root / "result.json").write_text(json.dumps(result, indent=2))
     volume.commit()
     return result
+
+
+@app.function(image=image, gpu="B200", cpu=8, memory=98304,
+              timeout=1800, startup_timeout=600, volumes={"/training": volume})
+def repeat_reference(previous_root: str) -> dict[str, Any]:
+    """Measure same-seed reference noise only after a distributed comparison needs it."""
+    volume.reload()
+    previous = Path(previous_root)
+    if not previous.is_relative_to("/training/accelerate"):
+        raise ValueError("The prior comparison must belong to this trainer.")
+    config = json.loads((previous / "reference-config.json").read_text())
+    destination = previous / "repeat"
+    config["output"] = str(destination)
+    path = previous / "repeat-config.json"
+    path.write_text(json.dumps(config))
+    command = [sys.executable, "-m", "intent_training.kevpatch.distributed_accelerate", str(path)]
+    with (previous / "repeat.stdout.log").open("w") as stdout, (previous / "repeat.stderr.log").open("w") as stderr:
+        process = subprocess.run(command, stdout=stdout, stderr=stderr,
+                                 env={**os.environ, "PYTHONUNBUFFERED": "1"}, timeout=1500)
+    if process.returncode:
+        result = {"status": "ERROR", "returncode": process.returncode,
+                  "stderr_tail": (previous / "repeat.stderr.log").read_text()[-12000:]}
+    else:
+        reference = json.loads((previous / "reference/result.json").read_text())
+        repeat = json.loads((destination / "result.json").read_text())
+        distributed = json.loads((previous / "distributed/result.json").read_text())
+        result = compare_losses(reference, repeat, distributed)
+        result["same_seed_noise_floor_measured"] = True
+        result["reference_path"] = str(previous)
+    (previous / "noise-result.json").write_text(json.dumps(result, indent=2))
+    volume.commit()
+    return result
