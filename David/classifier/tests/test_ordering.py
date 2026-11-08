@@ -52,3 +52,15 @@ def test_exception_does_not_block_successor():
     with gate.release(2) as stale:
         assert not stale
     assert header['last_seq'] == 2
+
+
+@pytest.mark.parametrize('seq', [2, 3])
+def test_default_missing_event_wait_matches_backend_budget(seq):
+    header = {'last_seq': 0}
+    gate = OrderingGate(header)
+    started = time.monotonic()
+    with gate.release(seq) as stale:
+        assert not stale
+    elapsed = time.monotonic() - started
+    assert elapsed >= 8.0
+    assert header['last_seq'] == seq
