@@ -79,7 +79,11 @@ The full requirements are in [Noah/MOD_PRD.md](Noah/MOD_PRD.md). This section is
   - Points `{ts, risk, flagged, corrected}` are kept in `$.state`, which survives Mod reloads.
   - Drawn with an `Svg` element, `{ source, alt, isInteractive: true }`, with the markup kept under 131,072 characters.
   - Plot risk per event, highlight flagged points, add a distinct marker where a correction was sent, and show `<title>` tooltips.
-- **Config:** use `userConfig` for `apiUrl` and `apiToken`. Never hardcode them.
+- **Config:** `apiUrl` and `apiToken` are declared as `userConfig` in `plugin.json`, both defaulting to empty. Never hardcode them.
+  - Empty values mean mock mode: the built-in mock classifier, the 10-day sample history and the "(mock)" labels.
+  - Noah's values live in his local `~/.claude/settings.json` under `pluginConfigs.vision.options`. The token was copied from the gitignored `Noah/backend/secrets.local.json`. **Never commit either.**
+  - When connected, the Mod drops any sample history at session start.
+  - **Verified connected (2026-11-07):** a test-file deletion went from the Mod to the deployed backend and came back as risk 0.94 with three actions in about 0.25 s. The correction reached the agent on its next tool call.
 
 ---
 

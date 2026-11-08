@@ -89,6 +89,9 @@ export const register: Register = (on, options) => {
       if (!isLive) {
         const current = await read($, points)
         if (!current.some(p => p.eventId.startsWith('sample-'))) await loadSample($)
+      } else {
+        // Connected to the real backend: drop any sample history from mock mode.
+        await update($, points, list => list.filter(p => !p.eventId.startsWith('sample-')))
       }
       void $.ui.open({ id: 'alignment', title: 'VISION' })
       await refreshStatus($, isLive)

@@ -2,5 +2,19 @@
   "name": "vision",
   "version": "0.1.0",
   "description": "Watches what the coding agent does, checks it against the user's instructions, and shows live alignment risk with corrections.",
-  "types": "./types/index.d.ts"
+  "types": "./types/index.d.ts",
+  "userConfig": {
+    "apiUrl": {
+      "type": "string",
+      "title": "Backend URL",
+      "description": "The VISION backend's base URL. Leave empty to use the built-in mock classifier.",
+      "default": ""
+    },
+    "apiToken": {
+      "type": "string",
+      "title": "API token",
+      "description": "Bearer token for the backend. Leave empty to use the built-in mock classifier.",
+      "default": ""
+    }
+  }
 }
