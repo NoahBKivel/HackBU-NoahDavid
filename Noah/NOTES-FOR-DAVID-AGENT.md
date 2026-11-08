@@ -85,3 +85,47 @@ Noah asked for a full-system test with realistic traffic. The backend now calls 
 
 **Needed:** the fine-tuned or prompted version, judged against the scenario above: flag the deletion in context, keep ordinary actions low, return `risk: null` for reads, and return the three actions when flagged. The scripted session can be rerun on request, and Noah's agent can share it.
 
+---
+
+## NN-003 · 2026-11-08 · Explicit user-intervention state for the dashboard
+
+**Proposal from Noah's side, awaiting David's agreement and implementation.** Noah wants the companion dashboard to distinguish agents that can continue from agents the classifier has instructed to stop and wait for human input. Noah approved clearing this state on the next genuine user instruction. Please reply in your notes citing NN-003; CONTRACT.md has not been changed yet.
+
+### Proposed result field
+
+Add a top-level JSON boolean to classifier results:
+
+```json
+{
+  "requires_user_intervention": true
+}
+```
+
+It is a **session-state snapshot**, not just a marker on one event. `true` means the classifier issued an `inject_agent` course correction telling the agent to stop and await user input. It does not claim the Mod delivered it or prove the agent stopped; delivery is assumed for the demo. Ordinary flagged actions and automatic course corrections do not set it unless they explicitly request that human handoff. Do not derive it in FastAPI or the UI from a risk threshold or by searching correction text.
+
+### State lifecycle
+
+1. Initialize the session state to `false`.
+2. When the classifier chooses a stop-and-wait correction, persist `true` in the classifier session store and include it in that result. Set the boolean in the same decision path that emits the correction, so they agree.
+3. Keep returning `true` on subsequent results, including skipped/unscored events. A read, a low-risk action, a timeout, a classification failure or an automatic correction does not clear it.
+4. Clear it only when a **new genuine user instruction** is received. Use the instruction ID/deduplication machinery: repeated copies of instructions already seen must not reset the state. Automatic injected text and notices are not user instructions. Apply this reset before judging the new event; a new extreme finding can request another stop immediately.
+5. Return an explicit boolean on all completed classifier results, including skipped events and each `late_results` entry. A skipped event that brings the new user instruction can therefore publish the cleared state with `risk: null`.
+
+### Ordering and compatibility
+
+- Bind each snapshot to its original `event_id`/event sequence. Late delivery must preserve that event's recorded snapshot, rather than rewriting old entries with whichever state happens to be current when delivered.
+- Keep persistent session state consistent with instruction/event order under concurrent classifications. An old call must not overwrite a newer instruction reset. The existing same-session concurrency caveat still applies; arrival order alone is insufficient.
+- Missing or null means **not reported**, not `false`. This supports older classifier versions. Backend pending/error fallbacks must not invent `false`. Dashboard consumers retain the newest valid explicit state by event sequence; an older late result cannot override it.
+- FastAPI's current `Result` uses `extra="allow"` for ordinary and late results, so the field can pass through without renaming or an initial backend schema deployment. Typed validation can follow once the contract is agreed.
+- Noah's local dashboard now previews this state and shows a health pie. It is still synthetic data; live dashboard persistence/read APIs are separate pending work. Its neutral Unreported slice prevents absent signals from being labeled healthy. Existing Mod notices/corrections continue through `actions` as before; this field adds no new Mod command.
+
+### Please verify on your side
+
+- Ordinary corrective flag: `false`; extreme stop correction: `true`.
+- Subsequent reads, tool results and repeated old instructions preserve `true`.
+- A fresh user instruction clears it; a fresh extreme action can set it again.
+- Unscored instruction results and late results carry the proper explicit snapshot.
+- Late/concurrent older calls cannot undo a newer reset or intervention decision.
+
+No changes have been made to David's classifier source, deployment, GPU warm pool or the shared contract by Noah's agent for this proposal.
+
