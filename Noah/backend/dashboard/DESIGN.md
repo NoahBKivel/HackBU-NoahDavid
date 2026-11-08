@@ -461,3 +461,8 @@ Evidence: review/metric-colors-desktop.jpg.
 Mobile Home health legend now uses 4px vertical row padding (formerly 12px),
 with a 90px three-state legend at 390px. Desktop retains 12px padding. Verified
 no horizontal overflow. Evidence: review/compact-health-mobile.jpg.
+
+Successful live connections now hide the entire sidebar/mobile provenance footer
+instead of displaying Live data. Connecting, access/connection errors and sample
+mode labels still appear. Verified hidden elements and no rendered Live data
+text at 390px. Evidence: review/no-live-footer-mobile.jpg.

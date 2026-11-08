@@ -330,15 +330,21 @@ function navigate(options = {}) {
 }
 
 function renderDataNote() {
-  view.insertAdjacentHTML('beforeend', '<p class="data-note" role="status">' + esc(sourceStatus) + '</p>');
-  document.querySelector('#data-status').textContent = sourceStatus;
+  view.insertAdjacentHTML('beforeend', '<p class="data-note" role="status"></p>');
+  setSourceStatus(sourceStatus);
 }
 
 function setSourceStatus(status) {
   sourceStatus = status;
-  document.querySelector('#data-status').textContent = status;
+  const visible = status !== 'Live data';
+  const sidebarStatus = document.querySelector('#data-status');
+  sidebarStatus.textContent = visible ? status : '';
+  sidebarStatus.parentElement.hidden = !visible;
   const note = view.querySelector('.data-note');
-  if (note) note.textContent = status;
+  if (note) {
+    note.textContent = visible ? status : '';
+    note.hidden = !visible;
+  }
 }
 
 async function pollSessions() {

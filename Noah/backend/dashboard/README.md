@@ -62,7 +62,7 @@ It reads the same events/results delivered to the Mod; no classifier calls or
 warmups are triggered by viewing. Modal Dict vision-dashboard-sessions persists
 up to 2,000 display points per session across backend shutdown/redeployment.
 Modal Dict entries expire after seven days without reads/writes; this is demo
-persistence, not permanent archival storage. Live data is labeled in the footer.
+persistence, not permanent archival storage. Successful live connections hide the footer; connection errors and explicit sample labels remain visible.
 
 The server reads apiUrl/apiToken from the Mod's existing Claude settings, with
 VISION_API_URL/VISION_API_TOKEN environment overrides and the gitignored backend
