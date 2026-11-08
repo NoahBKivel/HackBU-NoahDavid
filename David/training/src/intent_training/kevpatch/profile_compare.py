@@ -61,7 +61,7 @@ def attention_check() -> dict[str, Any]:
 
 def compare(records_path: str, output: str, config: dict[str, Any], pass_tokens: int,
             projection_records: int, volume: Any, prior_output: str = '',
-            native_only: bool = False) -> dict[str, Any]:
+            native_only: bool = False, native_results: str = '') -> dict[str, Any]:
     """Measure production grouping, padding-free attention and checkpointing on fixed records."""
     import torch
     from .batched_measure import _arguments, _optimizer, _seed, _step
@@ -140,13 +140,17 @@ def compare(records_path: str, output: str, config: dict[str, Any], pass_tokens:
                 'max_relative_loss_difference': gap, 'same_seed_relative_noise_floor': floor,
                 'runs': parity}
     save('attention-parity', gate)
-    scenarios = [('reference', True, pass_tokens), ('reference', False, pass_tokens // 2),
-                 ('reference', False, pass_tokens * 3 // 4)]
+    scenarios = [] if native_results else [('reference', True, pass_tokens),
+                                           ('reference', False, pass_tokens // 2),
+                                           ('reference', False, pass_tokens * 3 // 4)]
     if gate['status'] == 'PASS':
         scenarios += [('padding_free', True, pass_tokens),
-                      ('padding_free', False, pass_tokens // 2),
-                      ('padding_free', False, pass_tokens * 3 // 4)]
-    measurements = []
+                      ('padding_free', False, pass_tokens // 5),
+                      ('padding_free', False, pass_tokens * 2 // 5)]
+    previous = json.loads(Path(native_results).read_text()) if native_results else {}
+    if previous and previous['input_records'] != len(records):
+        raise ValueError('The existing native reference has a different input count.')
+    measurements = previous.get('measurements', [])
     for name, checkpointing, cap in scenarios:
         args.pass_tokens_max = cap
         context = padding_free_attention if name == 'padding_free' else nullcontext
