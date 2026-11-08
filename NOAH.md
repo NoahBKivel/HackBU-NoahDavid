@@ -207,6 +207,14 @@ The order doubles as the cut list: each step leaves something you can demo.
   - Change the design in small steps that Noah reviews one at a time.
   - **Draw charts as plain `Svg` images, without `isInteractive`.** The interactive frame (needed for hover tooltips on points) ignored the chart's height and added large empty bands above and below it. Pinning both `width` and `height` (tested 2026-11-07) made tooltips work but kept the gaps, so point tooltips stay off.
   - **A floating box (`position: "absolute"`) is painted over the elements *before* it, and under the ones after it.** To cover the pane and take its own clicks, like the settings menu, it must be the **last** child of the pane's outer box (`position="relative"`). Drawn earlier, the later sections were painted over it, so it looked see-through and they caught its clicks. The ⓘ cards work because each is the last child of its own chart section.
+  - **Design guidance adopted from the Impeccable skill (Noah's download, 2026-11-08), Operate mode** (a tool the user works in, so clarity beats expression):
+    - **Rhythm:** tight spacing inside a group, more between groups. The pane has three groups: summary (status, current risk, readouts), charts, and activity (flagged, recent).
+    - **Tabular figures** (`tabular` on Text) for numbers and times, so columns line up.
+    - **Color only for state:** green, yellow and red mean risk level. No decorative color.
+    - **One vocabulary:** section titles, buttons, dim helper text and icons look the same everywhere.
+    - **Empty states explain the pane.**
+    - **Restraint:** no gradients, glow, decorative motion or extra containers.
+    - Not applicable here: its launcher scripts and browser tools (not run; the Mod isn't a web page), fonts, page layouts, and marketing-page advice.
   - **Never put a border on a small control.** On the desktop a Box border adds a lot of size: a rounded border around the time window buttons made them huge. Plain Buttons can't be given rounded backgrounds, so the selected window uses a square tint the size of the button.
 - **Type-check with TypeScript in the scratchpad.** The `claude` command line isn't installed, so run `tsc -p <mod>/.claude-plugin/types/tsconfig.json` with a TypeScript copy installed in the session scratchpad. The engine checks rules, not types.
 - **Slow results (N-001), handled in the Mod:**

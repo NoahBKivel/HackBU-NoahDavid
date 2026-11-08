@@ -738,7 +738,8 @@ async function renderPane($: $, elements: Elements, live: boolean) {
   const recent = [...list].reverse()
 
   return (
-    <Box flexDirection="column" gap="sm" paddingX={1} position="relative">
+    <Box flexDirection="column" gap="lg" paddingX={1} position="relative">
+      <Box flexDirection="column" gap="sm">
       {/* Header row: status, then the settings gear at the far right. */}
       <Box flexDirection="row" justifyContent="flex-end" alignItems="center">
         <Box flexDirection="row" alignItems="center" gap="sm">
@@ -777,8 +778,10 @@ async function renderPane($: $, elements: Elements, live: boolean) {
         {readout(Text, Box, 'Flags', String(flagged.length), flagged.length ? 'error' : 'text')}
         {readout(Text, Box, 'Corrections', String(fixes), fixes ? 'success' : 'text')}
       </Box>
+      </Box>
 
 
+      <Box flexDirection="column" gap="sm">
       <Box flexDirection="column" width="100%" borderStyle="round" borderColor="#88878040" paddingX={1}>
         {chartTitle(Text, Box, Button, Svg, 'Risk per action', 'info-risk', chosen.risk, pick('risk'))}
         {Svg ? (
@@ -813,7 +816,9 @@ async function renderPane($: $, elements: Elements, live: boolean) {
           [['→ Gray', 'subtle'], [': drift is steady']],
         ])}
       </Box>
+      </Box>
 
+      <Box flexDirection="column" gap="md">
       <Box flexDirection="column">
         <Box flexDirection="row" justifyContent="space-between" alignItems="center">
           <Text weight="semibold">{`Flagged actions (${flagged.length})`}</Text>
@@ -855,7 +860,7 @@ async function renderPane($: $, elements: Elements, live: boolean) {
                 </Button>
               </Box>
               <Box flexShrink={0} width={5}>
-                <Text color={p.flagged ? 'error' : 'text'} wrap="truncate">{p.risk === null ? '' : pct(p.risk)}</Text>
+                <Text color={p.flagged ? 'error' : 'text'} wrap="truncate" tabular>{p.risk === null ? '' : pct(p.risk)}</Text>
               </Box>
               <Box flexShrink={1} flexGrow={1} minWidth={0} overflow="hidden">
                 <Text dimColor wrap="truncate">{`${p.tool}: ${p.summary}`}</Text>
@@ -865,6 +870,7 @@ async function renderPane($: $, elements: Elements, live: boolean) {
           </Box>
         ))}
         {!lists.recent && recent.length > RECENT_SHOWN && <Box paddingLeft={4}><Text dimColor>...</Text></Box>}
+      </Box>
       </Box>
       {isSettingsOpen && (
         <Box position="absolute" top={2} right={1}>
@@ -999,7 +1005,7 @@ async function setTimeFormat($: $, format: string) {
 function readout(Text: any, Box: any, label: string, value: string, color: string) {
   return (
     <Box flexDirection="column" alignItems="flex-start" key={`readout-${label}`}>
-      <Text size="heading" weight="bold" color={color}>{value}</Text>
+      <Text size="heading" weight="bold" color={color} tabular>{value}</Text>
       <Text dimColor size="caption">{label}</Text>
     </Box>
   )
@@ -1040,7 +1046,7 @@ const C = {
 }
 const W = 900
 const H = 290
-const PAD = { left: 62, right: 26, top: 16, bottom: 32 }
+const PAD = { left: 70, right: 30, top: 16, bottom: 36 }
 
 function frame(inner: string, yLabels: [number, string][], times: number[] = []) {
   const plotH = H - PAD.top - PAD.bottom
@@ -1048,7 +1054,7 @@ function frame(inner: string, yLabels: [number, string][], times: number[] = [])
     .map(([v, text]) => {
       const y = PAD.top + plotH * (1 - v)
       return `<line x1="${PAD.left}" y1="${y}" x2="${W - PAD.right}" y2="${y}" stroke="${C.grid}" stroke-width="1"/>` +
-        `<text x="${PAD.left - 6}" y="${y + 7}" text-anchor="end" font-size="19" fill="${C.axis}" font-family="sans-serif">${text}</text>`
+        `<text x="${PAD.left - 6}" y="${y + 8}" text-anchor="end" font-size="22" fill="${C.axis}" font-family="sans-serif">${text}</text>`
     })
     .join('')
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">${grid}${timeAxis(times)}${inner}</svg>`
@@ -1082,7 +1088,7 @@ function timeAxis(times: number[]) {
   const span = last - first
   const y = H - 6
   const label = (x: number, text: string, anchor = 'middle') =>
-    `<text x="${x.toFixed(1)}" y="${y}" text-anchor="${anchor}" font-size="19" fill="${C.axis}" font-family="sans-serif">${text}</text>`
+    `<text x="${x.toFixed(1)}" y="${y}" text-anchor="${anchor}" font-size="22" fill="${C.axis}" font-family="sans-serif">${text}</text>`
   if (span <= 0) return label(PAD.left + plotW / 2, timeLabel(first, MINUTE, false))
 
   const step = STEPS.find(s => span / s <= 5) ?? 30 * DAY
