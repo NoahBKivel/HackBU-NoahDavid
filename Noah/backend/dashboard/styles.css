@@ -302,7 +302,7 @@ button:focus-visible, a:focus-visible, summary:focus-visible {
   .health-total { margin-top: 5px; }
   .panel-heading h2 { font-size: 17px; }
   .health-pie { width: 140px; margin: 0; }
-  .health-legend > div { gap: 10px; padding: 12px 0; }
+  .health-legend > div { gap: 10px; padding: 4px 0; }
   .health-legend dd { gap: 0; }
   .health-legend dd > span { display: none; }
   .mobile-taskbar { display: grid; grid-template-columns: repeat(3, 1fr); position: fixed; z-index: 5; left: 50%; bottom: calc(16px + env(safe-area-inset-bottom)); transform: translateX(-50%); width: min(440px, calc(100% - 32px)); padding: 6px; border-radius: 999px; background: var(--sidebar); border: 1px solid var(--border); }

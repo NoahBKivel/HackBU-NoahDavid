@@ -457,3 +457,7 @@ flags are red, nonzero corrections green, zeros neutral and missing values muted
 This changes no classifier threshold, calculation or chart trace. Verified against
 the same live screenshot values (44/13/68/48 percent, 4 flags, 0 corrections).
 Evidence: review/metric-colors-desktop.jpg.
+
+Mobile Home health legend now uses 4px vertical row padding (formerly 12px),
+with a 90px three-state legend at 390px. Desktop retains 12px padding. Verified
+no horizontal overflow. Evidence: review/compact-health-mobile.jpg.
