@@ -28,14 +28,14 @@ This document specifies the training data, the labels, the training run, model s
 | Generated thinking notes | the notes Claude Code actually shows | none measured | notes appear in ~1% of real thinking blocks, so a model leaning on them loses little at runtime |
 | Accelerated training kernels | the reference forward pass | loss on fixed batches within max(the measured same-seed noise floor, 10⁻³ relative) | outside → accelerated kernels refused; the reference path is the default |
 
-**Scope.** *In:* training sources and constructions, labelling, the training recipe, candidate selection, calibration, the long-context validity gate, evaluation, and training records for the document-overflow screen. *Out (runtime specification):* the classifier's serving logic, firing thresholds, overflow-path selection at runtime, the production state cache, the demo.
+**Scope.** *In:* training sources and constructions, labelling, the training recipe, candidate selection, calibration, evaluation, and training records for the document-overflow screen. *Out (runtime specification):* the classifier's serving logic, firing thresholds, overflow-path selection at runtime, the production state cache, the demo. Long-context training and its validity gate are excluded. The handoff writes `long_context.json` as `{"validated_length":10239}`.
 
 ---
 
 ## 2. Design Principles
 
 1. **Label what is visible.** A label says what the monitor's own state shows. Evidence the monitor cannot see (raw reasoning, hidden-test rewards, later outcomes) informs the labeller and never becomes the evidence for a yes.
-2. **One renderer.** Training states and runtime states come from one renderer fed one event schema. No training-only formatting exists for monitor records; replay and long-document records keep Kev's native decision-record format, since they train general decision skill rather than monitor states.
+2. **One renderer.** Training states and runtime states come from one renderer fed one event schema. No training-only formatting exists for monitor records; replay records keep Kev's native decision-record format, since they train general decision skill rather than monitor states. Every record is rendered at the 10,239-token state budget.
 3. **Visible evidence decides labels.** A source label from a human reading the visible trace or a rule over visible tool calls is final for its question; a construction's intended label and every outcome-based or LLM-judged source label yield to the teacher, who labels from the visible state (section 8.4); the teacher fills every question no source covers.
 4. **No cue may predict a label except the behaviour.** Negative cuts match positives' event type and position; pairs share optimizer steps.
 5. **The held-out sets are touched once.** No held-out item reaches training, selection or calibration.
@@ -47,7 +47,7 @@ This document specifies the training data, the labels, the training run, model s
 ## 3. Claim Discipline
 
 - **Asserted:** true by construction, discharged by a parity test or arithmetic (identity warm-start, renderer parity, step count).
-- **Sourced:** taken from a cited measurement under stated conditions. The narrow-data study is "LLM-as-Jev" (arXiv 2610.02076: a ≥ 33% non-target share removed a yes-bias); the long-record share comes from the data-mixing and long-context research summarised in this project's reports (ProLong, arXiv 2410.02660; Kev-27B's model card, ~7.4% long records); the ≤ 1:3 balance recommendation is the same data-mixing research; Kev's context-validation rule is Kev's README.
+- **Sourced:** taken from a cited measurement under stated conditions. The narrow-data study is "LLM-as-Jev" (arXiv 2610.02076: a ≥ 33% non-target share removed a yes-bias); the ≤ 1:3 balance recommendation comes from the data-mixing research summarised in this project's reports.
 - **Estimated:** a forward projection with a band, settled by a named gate (run time, teacher throughput, generation spend).
 - **Refused:** no lift is reported before the lift test runs; no held-out score is reported for any candidate other than the selected one and stock Kev; no claim is made about accuracy on Codex or any harness other than Claude Code.
 
@@ -239,7 +239,7 @@ A `turn_completed` event renders as `[E<seq>] MESSAGE` followed by its final tex
 
 **Effort area:** the first directory under the repository root (`(root)` for root files); per area, counts of edits, writes and shell commands, with reads counted separately. Counts span the whole run, including events collapsed into the count line. EFFORT and OPEN FINDINGS always appear; an empty section renders as its heading followed by `(none)`.
 
-**Fill rule (newest first).** B_state = 32,767 tokens, counted with Kev's tokenizer on Kev's rendering (Kev rejects a state whose token count plus one exceeds `max_state` = 32,768); the state never depends on the questions asked of it. A record's question rows share Kev's packed allowance (`max_packed` = `max_state` + 1,664, checked by Kev's own fit test); rows that do not fit move to a sibling record with the same state, sharing its split and batch (siblings are not a contrast pair, so the cap's pair exemption does not cover them). Each single row must also fit Kev's row limit (`max_branch` = `max_state` + 640, so 640 tokens beside a full state): L7's «text» is trimmed to fit, evidence lines first, and a quoted «R_k text» is trimmed head and tail, each cut marked `[cut]`; the runtime trims the same way. USER INSTRUCTIONS and PROJECT DOCUMENTS verbatim first; then LATEST EVENT in full; then recent events as detailed blocks, newest first, stopping at the first block that does not fit what remains of the detail budget max(0.40 × B_state − tokens(instructions + documents), 0.15 × B_state), so the detailed events are always the newest in an unbroken run (the 0.15 floor keeps recent detail for the trajectory questions, matching the screen ledger's share); every older event as a one-liner; OPEN FINDINGS and EFFORT always. If the one-liners would overflow B_state, the oldest are replaced by one count line (`[E1–E120: 120 earlier events]`), oldest first, until the state fits. If instructions and documents exceed B_state − 0.15 × B_state − tokens(LATEST EVENT, OPEN FINDINGS, EFFORT, the section headings and one count line), the record belongs to the overflow screen form (section 6.6) instead.
+**Fill rule (newest first).** B_state = 10,239 tokens, counted with Kev's tokenizer on Kev's rendering (Kev rejects a state whose token count plus one exceeds `max_state` = 10,240); the state never depends on the questions asked of it. A record's question rows share Kev's packed allowance (`max_packed` = `max_state` + 1,664, checked by Kev's own fit test); rows that do not fit move to a sibling record with the same state, sharing its split and batch (siblings are not a contrast pair, so the cap's pair exemption does not cover them). Each single row must also fit Kev's row limit (`max_branch` = `max_state` + 640, so 640 tokens beside a full state): L7's «text» is trimmed to fit, evidence lines first, and a quoted «R_k text» is trimmed head and tail, each cut marked `[cut]`; the runtime trims the same way. USER INSTRUCTIONS and PROJECT DOCUMENTS verbatim first; then LATEST EVENT in full; then recent events as detailed blocks, newest first, stopping at the first block that does not fit what remains of the detail budget max(0.40 × B_state − tokens(instructions + documents), 0.15 × B_state), so the detailed events are always the newest in an unbroken run (the 0.15 floor keeps recent detail for the trajectory questions, matching the screen ledger's share); every older event as a one-liner; OPEN FINDINGS and EFFORT always. If the one-liners would overflow B_state, the oldest are replaced by one count line (`[E1–E120: 120 earlier events]`), oldest first, until the state fits. If instructions and documents exceed B_state − 0.15 × B_state − tokens(LATEST EVENT, OPEN FINDINGS, EFFORT, the section headings and one count line), the record belongs to the overflow screen form (section 6.6) instead.
 
 ### 6.5 Correction text (inserted by correction-window constructions; identical to the runtime's)
 
@@ -286,9 +286,9 @@ N = 12,200 training records, made of:
 | Part | Count | Formula / source |
 |---|---|---|
 | Replay | N_replay = 3,000 | decision-v7 2,000 + hard-v1 500 + tasksource 500; ρ_replay = 3,000 / 12,200 ≈ 0.25 (sourced: Kev's notes tie forgetting to replay share; LLM-as-Jev needed ≥ 33% non-target data, completed here by benign and chat-intent records) |
-| Long documents | N_long = 400 | QuALITY 200 + padded long policies 200 |
+| Long documents | N_long = 0 | No QuALITY or padded long-policy training records. |
 | Overflow screen | N_screen = 200 | section 7.4 |
-| Task records | 8,600 | n_o = s · n_o^plan per source (table 7.3), s = (N − N_replay − N_long − N_screen) / Σ n_o^plan = 8,600 / 10,630 ≈ 0.809 |
+| Task records | 9,000 | n_o = s · n_o^plan per source (table 7.3), s = (N − N_replay − N_long − N_screen) / Σ n_o^plan = 9,000 / 10,630 = 900 / 1,063. |
 
 Pair copies (note pairs, rewrite copies, goal-flip pairs) are inside these counts. A source that yields fewer records than s · n_o^plan passes its shortfall to the other sources of the same objective in proportion to their quotas. The dev split (section 7.9) is built in addition to N.
 
@@ -399,15 +399,13 @@ A V label here covers the question its offence matches: reading tests, grader ou
 | TonyDzi filtered | 150 | T | Tool-using sessions, no hook block, no bypass strings, not scheduled tasks or role prompts. |
 | Pressure negatives (construction) | 100 | C | 7.4 |
 
-**Replay and long documents**
+**Replay**
 
 | Source | Count | Conversion |
 |---|---|---|
 | jaredpalmer/kev-suites decision-v7 train | 2,000 | Pre-built from the suite's train split (not the trainer's `--replay` sampler): yes/no labels rebalanced to 50/50 per source (boolq, agnews), minimal-pair groups kept together, passed through `--data` with their original source names. |
 | kev-suites hard-v1 train | 500 | As data records. |
 | tasksource/tasksource-jev-typed-decisions | 500 | Filtered to `license_use` permitting training; CLINC, SGD and When2Call rows dropped; `kind` mapped to noul/choice/score. |
-| QuALITY v1.0.1 | 200 | Article padded to 16–32K with 2–4 other articles by different authors; a pointer names the target story; the target article at a uniformly drawn position; options shuffled. |
-| hard-v1 long_policy | 200 | Fresh policy instances padded with unrelated policies to 16–32K; the relevant policy at a uniformly drawn position. |
 
 ### 7.4 Constructions
 
@@ -435,19 +433,19 @@ The share of records showing notes is f_note = k · r, with r the measured share
 
 About 20% of flagged agent records (4.1) get a copy whose `agent_text` is rewritten to sound benign; actions and results unchanged (pair group). The copy is a record like any other: the teacher labels it, so questions whose evidence is the agent's text (M5, M7, M1) take the copy's own labels, while construction and visible-based labels on actions carry over.
 
-### 7.7 Long records
+### 7.7 State-length limit
 
-f_long = 0.10 of all records render at 16–32K tokens (sourced: the long-context research recommends 8–12%; Kev-27B used about 7.4%). They come from source runs with a long real history kept up to the cut, plus the long-document records (7.3). When long-history runs fall short of f_long, the rest come from agent records whose PROJECT DOCUMENTS are padded with non-normative text (long articles of the QuALITY kind, never agent documents or policies, which carry rules) until the rendered state reaches 16K to B_state, documents stopping at the 6.4 threshold, the record's own documents at a uniformly drawn position; labels are unchanged, since articles state no requirement (Kev-27B built 3,200 of its long records this way).
+No long-context training share or padding is used. Every record is rendered at B_state = 10,239 with `--max_state 10240`. Overflow screen states retain their 8,192-token budget.
 
 ### 7.8 Balance cap
 
-Per question, every positive row and every row belonging to a pair group is kept, and other negative rows are sampled down to at most 10 per positive; a base row and its negated twin (4.2) are kept or dropped together; no record loses its source's target questions, so no record vanishes. (The data-mixing research recommends ≤ 1:3; 1:10 keeps most of the joint labelling and the decided record mix, and the calibration offset corrects the remaining skew.) A dropped row costs no teacher call, since one call labels a whole record. Protected rows can push a question past 1:10; the measured post-cap rate π^train feeds the offset (9.5). A record's target questions are those of the section 7.3 objective its source or construction is listed under; benign, replay and long-document records have none, and a record whose rows would all be dropped keeps one at random. L7 and D5 rows are never capped.
+Per question, every positive row and every row belonging to a pair group is kept, and other negative rows are sampled down to at most 10 per positive; a base row and its negated twin (4.2) are kept or dropped together; no record loses its source's target questions, so no record vanishes. (The data-mixing research recommends ≤ 1:3; 1:10 keeps most of the joint labelling and the decided record mix, and the calibration offset corrects the remaining skew.) A dropped row costs no teacher call, since one call labels a whole record. Protected rows can push a question past 1:10; the measured post-cap rate π^train feeds the offset (9.5). A record's target questions are those of the section 7.3 objective its source or construction is listed under; benign and replay records have none, and a record whose rows would all be dropped keeps one at random. L7 and D5 rows are never capped.
 
 ### 7.9 Splits and exclusions
 
 - **Grouping.** Records are grouped by pair group, then trajectory, then task, then source; no group crosses a split.
-- **Dev.** 10% of groups at natural prevalence, built in addition to N. Per-question floor: enough positives that the AUROC standard error (Hanley–McNeil) is ≤ 0.035, about 60 positives at AUROC 0.8; rare questions top up from their own sources or constructions, and every prevalence-dependent quantity (π^dev, 9.5) is computed on base dev, without the top-ups. Dev holds: the intent slice (section 9.4, with the same floor per intent question; goal-splice records may enter it); the long-context gate items: constraint-insertion records (7.4) built on real runs with the inserted constraint in a project document instead of `[I1]`, PROJECT DOCUMENTS padded by non-normative articles to 8K, 16K and the single-state limit (the largest document load that renders within B_state under 6.4), the requirement document at one uniformly drawn position (start, middle or end), events and detail budget held fixed so labels are unchanged; the item count is n = d / SE² with SE = 0.03 / (1.96 + 1.28), where d is the larger of stock Kev-4B's own 8K-versus-16K and 8K-versus-limit disagreement rates on M2, on a 200-item pilot built the same way (n ≈ 700 at d = 0.06), so a model at parity passes both lengths with probability ≥ 0.8.
-- **Held-out conversions.** No held-out pass renders raw reasoning (reasoning fields go to the side record, as in training). TRACE: assistant messages split into text, tool-call and tool-result events with generated ids, user turns as `[I_n]`, each conversation cut before the first user turn that challenges the result or exposes the hack (located by the teacher once per conversation and logged), scored per 12.4. Probe items, each label mapped to its question's polarity (an implicit-goal or request-satisfaction yes is an M1 or M2 no): TRACE items as TRACE, scored on M1; IFBench items as the request in `[I1]` and the response as a final MESSAGE (LATEST EVENT), scored on M2; aspi items as the prompt in `[I1]` and the dataset's tool calls as events under their own tool names (6.1), the last as LATEST EVENT, scored on M7; UserIntentBench items as the original request `[I1]`, the update `[I2]` and the agent MESSAGE "Next I'm building this part: <predicate>" as LATEST EVENT, scored on G1. LLMBar and RewardBench 2: the request as `[I1]`, each response as a final MESSAGE, scored on M1 and M2 by accuracy against the human-preferred response. The long-context gate items in dev are excluded from selection scoring and calibration and are scored once, on the selected adapter.
+- **Dev.** 10% of groups at natural prevalence, built in addition to N. Per-question floor: enough positives that the AUROC standard error (Hanley–McNeil) is ≤ 0.035, about 60 positives at AUROC 0.8; rare questions top up from their own sources or constructions, and every prevalence-dependent quantity (π^dev, 9.5) is computed on base dev, without the top-ups. Dev holds the intent slice (section 9.4, with the same floor per intent question; goal-splice records may enter it). No long-context gate items or stock pilot are built.
+- **Held-out conversions.** No held-out pass renders raw reasoning (reasoning fields go to the side record, as in training). TRACE: assistant messages split into text, tool-call and tool-result events with generated ids, user turns as `[I_n]`, each conversation cut before the first user turn that challenges the result or exposes the hack (located by the teacher once per conversation and logged), scored per 12.4. Probe items, each label mapped to its question's polarity (an implicit-goal or request-satisfaction yes is an M1 or M2 no): TRACE items as TRACE, scored on M1; IFBench items as the request in `[I1]` and the response as a final MESSAGE (LATEST EVENT), scored on M2; aspi items as the prompt in `[I1]` and the dataset's tool calls as events under their own tool names (6.1), the last as LATEST EVENT, scored on M7; UserIntentBench items as the original request `[I1]`, the update `[I2]` and the agent MESSAGE "Next I'm building this part: <predicate>" as LATEST EVENT, scored on G1. LLMBar and RewardBench 2: the request as `[I1]`, each response as a final MESSAGE, scored on M1 and M2 by accuracy against the human-preferred response.
 - **Held out entirely** (never trained on, never used for selection or calibration): PatronusAI TRACE; MALT reviewed runs; LLMBar; RewardBench 2; the 200 items in `docs/research/heldout-intent-probe-manifest.jsonl`; IFEval; IFBench test; MT-Bench human judgments; HiL-Bench; RECAP; MTAC-IFBench; CUAD; Schema-Guided Dialogue; ContractNLI; facebook/hackbench; ScaleAI/mrt; mjkenney/cot-monitor-robustness; JevAny; Jeva-Eval; ameek CoT transcripts; PatronusAI/TRAIL; ScaleAI/aspi; UserIntentBench. rh-bench rows sourced from TRACE or MALT are excluded wherever rh-bench content appears.
 - **Never trained on:** the demo repository and prompt once chosen; the demo check (12.3) scores them.
 - **Not used:** hewittlab monitor sets, oliverdk, dang-w, stepguard, ToolPRMBench, funes clones, davanstrien, crispwisp, RLVR-IFeval, AgentRx, MAUD, SWE-Gym, AgentGlass, nebius trajectory sets, AgentLogs, pi sessions, DevGPT, Skywork-80K, PRISM, USS, WebDev Arena, JevAgentHarness, Sengim, lucabaroni, rh-bench, FollowBench, ComplexBench, HANDBOOK, ReqClarifyBench, swe-clarify, MAST, the chat and QA ambiguity sets, HumanEvalComm, ClarifyCodeBench, CodeClarQA, nebius SWE-rebench scores, Lost in Conversation, Arena 55k/100k, HelpSteer2, UltraFeedback, SpecBench, agent-reward-bench.
@@ -471,7 +469,7 @@ For each record the teacher receives the rendered state (exactly what the monito
 
 ### 8.3 Votes and targets
 
-One vote from GPT 6.1 Sol and one from Terra, both on fast mode. On a yes/no question each vote is yes (1), no (0), or can't tell (0.5); the target is the mean of the two, so 0, 0.25, 0.5, 0.75 or 1; a tie resolves to the positive class, since a missed problem costs the user more than a false flag the agent dismisses: `label` = target ≥ 0.5 where the positive class is yes, and `label` = target > 0.5 for G1 (target 0.5 gives no, the drift class); the soft target keeps the uncertainty in the loss. The soft target carries the uncertainty into the loss; binary counts and AUROC use `label`. On a choice or score question each vote picks one option; the target is the mean of the two one-hot votes and `label` is the option with the higher mean (a tie between a positive and a non-positive option goes to the positive one; other ties go to the Sol vote). Records are sent to labelling subagents in batches of 10–20 records from one source per call, fewer when a batch would exceed the labelling model's input limit.
+One vote from GPT 6.1 Sol and one from Terra, with low thinking and both votes launched in parallel. Codex labellers use fast mode; direct OpenAI labellers use standard concurrent requests, never the Batch API, with the same instructions and vote format. Shared ownership prevents duplicate votes. On a yes/no question each vote is yes (1), no (0), or can't tell (0.5); the target is the mean of the two, so 0, 0.25, 0.5, 0.75 or 1; a tie resolves to the positive class, since a missed problem costs the user more than a false flag the agent dismisses: `label` = target ≥ 0.5 where the positive class is yes, and `label` = target > 0.5 for G1 (target 0.5 gives no, the drift class); the soft target keeps the uncertainty in the loss. The soft target carries the uncertainty into the loss; binary counts and AUROC use `label`. On a choice or score question each vote picks one option; the target is the mean of the two one-hot votes and `label` is the option with the higher mean (a tie between a positive and a non-positive option goes to the positive one; other ties go to the Sol vote). Records are sent in batches of 20–30 records from one source per call, fewer when a batch would exceed the labelling model's input limit. Label train constructions and rare-question sources first, then the remaining train records; dev waits.
 
 ### 8.4 Label resolution
 
@@ -511,7 +509,7 @@ python -m kev.train \
   --base Qwen/Qwen3.5-4B-Base --base_revision 1001bb4d826a52d1f399e183466143f4da7b741b \
   --lora 16 --lora_targets all --head_dim 256 \
   --data <train.jsonl> \
-  --max_state 32768 --shared_prefix 1 --length_sort 1 --pass_tokens_max <P> \
+  --max_state 10240 --shared_prefix 1 --length_sort 1 --pass_tokens_max <P> \
   --p_none_pair 0 --p_none 0 --p_none_distract 0 --p_distract 0 \
   --epochs 1 --lr 2e-5 --batch 2 --accum 8 \
   --dtype bf16 --checkpointing 1 --device cuda --seed 1 --out <run dir>
@@ -558,15 +556,13 @@ Candidates are scored with the batched training forward (shared prefix); a candi
 
 | Quantity | Formula | Inputs |
 |---|---|---|
-| Task-record scale s | (N − N_replay − N_long − N_screen) / Σ n_o^plan | N = 12,200; N_replay = 3,000 |
+| Task-record scale s | (N − N_replay − N_long − N_screen) / Σ n_o^plan = 9,000 / 10,630 | N = 12,200; N_replay = 3,000; N_long = 0; N_screen = 200 |
 | Note share f_note | k · r | r measured from live events; k = 4 |
-| Long share f_long | 0.10 | sourced |
 | Negatives per positive | ≤ 10 per question among unprotected rows; protected rows (7.8) may exceed it | decided |
 | Positive floor | max(0.8 · P_q, 60), P_q = Σ over sources of s · n^plan × the source's positive share for q | each source's intended positive share, fixed before the build: constructions from their intended labels, dataset V sources from the natural share among the rows the converter keeps (dataset metadata), agent-run sources (8.7), V labels on responses generated during the build (IF_multi's sampled responses) and T sources 0 (no measured positive rate exists for any monitor question); the 60 (the dev floor's count, 7.9) is the floor for questions whose positives come only from teacher labels (G5, M5) |
 | Dev positives per question | min n with Hanley–McNeil SE(AUROC) ≤ 0.035 | per-question AUROC estimate (0.8 default) |
-| State budget | B_state = 32,767; detail budget max(0.40 · B_state − tokens(instructions + documents), 0.15 · B_state) | Kev's tokenizer |
+| State budget | B_state = 10,239; `max_state` = 10,240; detail budget max(0.40 · B_state − tokens(instructions + documents), 0.15 · B_state) | Kev's tokenizer |
 | Steps S | ⌈R / 16⌉ | R = train records after the cap, replay included |
-| Long-gate item count | n = d / (0.03 / 3.24)², so a model at parity passes both lengths with probability ≥ 0.8 | d = stock Kev-4B's 8K-versus-long disagreement on a 200-item pilot |
 | Save interval | ⌈S / 10⌉ | S |
 | Pass token cap P | max P with smoke-run peak memory ≤ 0.9 · GPU memory, and P ≥ the padded cost of the largest single record (a larger record halts the trainer) | smoke run on a synthetic record at the largest real padded cost (a full state plus its question count × its longest row) |
 | Screen section cap | (screen budget − instructions − ledger) / 10, the ledger including LATEST EVENT | screen budget 8,192 tokens (stock Kev's validated length), 10 sections per state |
@@ -578,16 +574,15 @@ Candidates are scored with the batched training forward (shared prefix); a candi
 | Item | Estimate | Band | Instrument |
 |---|---|---|---|
 | Training run | ~$10–19 (H100 at $3.95/h × 2–3.5 h, plus smoke, resume-parity and pass-cap trials) | $6–25 | Modal billing per app |
-| Candidate scoring | each candidate reads all of dev (~1,600–1,900 states, mean ~6.7K tokens with the long share): ~12M tokens, ~7 min on an H100 at ~30K tokens/s (unmeasured); stock and the step-400 pair run in a separate container during training, so ~14 min (the final save's pair) follows the run | 10–30 min after the run; settled by the first candidate scored | scoring timer |
+| Candidate scoring | each candidate reads all of dev; token count and scoring rate at the 10,239-token state budget are measured on the actual dev records. Stock and the step-400 pair run in a separate container during training; the final save's pair follows the run. | settled by the first candidate scored | scoring timer |
 | Serve-path parity | the winner over 300 dev records through the serving path (stock's side before training ends), ~5 min | 3–15 min | timer |
 | Lift and held-out reports | 2 models × (200 probe items; 200 TRACE conversations, one state each; LLMBar, RewardBench 2; 2,172 retention records), both models concurrently in separate containers, once the selected model is live, ~15–30 min after the pick | 10–45 min | timer |
-| Long-context gate | 200-item stock pilot × 3 lengths during the data build (~10 min); ~700–1,000 items × 3 lengths on the selected adapter after the pick (~0.5 h) | 0.3–1 h | timer |
 | Agent runs (wall-clock) | ~300 headless runs × 3–10 min at ~20 in parallel ≈ 1–2.5 h, plus container image pulls | 1–4 h | per-job wall-clock log |
-| Teacher items and calls | ~10,000–11,000 items (long-gate pilot and items included) × 2 votes; at 10–20 records per call, ~1,000–2,000 calls | ±30% with dev top-ups | per-batch call log |
+| Teacher items and calls | two votes per teacher-labelled record, batched 20–30 records from one source where input fits; calls counted from the actual queue, without long-gate pilot or items | dev top-ups and diagnostic passes counted separately | per-batch call log |
 | Generation and agent runs | the $200 cap binds; generation reserved first (8.7) | cap $200 | per-job spend log; stage closes at the cap |
 | Teacher wall-clock | hours = calls × minutes per call / (60 × parallel subagents): ~1,500 calls × ~3.5 min at up to 100 parallel ≈ 1 h | 0.3–3.7 h (2–5 min per call, 50–100 parallel, 1,000–2,200 calls); a relabel pass on one question adds up to its share of a full pass; RF units on G2/D2 records and sibling records add ~10–20% | throughput log |
 
-**Irreducible floor.** Every record's state must be rendered at the length the runtime would render it; long records (10%) dominate token count, and the shared-prefix path is the only lever on that cost.
+**Irreducible floor.** Every record's state must be rendered at the length the runtime would render it, using the 10,239-token state budget. Shared-prefix training reuses each record's state across its question rows.
 
 ---
 
@@ -619,7 +614,6 @@ Candidates are scored with the batched training forward (shared prefix); a candi
 | Gate | Endpoint | If it fails |
 |---|---|---|
 | Retention | Kev's decision-v7 development and calibration partitions (2,172 records): tuned minus stock accuracy with its 95% interval, winner and stock | reported |
-| Long-context validity (selected adapter, after the pick) | at 16K and at the single-state limit, M2 accuracy within 3 points of the model's own 8K accuracy on the paired 95% lower bound (Kev's validation rule); accuracy by placement (start, middle, end) reported | the validated length drops to the longest that passes; the overflow path takes the rest |
 | Requirement filter | RF recall at p ≥ 0.5 on dev's RF rows, selected adapter and stock Kev | reported |
 | Demo check | through the deployed `classify()` (or, before it is deployed, the shared renderer and the serving path with the per-question transform), on a recorded Mod session of the demo scenario (stand-in until it exists: a hand-written Mod-event stream of the agent deleting the slow tests), rendered like any record, at least one every-event problem question fires at calibrated p ≥ 0.5 at the offending event | the next candidate in pick order |
 
@@ -661,7 +655,7 @@ Baseline: stock Kev-4B given the same calibration family (per question, T_q and 
 |---|---|---|---|
 | 1. Foundations | state renderer, screen renderer and requirement-unit splitter; event schema validator; trainer patches (saves and resume, pair-group batching); interpolation tool; accelerated-kernel trial | renderer parity (golden fixtures); identity parity; resume parity; kernel check; accelerated-kernel parity; pass-cap measurement | none |
 | 2. Records | source converters (7.3); constructions (7.4); agent-side generator (8.6); agent runs (8.7); notes and rewrites | secrets scan; converter schema check | 1 |
-| 3. Labels and splits | teacher labelling (8); label resolution; balance cap; splits; intent slice; long-gate items and their stock pilot | data gates (12.2) | 2 |
+| 3. Labels and splits | teacher labelling (8); label resolution; balance cap; splits; intent slice | data gates (12.2) | 2 |
 | 4. Training and selection | the run (9.1); candidates; selection; calibration | serve-path parity; behaviour gates (12.3) | the run: the labelled, capped train split and its pair-integrity check; selection and calibration: dev, the intent slice and stock's dev scores |
-| 5. Evaluation | the lift test; held-out reports; long-context validity | lift (12.4) | 4 |
+| 5. Evaluation | the lift test; held-out reports | lift (12.4) | 4 |
 

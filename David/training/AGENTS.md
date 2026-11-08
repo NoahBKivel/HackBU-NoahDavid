@@ -28,11 +28,13 @@ No project-guidance metadata in product artifacts. Task-row IDs, spec-section re
 ## 5. The resource-access law
 
 Pre-authorized, never permission-asking:
-- **Keys:** `C:\Users\david\Documents\GitHub\classifier-for-metagaming\.env` (`ANTHROPIC_API_KEY`, `HF_TOKEN`). Load into the environment of the commands that need them; never print, log, copy or commit them; never generate or alter credentials.
+- **Keys:** `C:\Users\david\Documents\GitHub\classifier-for-metagaming\.env` (`ANTHROPIC_API_KEY`, `HF_TOKEN`, `OPENAI_API_KEY`). Load into the environment of the commands that need them; never print, log, copy or commit them; never generate or alter credentials.
 - **Anthropic API and `claude -p`:** Haiku 5.5 and Sonnet 5.5, up to $200 in total for this build, every job logged in `results/spend.jsonl`.
+- **OpenAI labelling API:** GPT 6.1 Sol and Terra, with a separate $200 total cap, real usage and cost logged per call, and shared ownership preventing duplicate votes. Use standard concurrent requests with cached fixed instructions. Report a roughly 50-record pilot's measured full-train cost projection before scaling.
 - **Modal** (workspace `davidkny22`, CLI logged in): the app `intent-monitor-training` and the volume `intent-monitor-training`, H100 for training and scoring. The app `intent-monitor` and the volume `intent-monitor-model` belong to the runtime build and are never modified.
 - **Hugging Face, Harbor (`davidkny22`), Docker Desktop, GitHub** (git credentials present).
 - **Codex subagents:** up to 100 concurrent.
+- **Local resources:** at most eight concurrent local Python, Docker or shell workload workers, with no new local workload until available RAM exceeds 4 GB. API-bound labelling subagents are exempt from that worker cap. Move heavy conversion to Modal. Docker remains stopped; do not restart it or manage other local processes.
 - **The owner alert** (`scripts/alert.ps1`): for the cases task.md lists, never for routine progress.
 Every output that matters ends up on the Modal volume or in `David/`, never only in a container.
 

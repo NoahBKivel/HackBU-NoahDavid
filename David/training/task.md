@@ -6,9 +6,9 @@ The workspace root for this task is `HackBU-NoahDavid/David/training/` (called `
 
 ---
 
-## 0. Context Recovery (do this first, every session)
+## 0. Context Recovery (do this first after actual compaction)
 
-**If this is not your first session, or the context window has rolled over:**
+**Only when actual compaction or context-window rollover has occurred:**
 
 1. Read this file (`training/task.md`) completely, every line.
 2. Read `training/AGENTS.md` completely. Its laws bind every action.
@@ -24,7 +24,7 @@ The workspace root for this task is `HackBU-NoahDavid/David/training/` (called `
 11. Read the skills, each in full: `C:\Users\david\.codex\skills\stay-on-goal\SKILL.md`, `C:\Users\david\.claude\skills\reading-context\SKILL.md`, `C:\Users\david\.claude\skills\slopless-writing\SKILL.md`. Declare the goal-directed chain for the current work in one line (current action -> immediate artifact -> required gate -> the 08:00 deliverable).
 12. Only after all of the above, resume from where the last session stopped. Read `David/docs/research/` reports or `David/docs/audits/` only when a task row or the spec cites them.
 
-**Do not rely on memory. Read the files.** Tail reads are capped at 10 lines unless a step above says otherwise. Section 0 fires on compaction or rollover only, never on an ordinary turn boundary, and when it fires a partial pass is a false record: execute it exactly as written.
+**Do not rely on memory. Read the files.** Tail reads are capped at 10 lines unless a step above says otherwise. Section 0 fires on actual compaction or rollover only, never on an ordinary turn boundary or session resume. The owner's MSG-006 makes this trigger explicit. When it fires a partial pass is a false record: execute it exactly as written.
 
 **On-demand data, never Section-0 reads:** everything under `training/data/` and `training/results/`, the spend log, `TASK-CLAIMS.md` beyond its rows, and the dataset dossier `David/docs/DATASET-DOSSIER.md` (read the entry a converter needs, nothing else).
 
@@ -72,6 +72,8 @@ For any mechanism the spec does not pin down to the line (a dataset's real field
 
 You can run up to 100 concurrent subagents. Converters, constructions, generation and labelling are parallel by nature: fan them out. Moving equal-cost work into a second Modal container is pre-approved wherever it shortens the critical path (spec 11). If throughput is the concern, add workers; never stop.
 
+The owner caps local Python, Docker and shell workload concurrency at eight and forbids starting a new local workload until available RAM exceeds 4 GB. API-bound labelling subagents are exempt from that worker cap. Offload heavy conversion to Modal. Docker remains stopped; do not restart it or manage other local processes. Prioritize at least 60 API-bound Sol and Terra labellers where slots and verified inputs permit, with low thinking. Label train constructions and rare-question sources first, then the remaining train records; dev waits. Launch a batch's two model votes in parallel.
+
 ---
 
 ## 2. Objective
@@ -79,12 +81,12 @@ You can run up to 100 concurrent subagents. Converters, constructions, generatio
 Produce, from the spec:
 
 - **The shared module `David/monitor_format/`** (section 4, Step 2), with its frozen interface, used by every record and imported read-only by the runtime build.
-- **The training data:** N = 12,200 train records (spec 7.1), a grouped dev split with the intent slice and the long-context gate items (7.9), and the held-out conversions (7.9), all labelled (8) and passing the data gates (12.2).
+- **The training data:** N = 12,200 train records (spec 7.1): 3,000 replay, 200 overflow screen and 9,000 task records, with s = 9,000 / 10,630. Render every record at B_state = 10,239 with `--max_state 10240`; overflow screens retain 8,192 tokens. Build a grouped dev split with the intent slice and the held-out conversions (7.9), all labelled (8) and passing the data gates (12.2). No long-context training records, QuALITY records, padded long-policy records or long-context gate items are built.
 - **The patched trainer and the interpolation tool** (9.2), with the Phase-1 correctness gates passing (12.1).
 - **One training run** (9.1) on a Modal H100, saves every ⌈S/10⌉ steps.
 - **Selection and calibration** (9.3 to 9.5): five candidates scored, the pick made, calibration fitted, serve-path parity and the demo check passing (12.1, 12.3).
 - **The runtime handoff files** on the Modal volume `intent-monitor-training`: `selected/` (a directory Kev's `Checkpoint` loads), `calibration.json` and `long_context.json`, in the formats of section 4, Step 9.
-- **The evaluation** (12.3, 12.4): the lift test, LLMBar and RewardBench 2, retention, RF recall, the long-context gate and the "flag everything" report, written to `training/reports/RESULTS.md` with real numbers.
+- **The evaluation** (12.3, 12.4): the lift test, LLMBar and RewardBench 2, retention, RF recall and the "flag everything" report, written to `training/reports/RESULTS.md` with real numbers.
 
 **DO NOT MARK THIS GOAL COMPLETE** until: the handoff files exist on the volume and load through Kev's serving path; serve-path parity and the demo check logged PASS (or their spec fallbacks were taken and logged); every Phase-1 and data gate logged PASS or its spec fallback; `RESULTS.md` carries the lift test and every reported item with measured values; `DAVID.md` carries the handoff milestone; STATUS reflects the final state; and a final recap exists.
 
@@ -103,11 +105,11 @@ Produce, from the spec:
 
 ### 2.2 Environment and access
 
-- **Keys:** `C:\Users\david\Documents\GitHub\classifier-for-metagaming\.env` holds `ANTHROPIC_API_KEY` and `HF_TOKEN`. Load it into the process environment of the commands that need it (Hugging Face downloads, the Anthropic API, `claude -p`). Never print it, copy it, or write it anywhere. No other Anthropic key exists on the machine; every `claude -p` run gets `ANTHROPIC_API_KEY` from this file, so it bills the API credit.
+- **Keys:** `C:\Users\david\Documents\GitHub\classifier-for-metagaming\.env` holds `ANTHROPIC_API_KEY`, `HF_TOKEN` and `OPENAI_API_KEY`. Load them into the process environment of the commands that need them. Never print, log, copy or commit a key. No other Anthropic key exists on the machine; every `claude -p` run gets `ANTHROPIC_API_KEY` from this file, so it bills the API credit. OpenAI labelling has a separate $200 total cap, with each call's usage and cost recorded in the spend ledger. Run a roughly 50-record pilot and report the measured full-train cost projection before scaling standard concurrent API requests; use prompt caching for fixed instructions and shared claims to prevent duplicate votes.
 - **Modal:** the CLI is logged in to workspace `davidkny22` with auto-refill on. Training and scoring use the app name `intent-monitor-training` and the volume `intent-monitor-training`. Never modify the deployed app `intent-monitor` or its volume `intent-monitor-model`; they belong to the runtime build.
 - **Hugging Face:** `HF_TOKEN` has access to SWE-chat, TRACE and the other gated sets the spec names; impossible-SWE may still be pending (its quota then redistributes).
 - **Harbor** (HVTB): installed and logged in as `davidkny22` (`harbor` CLI).
-- **Docker Desktop:** start it yourself when the lhaw or SWE-Misbehavior containers need it.
+- **Docker Desktop:** remains stopped under the owner's resource instruction; do not restart it.
 - **Claude Code CLI:** `claude` is on PATH; headless runs use `claude -p` with Haiku 5.5 (`claude-haiku-5-5`) or Sonnet 5.5 (`claude-sonnet-5-5`).
 - **Kev:** clone `https://github.com/jaredpalmer/kev` into `training/vendor/kev` and check out `fc4a17e194bca35a48c57211392ec49ea54a94ac`. Environment pins are in spec 9.1.
 - **Codex subagents:** raise the concurrent-subagent limit to what the labelling needs (the owner allows up to 100); find the setting in Codex's own config and record what you changed in BUILD-LOG. Labelling and conversion subagents run on fast mode; thinking level medium for most work, low or none for mechanical work (format conversion, rule-checked labels).
@@ -167,11 +169,11 @@ HackBU-NoahDavid/
         │   ├── generation/            # agent-side generator (8.6), agent runs (8.7), spend ledger
         │   ├── teacher/               # labelling prompts, batching, vote collection (8)
         │   ├── assemble/              # label resolution (8.4), balance cap (7.8), siblings, twins
-        │   ├── splits/                # grouping, dev, intent slice, long-gate items, held-out conversions (7.9)
+        │   ├── splits/                # grouping, dev, intent slice, held-out conversions (7.9)
         │   ├── kevpatch/              # trainer patches (9.2) applied to vendor/kev, interpolation tool
         │   ├── modal_app/             # the Modal training and scoring app (intent-monitor-training)
         │   ├── select/                # candidate scoring, pick rule (9.4), calibration (9.5)
-        │   └── evaluate/              # lift (12.4), held-out reports, long-context gate (12.3)
+        │   └── evaluate/              # lift (12.4), held-out reports, behaviour gates (12.3)
         ├── tests/
         ├── .gitignore                 # data/, results/, vendor/, .venv/, *.safetensors, *.pt
         ├── data/                      # GITIGNORED: downloads/<source>/ (each its own folder), records/, frozen/
@@ -209,9 +211,9 @@ The steps are dependency-ordered. Completion is gate-based: a step is done when 
 **Concurrency.** Steps overlap wherever the dependency column allows. The background tracks are: agent runs (from Step 1), the smoke run (from Step 3), generation (from Step 4), and, once training starts, the dev and held-out work and candidate scoring (Step 7).
 
 **The clock rule.** Work backward from 08:00 EST:
-- `latest_training_start = 08:00 − measured_run_time − 20 min (final-pair scoring, calibration, handoff) − 30 min margin`. Use 2.5 h for the run time until the smoke run measures throughput, then recompute it and record it in STATUS. With 2.5 h it is 04:40.
+- `latest_training_start = 08:00 − measured_run_time − 20 min (final-pair scoring, calibration, handoff) − 30 min margin`. Recompute it from measured full-pass-cap batched-record throughput at B_state = 10,239 and record it in STATUS. A one-record timing is not the full-cap batched throughput. Until that measurement lands, the old 32K projection is historical only.
 - `agent_run_cutoff = latest_training_start − 75 min` (converting and labelling their records). Unfinished runs stop at the cut-off; their quota redistributes (spec 7.1).
-- At `latest_training_start`, the train split freezes with what has passed labelling. If a data gate's rebuild has not finished, log the shortfall in VALIDATION-LOG and DATA-REPORT, fire the alert, and start training anyway: a model by 08:00 outranks a rebuild.
+- **Owner hold:** do not freeze the train split or start training at the historical 02:40 forecast or any recomputed forecast until the owner confirms the freeze time and N. Keep data and labelling work going within the resource limits. Report measured H100, B200 and Unsloth records per hour as each result lands, together with the recomputed latest-training-start forecast, so the owner can choose.
 - If training has not ended by 08:00, select from the saves that exist (spec 9.3) and finish Steps 8 and 9 with them.
 
 ### Step 1: Setup (first 20 minutes)
@@ -235,31 +237,31 @@ Fixtures: the four sample events in `Noah/backend/samples/`, corrected to what t
 **Gates (spec 12.1):** `identity-parity`, `resume-parity`, `kernel-check`, `accelerated-kernel-parity` (its fallback, the reference path, is a valid outcome), and the measured `P` and run time logged. Recompute the clock (section 4) and record it in STATUS.
 
 ### Step 4: Records (parallel subagents)
-**Build:** one converter per source in spec 7.3 and one builder per construction in 7.4, fanned out to subagents (each gets: its 7.3 row, its dossier entry, the event schema, the shared module's interface, and its output path); the agent-side generator (8.6) feeding constructions, IF_multi, InFoBench, IN3, SWE-bench annotations, rewrites (7.6) and notes (7.5); the cut rule (7.2) with matched negative cuts; long records (7.7); replay and long-document records in Kev's native format (7.3). Every converter's output validates against the event schema before any of its records are rendered. Order the fan-out by how many positives a source supplies to rare questions (constructions, then V sources), so the labelling queue fills early.
+**Build:** one converter per source in spec 7.3 and one builder per construction in 7.4, fanned out to subagents (each gets: its 7.3 row, its dossier entry, the event schema, the shared module's interface, and its output path); the agent-side generator (8.6) feeding constructions, IF_multi, InFoBench, IN3, SWE-bench annotations, rewrites (7.6) and notes (7.5); the cut rule (7.2) with matched negative cuts; replay in Kev's native format (7.3). Render every record at B_state = 10,239, preserving the fill rule and the 8,192-token overflow screen budget. Every converter's output validates against the event schema before any of its records are rendered. Order the fan-out by how many positives a source supplies to rare questions (constructions, then V sources), so the labelling queue fills early.
 **Gate (`records`):** every converter and construction validates; the secrets scan finds zero matches; per-source record counts against `s · n^plan` written to `reports/DATA-REPORT.md` (shortfalls redistributed per 7.1).
 
 ### Step 5: Labels and the train-split freeze
-**Build:** the teacher (spec 8): labelling instructions verbatim from 8.2, one Sol vote and one Terra vote per record, batches of 10 to 20 records from one source, vote collection into `data/`; the three ordered diagnostic passes (8.2 item 6); label resolution (8.4), construction mismatch and retries (7.4); twins (4.2); siblings (6.4); the balance cap (7.8); grouping and the train split (7.9). Label the train split first; dev and held-out work moves to Step 7.
-**Gates (spec 12.2):** `positive-floor` (max(0.8 · P_q, 60) per question, P_q computed per spec 10 before labelling starts and written to DATA-REPORT), `teacher-agreement`, `cant-tell-rate`, `pair-integrity`, `secrets-scan`. Each failure takes its spec fallback once. Then freeze: write `data/frozen/train.jsonl` and its hash, copy it to the volume.
+**Build:** the teacher (spec 8): labelling instructions verbatim from 8.2, one Sol vote and one Terra vote per record, launched in parallel with low thinking, in batches of 20 to 30 records from one source where input fits, vote collection into `data/`; the three ordered diagnostic passes (8.2 item 6); label resolution (8.4), construction mismatch and retries (7.4); twins (4.2); siblings (6.4); the balance cap (7.8); grouping and the train split (7.9). Label train constructions and rare-question sources first, then the remaining train records; dev and held-out work waits. Use shared vote ownership across Codex and direct OpenAI labellers. Report unique records with both votes completed per hour over the last 15 minutes, running labellers and projected train completion now and 15 minutes after scale-up; report the combined rate 15 minutes after the API client starts.
+**Gates (spec 12.2):** `positive-floor` (max(0.8 · P_q, 60) per question, P_q computed per spec 10 before labelling starts and written to DATA-REPORT), `teacher-agreement`, `cant-tell-rate`, `pair-integrity`, `secrets-scan`. Each failure takes its spec fallback once. After the owner releases the freeze hold, write `data/frozen/train.jsonl` and its hash and copy it to the volume.
 
 ### Step 6: The training run (background on Modal)
 **Build:** the spec 9.1 command on the frozen train split plus replay, saves every ⌈S/10⌉ steps to the volume, on the measured `P`. Watch it; on a crash, resume from the last save (one automatic retry; a second crash fires the alert and the run resumes again).
 **Gate (`run`):** the run reaches its final step, or 08:00 arrives (the clock rule).
 
 ### Step 7: While training runs (parallel)
-**Build:** the dev split at natural prevalence with its per-question floor and top-ups (7.9), the intent slice (9.4), the long-gate pilot on stock Kev and then its items (7.9), the held-out conversions (7.9: TRACE with the teacher locating the exposure cut once per conversation, the probe items mapped to their questions, LLMBar, RewardBench 2), all labelled. In a separate scoring container: stock Kev on dev (and stock's calibration fit, spec 12.4), then each candidate as soon as its save exists (the step-400 save at both α), per 9.4.
+**Build:** the dev split at natural prevalence with its per-question floor and top-ups (7.9), the intent slice (9.4), the held-out conversions (7.9: TRACE with the teacher locating the exposure cut once per conversation, the probe items mapped to their questions, LLMBar, RewardBench 2), all labelled. In a separate scoring container: stock Kev on dev (and stock's calibration fit, spec 12.4), then each candidate as soon as its save exists (the step-400 save at both α), per 9.4.
 **Gate (`dev-ready`):** dev and the intent slice meet their floors; every candidate that exists is scored; stock's lift-baseline calibration is fitted.
 
 ### Step 8: Selection, calibration, handoff
 **Build:** score the final save's two candidates; apply the pick rule (9.4: paired bootstrap standard error, keep within one, highest intent score, pick order); calibrate the winner (9.5); write the handoff to the volume `intent-monitor-training`:
 - `selected/`: the winner as a directory Kev's `Checkpoint` loads (an α = 0.85 winner as full weights), plus `selected.json` naming the candidate, its α, its save step and the commit hash;
 - `calibration.json`: `{"<question id>": {"T": float, "b": float}}` for yes/no questions and `{"<question id>": {"T": float, "b": {"<option>": float}}}` for choice and score questions, keyed by base id (no twins), score options keyed `"0"`, `"1"`, `"2"` as Kev reports them;
-- `long_context.json`: `{"validated_length": int}`, written after the long-context gate (8,192 until then).
+- `long_context.json`: `{"validated_length":10239}`, written at handoff; no long-context gate or pilot is required.
 Then serve-path parity on 300 dev records and the demo check through the shared renderer and the serving path (12.3), with the fallbacks of 12.1 and 12.3 if they fail. Add a `DAVID.md` milestone: the handoff files exist, where, and the winner.
 **Gates:** `serve-path-parity`, `demo-check`. Fire the alert when both pass ("model ready").
 
 ### Step 9: Evaluation (parallel containers, after the handoff)
-**Build:** the lift test (12.4), LLMBar and RewardBench 2, retention, RF recall, the "flag everything" report (13), the long-context gate (12.3, then rewrite `long_context.json` and add a `DAVID.md` line with the validated length). Write every number to `reports/RESULTS.md`: each with its n, its interval, and the candidate it describes.
+**Build:** the lift test (12.4), LLMBar and RewardBench 2, retention, RF recall and the "flag everything" report (13). Add a `DAVID.md` line carrying the handoff state length of 10,239. Write every evaluation number to `reports/RESULTS.md`: each with its n, its interval, and the candidate it describes.
 **Gate (`lift`):** the lift test ran on the pre-registered protocol and its result (pass or fail) is in RESULTS.md. A failed lift is reported as measured, never re-run with a changed protocol.
 
 ### Step 10: Close
@@ -309,7 +311,7 @@ Role boundaries: a gate result lives in VALIDATION-LOG and is referenced elsewhe
 
 1. **Re-read the spec section the row anchors.** Most format questions are answered there to the token.
 2. **A dataset field is not where the spec or dossier says:** open three real rows from the download, then the dossier entry, then the dataset card; record the real layout in `notes/` and a CONSTRAINT.
-3. **Kev rejects or silently drops records:** check `max_state`, `max_packed` (`max_state` + 1,664) and `max_branch` (`max_state` + 640) in `vendor/kev/kev/model.py` and the trainer's fit test; a state at exactly 32,768 tokens is rejected (spec 6.4 uses 32,767).
+3. **Kev rejects or silently drops records:** check `max_state`, `max_packed` (`max_state` + 1,664) and `max_branch` (`max_state` + 640) in `vendor/kev/kev/model.py` and the trainer's fit test; a state at exactly 10,240 tokens is rejected (spec 6.4 uses 10,239).
 4. **Teacher agreement is low on one question:** read 10 disagreements side by side; the cause is usually an instruction the two models read differently. Tighten that question's instruction once (8.5), relabel once.
 5. **A converter is slow or a source is huge:** take the first rows that meet the quota after the source's filters, in the dataset's own order, and move on; quotas are counts, not exhaustive passes.
 6. **A Modal job stalls:** check `modal app logs intent-monitor-training`; kill and relaunch from the last save; never idle-wait on a stalled job.
@@ -329,7 +331,7 @@ Role boundaries: a gate result lives in VALIDATION-LOG and is referenced elsewhe
 - [ ] Five candidates (or those that existed at 08:00) scored; pick logged with its kept set and intent scores
 - [ ] Calibration fitted; `selected/`, `selected.json`, `calibration.json`, `long_context.json` on the volume in the Step-8 formats, loading through Kev's serving path
 - [ ] `serve-path-parity` and `demo-check` PASS (or their fallbacks taken and logged)
-- [ ] RESULTS.md: lift test (both endpoints), LLMBar, RewardBench 2, retention, RF recall, flag-everything, long-context validity, each with n and interval
+- [ ] RESULTS.md: lift test (both endpoints), LLMBar, RewardBench 2, retention, RF recall and flag-everything, each with n and interval
 - [ ] `DAVID.md` milestones: module interface, handoff files, validated length
 - [ ] Spend within $200; secrets scan clean on every commit
 - [ ] STATUS reflects the final state; TASKLIST has no open rows except `blocked [needs: X]`; a final recap with a terminal anchor exists
