@@ -64,18 +64,18 @@ def run(folder, run_tests=True):
 
 
 @app.function(image=image, cpu=2, memory=8192, timeout=3600, volumes={"/training": volume})
-def queue(folder):
+def queue(folder, main=False):
     import subprocess
     import sys
     volume.reload()
     folder = Path(folder)
     if not folder.is_relative_to(Path("/training/prepared")):
         raise ValueError("Development inputs must remain on the training volume.")
-    destination = Path("/training/votes") / (folder.name + "-queue") / "queue.jsonl"
+    destination = Path("/training/votes") / (folder.name + ("-main-queue" if main else "-rf-queue")) / "queue.jsonl"
     if destination.exists():
         raise FileExistsError("The isolated development queue already exists.")
     result = subprocess.run([sys.executable, "/opt/intent-training/scripts/teacher_publish_rf.py",
-                             "--input", str(folder / "requirements-dev-unique.jsonl"), "--queue", str(destination)],
+                             "--input", str(folder / ("main.jsonl" if main else "requirements-dev-unique.jsonl")), "--queue", str(destination)],
                             capture_output=True, text=True)
     if result.returncode:
         raise ValueError(result.stdout + result.stderr)
@@ -87,6 +87,8 @@ if __name__ == "__main__":
     import sys
     with app.run(detach=True):
         function = queue if "--queue" in sys.argv else run
-        folder = "/training/prepared/dev-helpsteer-all-cuts-8191" if "--helpsteer" in sys.argv else "/training/prepared/dev-catch-all-cuts-8191"
-        call = function.spawn(folder) if "--queue" in sys.argv else function.spawn(folder, False)
+        source = ("reward_hack_lcb" if "--reward-hack-lcb" in sys.argv else "terminal_wrench" if "--terminal-wrench" in sys.argv else "tau2" if "--tau2" in sys.argv
+                  else "helpsteer" if "--helpsteer" in sys.argv else "catch")
+        folder = "/training/prepared/dev-" + source + "-all-cuts-8191"
+        call = function.spawn(folder, "--main" in sys.argv) if "--queue" in sys.argv else function.spawn(folder, False)
         print(json.dumps({"app_id": app.app_id, "function_call_id": call.object_id}), flush=True)
