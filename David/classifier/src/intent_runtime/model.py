@@ -33,8 +33,8 @@ class QuestionRunner:
         return self.to_record(request)
 
     def decode(self, probabilities: list, metadata: list[dict]) -> dict:
-        """Calibrate unrounded probability lists in their metadata order."""
-        answers = {m["id"]: self.calibrator.apply(m["id"], p, m["keys"]) for m, p in zip(metadata, probabilities, strict=True)}
+        """Return unrounded model probabilities in their metadata order."""
+        answers = {m["id"]: dict(zip(m["keys"], p, strict=True)) for m, p in zip(metadata, probabilities, strict=True)}
         if hasattr(self, "trace"):
             self.trace.last = {"raw": {m["id"]: dict(zip(m["keys"], p)) for m, p in zip(metadata, probabilities)}, "calibrated": answers}
             if hasattr(self.trace, "requests"):

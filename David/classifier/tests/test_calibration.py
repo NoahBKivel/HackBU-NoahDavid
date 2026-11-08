@@ -16,13 +16,22 @@ def test_calibration_scalar_suffix_and_fallback():
     assert selection(__import__('pathlib').Path('nonexistent')) == {"checkpoint": STOCK_CHECKPOINT, "calibration": None, "source": "stock-kev"}
 
 
-def test_choice_offsets_and_metadata_order():
+def test_runner_uses_raw_scores_despite_calibration_and_preserves_option_order():
     runner = QuestionRunner.__new__(QuestionRunner)
     runner.calibrator = Calibrator({"G2": {"T": 2, "b": {"done": -2, "broken": 1, "not done": 0}}}, 1)
     decoded = runner.decode([[0.8, 0.1, 0.1]], [{"id": "G2#R3", "keys": ["done", "broken", "not done"]}])
-    weights = [math.sqrt(.8) * math.exp(-2), math.sqrt(.1) * math.e, math.sqrt(.1)]
-    assert decoded["G2#R3"]["broken"] == pytest.approx(weights[1] / sum(weights))
-    assert max(decoded["G2#R3"], key=decoded["G2#R3"].get) == "broken"
+    assert decoded["G2#R3"] == {"done": 0.8, "broken": 0.1, "not done": 0.1}
+
+
+def test_on_track_score_does_not_become_drift_from_provisional_calibration():
+    from intent_runtime.firing import fired
+    from intent_runtime.pane import readings
+    runner = QuestionRunner.__new__(QuestionRunner)
+    runner.calibrator = Calibrator({"G1": {"T": 4.691364870111693, "b": -4.54242950576019}}, 1)
+    answers = runner.decode([[0.031364016234874725, 0.9686359167098999]],
+                            [{"id": "G1", "keys": ["false", "true"]}])
+    assert readings(answers, [])['drift'] == pytest.approx(1 - 0.9686359167098999)
+    assert "G1" not in fired(answers)
 
 
 def test_exact_zero_probability_stays_zero():
