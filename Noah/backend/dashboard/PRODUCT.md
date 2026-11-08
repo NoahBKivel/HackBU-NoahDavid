@@ -41,6 +41,7 @@ The Agents page total is a small N agents total line directly above the project
 list, below health counts/filter controls, rather than beside the page title.
 It remains the overall total when the stopped-agent filter is active.
 
-Agents health totals are stacked vertically: healthy first, needs attention
-second. View problems sits immediately to the right of the attention row;
-Remove filter occupies the same position while active.
+Local review: Agents state counts are side by side: Healthy, Need attention,
+Unreported, with large labels below each number. View problems/Remove filter
+is below the middle column. Always show all three states, including zero.
+Noah reviewed and approved pushing this revision.

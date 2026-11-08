@@ -670,7 +670,7 @@
         "review/attention-filter-mobile.jpg",
         "review/stacked-counts-mobile.jpg"
       ],
-      "layout": "Stacked healthy/attention rows; button beside attention row"
+      "layout": "Three columns: Healthy / Need attention / Unreported; count above label, button below middle"
     },
     "agentTotalPlacement": {
       "location": "Directly above project list; below summary/filter controls",
@@ -703,6 +703,56 @@
       "zero": "neutral",
       "missing": "muted",
       "evidence": "review/metric-colors-desktop.jpg"
+    },
+    "horizontalStatesReview": {
+      "localOnly": false,
+      "pushApproved": true,
+      "columns": [
+        "Healthy",
+        "Need attention",
+        "Unreported"
+      ],
+      "showZeroStates": true,
+      "numberSize": {
+        "desktop": "36px",
+        "mobile": "32px"
+      },
+      "labelSize": {
+        "desktop": "20px",
+        "mobile": "16px"
+      },
+      "filter": "Below middle column",
+      "verified": [
+        "390x844",
+        "320x700",
+        "1280x600 fits"
+      ]
+    },
+    "numericTypographyReview": {
+      "family": "IBM Plex Mono",
+      "weight": 500,
+      "source": "fonts/IBMPlexMono-Medium.ttf",
+      "license": "fonts/OFL-IBMPlexMono.txt",
+      "origin": "https://github.com/google/fonts/tree/main/ofl/ibmplexmono",
+      "scope": [
+        "state counts",
+        "active total",
+        "large run metrics",
+        "risk percentages"
+      ],
+      "cardTitleSize": "17px",
+      "cardRiskSize": "16px",
+      "localOnly": false,
+      "verified": [
+        "font loading",
+        "390px mobile Home and Agents",
+        "1280x600 fit"
+      ],
+      "evidence": [
+        "review/numeric-type-mobile.jpg",
+        "review/numeric-type-desktop.jpg"
+      ],
+      "pushApproved": true
     }
   },
   "components": [

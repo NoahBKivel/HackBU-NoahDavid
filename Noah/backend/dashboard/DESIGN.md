@@ -466,3 +466,23 @@ Successful live connections now hide the entire sidebar/mobile provenance footer
 instead of displaying Live data. Connecting, access/connection errors and sample
 mode labels still appear. Verified hidden elements and no rendered Live data
 text at 390px. Evidence: review/no-live-footer-mobile.jpg.
+
+## Local-only horizontal Agents states
+
+The new review layout supersedes stacked health stats: Healthy, Need attention,
+Unreported form three equal-width columns (max 780px), counts above labels.
+The middle column owns View problems/Remove filter on the next grid row. All
+three states are present even at zero. Type is 36px counts/20px labels desktop,
+32px/16px mobile. At short desktop heights, surrounding margins/row padding
+contract to preserve 1280x600 fit. Verified 390px/320px width, filter/restoration
+and desktop fit. Evidence: review/horizontal-agent-states-mobile.jpg and
+review/horizontal-agent-states-desktop.jpg. User subsequently reviewed and approved pushing this revision.
+
+## Local numeric and card-title refinement
+
+IBM Plex Mono Medium is self-hosted for state counts, active total, large run
+metrics and card risk percentages; IBM Plex Sans remains for labels and titles.
+Home/directory titles are now 17px medium; directory risk is 16px, preserving
+the title as the largest card text. Verified loaded font, computed sizes, mobile
+Home/Agents, 1280x600 fit and empty console. Evidence: review/numeric-type-*.jpg.
+Noah reviewed and approved pushing this revision.

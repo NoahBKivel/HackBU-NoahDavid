@@ -259,9 +259,9 @@ function renderAgentDirectory() {
     projects.get(session.name).push(session);
   }
   view.innerHTML = '<div class="page-heading directory-page-heading"><h1>Agents</h1>' +
-    '<div class="directory-controls"><p class="directory-health-counts"><span>' + icon('healthy') + '<strong>' + fleet.healthy + '</strong> healthy</span>' +
-    '<span>' + icon('intervention') + '<strong>' + fleet.attention + '</strong> ' + (fleet.attention === 1 ? 'needs' : 'need') + ' attention</span>' +
-    (fleet.unknown ? '<span>' + fleet.unknown + ' unreported</span>' : '') + '</p>' +
+    '<div class="directory-controls"><p class="directory-health-counts"><span class="directory-state healthy"><strong>' + fleet.healthy + '</strong><span>Healthy</span></span>' +
+    '<span class="directory-state attention"><strong>' + fleet.attention + '</strong><span>Need attention</span></span>' +
+    '<span class="directory-state unknown"><strong>' + fleet.unknown + '</strong><span>Unreported</span></span></p>' +
     '<button class="directory-filter" type="button" data-stopped-filter aria-controls="agent-directory" aria-pressed="' + stoppedAgentsOnly + '">' +
     (stoppedAgentsOnly ? 'Remove filter' : 'View problems') + '</button></div></div>' +
     '<p class="directory-total">' + fleet.active + ' agent' + (fleet.active === 1 ? '' : 's') + ' total</p>' +

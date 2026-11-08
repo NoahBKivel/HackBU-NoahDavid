@@ -5,6 +5,13 @@
   font-weight: 100 700;
   font-display: swap;
 }
+@font-face {
+  font-family: 'IBM Plex Mono';
+  src: url('./fonts/IBMPlexMono-Medium.ttf') format('truetype');
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+}
 :root {
   color-scheme: dark;
   --bg: #101010;
@@ -24,6 +31,7 @@
   --error: #ed9898;
   --focus: #c5c5bd;
   --font-display: 'IBM Plex Sans', "Segoe UI Variable", "Segoe UI", sans-serif;
+  --font-numeric: 'IBM Plex Mono', monospace;
   --space-1: 4px;
   --space-2: 8px;
   --space-3: 12px;
@@ -97,7 +105,7 @@ button:focus-visible, a:focus-visible, summary:focus-visible {
 .health-summary { position: relative; min-width: 0; }
 .health-summary-heading { margin-bottom: 8px; }
 .health-total { display: flex; align-items: baseline; gap: 6px; margin: 0; color: var(--muted); font-size: 12px; white-space: nowrap; }
-.health-total strong { font-size: 20px; font-weight: 500; color: var(--text); font-variant-numeric: tabular-nums; }
+.health-total strong { font-family: var(--font-numeric); font-size: 20px; font-weight: 500; color: var(--text); font-variant-numeric: tabular-nums; }
 .panel-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 36px; }
 .panel-heading h2 { display: flex; align-items: center; gap: 10px; margin: 0; font-size: 18px; font-weight: 450; letter-spacing: -.02em; }
 .panel-heading h2 .icon { color: #cecec7; width: 17px; height: 17px; }
@@ -128,7 +136,7 @@ button:focus-visible, a:focus-visible, summary:focus-visible {
 .home-activity-row { display: block; min-height: 80px; padding: 16px 10px; margin: 0 -10px; border-radius: 12px; }
 .home-activity-row:hover { background: var(--hover); }
 .home-activity-main { display: grid; grid-template-columns: minmax(0, max-content) minmax(0, 1fr); align-items: center; gap: 8px 16px; min-width: 0; }
-.home-agent-title { min-width: 0; font-size: 18px; font-weight: 500; line-height: 1.3; letter-spacing: -.015em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.home-agent-title { min-width: 0; font-size: 17px; font-weight: 500; line-height: 1.3; letter-spacing: -.015em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .home-agent-project { display: flex; align-items: center; justify-content: flex-end; gap: 6px; min-width: 0; color: var(--faint); font-size: 12px; }
 .home-agent-project .icon { width: 14px; height: 14px; }
 .home-agent-project > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -146,13 +154,14 @@ button:focus-visible, a:focus-visible, summary:focus-visible {
 .directory-page-heading h1 { font-size: 34px; font-weight: 600; letter-spacing: -.035em; }
 .directory-page-heading p { font-size: 15px; }
 .directory-total { margin: 0 0 12px; color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; }
-.directory-controls { display: grid; grid-template-columns: max-content max-content; grid-template-rows: 24px 32px; align-items: center; gap: 4px 16px; margin-top: 16px; }
+.directory-controls { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: start; gap: 14px 20px; max-width: 780px; margin-top: 24px; }
 .directory-page-heading .directory-health-counts { display: contents; margin: 0; font-size: 13px; }
-.directory-health-counts > span { display: inline-flex; grid-column: 1; align-items: center; gap: 6px; }
-.directory-health-counts strong { color: var(--text); font-weight: 500; font-variant-numeric: tabular-nums; }
-.directory-health-counts > span:first-child .icon { color: #81bd85; }
-.directory-health-counts > span:nth-child(2) .icon { color: #ed9898; }
-.directory-filter { grid-column: 2; grid-row: 2; padding: 6px 10px; border: 1px solid #45453f; border-radius: 8px; background: transparent; color: var(--text); font-size: 13px; line-height: 1.4; }
+.directory-state { display: flex; flex-direction: column; align-items: center; gap: 6px; grid-row: 1; min-width: 0; text-align: center; }
+.directory-state strong { font-family: var(--font-numeric); color: var(--text); font-size: 36px; line-height: 1.1; font-weight: 500; font-variant-numeric: tabular-nums; }
+.directory-state > span { color: var(--muted); font-size: 20px; line-height: 1.25; }
+.directory-state.healthy strong { color: #a2c9ac; }
+.directory-state.attention strong { color: #e4a99e; }
+.directory-filter { grid-column: 2; grid-row: 2; justify-self: center; width: max-content; padding: 6px 10px; border: 1px solid #45453f; border-radius: 8px; background: transparent; color: var(--text); font-size: 13px; line-height: 1.4; }
 .directory-filter:hover { background: var(--hover); }
 .directory-filter[aria-pressed="true"] { background: var(--selected); }
 .directory-project { min-width: 0; }
@@ -162,10 +171,10 @@ button:focus-visible, a:focus-visible, summary:focus-visible {
 .directory-project-agents > li { min-width: 0; }
 .directory-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 8px 24px; padding: 16px 20px; border-radius: 12px; background: var(--panel); }
 .directory-row:hover { background: var(--hover); }
-.directory-task { min-width: 0; font-size: 18px; font-weight: 500; line-height: 1.3; letter-spacing: -.015em; overflow-wrap: anywhere; }
+.directory-task { min-width: 0; font-size: 17px; font-weight: 500; line-height: 1.3; letter-spacing: -.015em; overflow-wrap: anywhere; }
 .directory-risk { display: flex; align-items: baseline; justify-self: end; gap: 8px; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .directory-risk > span { font-size: 12px; color: var(--faint); }
-.directory-risk > strong { font-size: 18px; font-weight: 500; }
+.directory-risk > strong { font-family: var(--font-numeric); font-size: 16px; font-weight: 500; }
 .directory-seen { justify-self: end; color: var(--faint); font-size: 12px; white-space: nowrap; }
 .session-header { display: flex; align-items: center; justify-content: space-between; gap: 24px; margin-bottom: 24px; min-height: 32px; }
 .session-heading { display: flex; align-items: center; min-width: 0; gap: 8px; }
@@ -181,11 +190,11 @@ button:focus-visible, a:focus-visible, summary:focus-visible {
 .metric { min-width: 0; }
 .metric + .metric { padding-left: 20px; border-left: 1px solid var(--line); }
 .metric-label { color: var(--muted); font-size: 12px; margin-bottom: 8px; }
-.metric-value { margin: 0; font-size: 25px; font-weight: 550; font-variant-numeric: tabular-nums; line-height: 1.25; letter-spacing: -.025em; }
+.metric-value { margin: 0; font-family: var(--font-numeric); font-size: 25px; font-weight: 500; font-variant-numeric: tabular-nums; line-height: 1.25; letter-spacing: -.025em; }
 .metrics { --success: #53c556; --warning: #e49c06; --error: #f17778; }
 .metrics .subtle { color: var(--faint); }
 .current-risk .metric-value { display: flex; align-items: baseline; gap: 9px; font-size: 28px; }
-.risk-label { font-size: 11px; font-weight: 450; letter-spacing: 0; }
+.risk-label { font-family: var(--font-display); font-size: 11px; font-weight: 450; letter-spacing: 0; }
 .charts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
 .chart-card { min-width: 0; border: 1px solid var(--border); border-radius: 20px; background: var(--panel); padding: 18px 20px 12px; position: relative; }
 .chart-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 28px; }
@@ -251,6 +260,11 @@ button:focus-visible, a:focus-visible, summary:focus-visible {
   .chart svg { height: 100%; }
 }
 @media (min-width: 1000px) and (max-height: 700px) {
+  .directory-page-heading { margin-top: 0; margin-bottom: 16px; }
+  .directory-controls { margin-top: 12px; gap: 8px 20px; }
+  .directory-state strong { font-size: 32px; }
+  .agent-directory { gap: 16px; }
+  .directory-row { padding-block: 14px; }
   .home-body { gap: 16px; }
   .home-health { grid-template-columns: 164px minmax(0, 440px); }
   .health-pie { width: 164px; }
@@ -288,6 +302,9 @@ button:focus-visible, a:focus-visible, summary:focus-visible {
   .page-heading { margin-top: 4px; margin-bottom: 24px; }
   .page-heading h1 { font-size: 22px; }
   .directory-page-heading h1 { font-size: 30px; }
+  .directory-controls { gap: 12px 10px; }
+  .directory-state strong { font-size: 32px; }
+  .directory-state > span { font-size: 16px; }
   .directory-project-agents { margin-left: 18px; }
   .directory-row { padding: 14px; gap: 8px 12px; }
   .home-activity-main { grid-template-columns: minmax(0, max-content) minmax(0, 1fr); gap: 8px 10px; }

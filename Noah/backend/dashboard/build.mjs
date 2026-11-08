@@ -4,7 +4,7 @@ import path from 'node:path';
 
 export const root = fileURLToPath(new URL('.', import.meta.url));
 export const output = path.join(root, 'dist');
-export const assets = ['index.html', 'styles.css', 'model.js', 'charts.js', 'preview-data.js', 'live-data.js', 'app.js', 'fonts/IBMPlexSans.ttf', 'fonts/OFL-IBMPlexSans.txt'];
+export const assets = ['index.html', 'styles.css', 'model.js', 'charts.js', 'preview-data.js', 'live-data.js', 'app.js', 'fonts/IBMPlexSans.ttf', 'fonts/OFL-IBMPlexSans.txt', 'fonts/IBMPlexMono-Medium.ttf', 'fonts/OFL-IBMPlexMono.txt'];
 
 export async function build() {
   await mkdir(output, { recursive: true });

@@ -156,3 +156,8 @@ Pages is published at https://noahbkivel.github.io/HackBU-NoahDavid/ . Local
 operation is unchanged. Open the ignored local dashboard-access.local.json file
 to copy DASHBOARD_TOKEN for first use on your phone. The read key was verified
 to return saved sessions and to reject event submission.
+
+Local typography review also bundles IBM Plex Mono Medium in
+fonts/IBMPlexMono-Medium.ttf with fonts/OFL-IBMPlexMono.txt from
+https://github.com/google/fonts/tree/main/ofl/ibmplexmono . Large numbers use
+this face; card titles are 17px and card risk figures 16px. Reviewed and approved for publication.
