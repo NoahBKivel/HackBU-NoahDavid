@@ -37,6 +37,15 @@ def source_candidates(record: dict, construction: str | None, plan: list[dict]) 
     return []
 
 
+def composition_role(record: dict) -> str:
+    """Keep naturally overflowing task sources in their canonical composition part."""
+    meta = record.get("_meta", {})
+    marker = meta.get("construction") or meta.get("construction_type")
+    if isinstance(marker, dict):
+        marker = marker.get("type")
+    return "screen" if str(marker).replace("-", "_") == "overflow_screen" else "task"
+
+
 def sample_units(records: list[dict], candidates: dict[int, list[str]],
                  weights: dict[str, float], count: int, rng: random.Random) -> tuple[list[dict], dict]:
     """Draw linked units with source weights corrected for their average unit size."""
@@ -144,14 +153,12 @@ def build_payload(directories: list[str], plan: dict, destination: str,
         if construction:
             record["_meta"]["construction"] = construction
         candidates[id(record)] = source_candidates(record, construction, task_plan)
-    def screen(record: dict) -> bool:
-        keys = {key.split("#")[0] for key in record["questions"]}
-        return bool(keys) and keys <= {"SCR", "M8"}
     replay = [record for record in records if record["_meta"].get("native_record") and
               record["_meta"].get("source") in {"kev_replay", "tasksource"}]
     replay_ids = {id(record) for record in replay}
-    screens = [record for record in records if screen(record)]
-    tasks = [record for record in records if id(record) not in replay_ids and not screen(record)]
+    screens = [record for record in records if composition_role(record) == "screen"]
+    tasks = [record for record in records if id(record) not in replay_ids and
+             composition_role(record) == "task"]
     rng = random.Random(seed)
     selected_tasks, assignments = sample_units(tasks, candidates,
         {entry["id"]: entry["planned_quota"] for entry in task_plan}, 90, rng)

@@ -6,10 +6,18 @@ from pathlib import Path
 import tempfile
 import unittest
 
-from intent_training.kevpatch.mixture import load_prepared, sample_units, source_candidates
+from intent_training.kevpatch.mixture import composition_role, load_prepared, sample_units, source_candidates
 
 
 class BenchmarkMixtureTests(unittest.TestCase):
+    def test_natural_task_overflow_does_not_consume_construction_quota(self):
+        natural = {"questions": {"SCR#1": {}, "M8#1": {}},
+                   "_meta": {"source": "aria_reward_hacking", "form": "screen"}}
+        constructed = {"questions": natural["questions"],
+                       "_meta": {"source": "agentif", "construction": "overflow_screen"}}
+        self.assertEqual(composition_role(natural), "task")
+        self.assertEqual(composition_role(constructed), "screen")
+
     def test_declared_eligibility_precedes_general_objective(self):
         plan = [{"id": "science:claim", "source": "science", "slice": "claim", "objective": ["M5", "G5"]},
                 {"id": "science:benign", "source": "science", "slice": "benign", "objective": []}]
