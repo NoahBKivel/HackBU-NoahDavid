@@ -16,6 +16,7 @@ def main() -> None:
     parser.add_argument('--cap', type=int, required=True)
     parser.add_argument('--projection-records', type=int, required=True)
     args = parser.parse_args()
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
     from kev_prepare_upload import available_memory_gib
     memory = available_memory_gib()
     if memory <= 3.5:
