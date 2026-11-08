@@ -43,7 +43,7 @@ const listsOpen = atom({ plugin: 'vision', key: 'listsOpen' } as const, { flags:
 
 // How many rows the flagged and recent lists show before "Show more".
 const FLAGS_SHOWN = 3
-const RECENT_SHOWN = 4
+const RECENT_SHOWN = 3
 
 // Time windows a chart can show, by the label drawn next to its title.
 const WINDOWS: { id: string; label: string; ms: number }[] = [
@@ -979,7 +979,7 @@ const C = {
   trend: '#7F77DD',
 }
 const W = 640
-const H = 160
+const H = 220
 const PAD = { left: 54, right: 22, top: 14, bottom: 28 }
 
 function frame(inner: string, yLabels: [number, string][], times: number[] = []) {
