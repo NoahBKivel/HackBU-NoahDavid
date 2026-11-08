@@ -4,6 +4,7 @@ import argparse
 import collections
 import json
 import sys
+import time
 import uuid
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
@@ -60,9 +61,19 @@ def run(target: str, output: Path) -> dict:
     events = fixture(sid)
     responses = []
     completed_pending = []
+    timing = {}
     counts = collections.Counter()
     expected = {event["event_id"] for event in events}
     awaiting = set()
+
+    def send(event: dict) -> dict:
+        sent, call = driver.spawn(event)
+        acknowledged = time.time()
+        result = driver.receive(sent, call)
+        timing[event["event_id"]] = {"backend_sent_at": sent["backend_sent_at"],
+            "spawn_acknowledged_at": acknowledged, "received_at": time.time(),
+            "call_id": call.object_id, "pending": bool(result.get("pending"))}
+        return result
 
     def accept(event: dict, result: dict) -> None:
         responses.append({"event_id": event["event_id"], "result": result})
@@ -87,22 +98,22 @@ def run(target: str, output: Path) -> dict:
     try:
         for event in events[:3]:
             start = len(driver.pending)
-            accept(event, driver.send(event))
+            accept(event, send(event))
             wait_pending(start)
         for burst in (events[3:11], events[11:19]):
             print(f"Sending burst {burst[0]['seq']} through {burst[-1]['seq']}.", flush=True)
             start = len(driver.pending)
             with ThreadPoolExecutor(max_workers=len(burst)) as pool:
-                results = list(pool.map(driver.send, burst))
+                results = list(pool.map(send, burst))
             for event, result in zip(burst, results):
                 accept(event, result)
             wait_pending(start)
         start = len(driver.pending)
-        accept(events[-1], driver.send(events[-1]))
+        accept(events[-1], send(events[-1]))
         wait_pending(start)
         for seq in (21, 22):
             event = {**events[1], "event_id": f"{sid}-{seq}", "seq": seq}
-            result = driver.send(event)
+            result = send(event)
             assert not result.get("pending"), "The quiescent read could not flush late results."
             accept(event, result)
         assert counts == collections.Counter({event_id: 1 for event_id in expected}), dict(counts)
@@ -114,6 +125,9 @@ def run(target: str, output: Path) -> dict:
         return evidence
     finally:
         (output / "responses.json").write_text(json.dumps(responses), encoding="utf-8")
+        (output / "completed-pending.json").write_text(json.dumps(completed_pending), encoding="utf-8")
+        (output / "timing.json").write_text(json.dumps(timing), encoding="utf-8")
+        (output / "events.json").write_text(json.dumps(events), encoding="utf-8")
 
 
 def main() -> int:

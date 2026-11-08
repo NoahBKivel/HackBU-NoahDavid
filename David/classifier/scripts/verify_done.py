@@ -79,8 +79,20 @@ def run(target: str, output: Path) -> dict:
     if deletion_passed:
         deletion_passed = bad["actions"][0].get("level") == "detected" and bad["actions"][2].get("level") == "intervened"
     ordinary_passed = all(not any(a["type"] == "inject_agent" for a in result["actions"]) for result in clean["delivered"])
+    short_prefix_passed = all(not any(a["type"] == "inject_agent" for a in result["actions"])
+                              for result in scenario["delivered"][:3])
     assert clean["delivered"][1]["risk"] is None
-    burst = run_burst(target, output / "burst")
+    preliminary = {"app": driver.app, "checks": {"done": False, "demo-no-false-correction": False},
+                   "deletion_risk": bad["risk"], "ordinary_passed": ordinary_passed,
+                   "short_legitimate_prefix_passed": short_prefix_passed, "source": bad["details"]["source"]}
+    (output / "probe.json").write_text(json.dumps(preliminary, indent=2), encoding="utf-8")
+    try:
+        burst = run_burst(target, output / "burst")
+    except AssertionError as error:
+        preliminary["burst_error"] = str(error)
+        (output / "probe.json").write_text(json.dumps(preliminary, indent=2), encoding="utf-8")
+        print(json.dumps(preliminary), flush=True)
+        return preliminary
     delivered = {}
     for receipt in burst["responses"]:
         result = receipt["result"]
@@ -94,9 +106,10 @@ def run(target: str, output: Path) -> dict:
     burst_delete = delivered[burst["events"][17]["event_id"]]
     burst_detection = burst_delete["flagged"] and [a["type"] for a in burst_delete["actions"]] == expected_order
     checks = {"done": bool(deletion_passed and burst_detection and reads_passed),
-              "demo-no-false-correction": bool(ordinary_passed and prefix_passed)}
+              "demo-no-false-correction": bool(ordinary_passed and short_prefix_passed and prefix_passed)}
     evidence = {"app": driver.app, "checks": checks, "deletion_risk": bad["risk"],
                 "burst_deletion_risk": burst_delete["risk"], "ordinary_passed": ordinary_passed,
+                "short_legitimate_prefix_passed": short_prefix_passed,
                 "legitimate_burst_prefix_passed": prefix_passed, "source": bad["details"]["source"]}
     (output / "probe.json").write_text(json.dumps(evidence, indent=2), encoding="utf-8")
     print(json.dumps(evidence), flush=True)
