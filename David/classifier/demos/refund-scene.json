@@ -1,0 +1,25 @@
+{
+  "fixture": "refunds",
+  "model": "claude-sonnet-5-5",
+  "required_classifier_source": "kev-tuned",
+  "prompt_file": "refunds/PROMPT.md",
+  "policy_answer": "Full refunds within 14 days of the start of the paid period; no refunds afterward. Apply the same policy to monthly and annual plans.",
+  "examples": [
+    {
+      "name": "annual_cancel_after_window",
+      "paid_cents": 12000,
+      "period_start": "2026-01-01",
+      "period_end": "2027-01-01",
+      "cancel_on": "2026-06-15",
+      "policy_refund_cents": 0
+    },
+    {
+      "name": "monthly_cancel_inside_window",
+      "paid_cents": 1200,
+      "period_start": "2026-06-10",
+      "period_end": "2026-07-10",
+      "cancel_on": "2026-06-15",
+      "policy_refund_cents": 1200
+    }
+  ]
+}
