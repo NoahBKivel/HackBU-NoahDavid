@@ -1,0 +1,815 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-08T11:09:34.746965+00:00",
+  "title": "Design System: VISION companion dashboard",
+  "extensions": {
+    "colorMeta": {
+      "bg": {
+        "role": "neutral",
+        "displayName": "Bg",
+        "tonalRamp": [
+          "oklch(15% 0.0000 89.88)",
+          "oklch(26% 0.0000 89.88)",
+          "oklch(38% 0.0000 89.88)",
+          "oklch(49% 0.0000 89.88)",
+          "oklch(61% 0.0000 89.88)",
+          "oklch(72% 0.0000 89.88)",
+          "oklch(84% 0.0000 89.88)",
+          "oklch(95% 0.0000 89.88)"
+        ]
+      },
+      "sidebar": {
+        "role": "neutral",
+        "displayName": "Sidebar",
+        "tonalRamp": [
+          "oklch(15% 0.0000 89.88)",
+          "oklch(26% 0.0000 89.88)",
+          "oklch(38% 0.0000 89.88)",
+          "oklch(49% 0.0000 89.88)",
+          "oklch(61% 0.0000 89.88)",
+          "oklch(72% 0.0000 89.88)",
+          "oklch(84% 0.0000 89.88)",
+          "oklch(95% 0.0000 89.88)"
+        ]
+      },
+      "panel": {
+        "role": "neutral",
+        "displayName": "Panel",
+        "tonalRamp": [
+          "oklch(15% 0.0019 106.55)",
+          "oklch(26% 0.0019 106.55)",
+          "oklch(38% 0.0019 106.55)",
+          "oklch(49% 0.0019 106.55)",
+          "oklch(61% 0.0019 106.55)",
+          "oklch(72% 0.0019 106.55)",
+          "oklch(84% 0.0019 106.55)",
+          "oklch(95% 0.0019 106.55)"
+        ]
+      },
+      "text": {
+        "role": "neutral",
+        "displayName": "Text",
+        "tonalRamp": [
+          "oklch(15% 0.0040 106.47)",
+          "oklch(26% 0.0040 106.47)",
+          "oklch(38% 0.0040 106.47)",
+          "oklch(49% 0.0040 106.47)",
+          "oklch(61% 0.0040 106.47)",
+          "oklch(72% 0.0040 106.47)",
+          "oklch(84% 0.0040 106.47)",
+          "oklch(95% 0.0040 106.47)"
+        ]
+      },
+      "muted": {
+        "role": "neutral",
+        "displayName": "Muted",
+        "tonalRamp": [
+          "oklch(15% 0.0084 106.60)",
+          "oklch(26% 0.0084 106.60)",
+          "oklch(38% 0.0084 106.60)",
+          "oklch(49% 0.0084 106.60)",
+          "oklch(61% 0.0084 106.60)",
+          "oklch(72% 0.0084 106.60)",
+          "oklch(84% 0.0084 106.60)",
+          "oklch(95% 0.0084 106.60)"
+        ]
+      },
+      "faint": {
+        "role": "neutral",
+        "displayName": "Faint",
+        "tonalRamp": [
+          "oklch(15% 0.0073 106.60)",
+          "oklch(26% 0.0073 106.60)",
+          "oklch(38% 0.0073 106.60)",
+          "oklch(49% 0.0073 106.60)",
+          "oklch(61% 0.0073 106.60)",
+          "oklch(72% 0.0073 106.60)",
+          "oklch(84% 0.0073 106.60)",
+          "oklch(95% 0.0073 106.60)"
+        ]
+      },
+      "border": {
+        "role": "neutral",
+        "displayName": "Border",
+        "tonalRamp": [
+          "oklch(15% 0.0053 106.72)",
+          "oklch(26% 0.0053 106.72)",
+          "oklch(38% 0.0053 106.72)",
+          "oklch(49% 0.0053 106.72)",
+          "oklch(61% 0.0053 106.72)",
+          "oklch(72% 0.0053 106.72)",
+          "oklch(84% 0.0053 106.72)",
+          "oklch(95% 0.0053 106.72)"
+        ]
+      },
+      "line": {
+        "role": "neutral",
+        "displayName": "Line",
+        "tonalRamp": [
+          "oklch(15% 0.0036 106.63)",
+          "oklch(26% 0.0036 106.63)",
+          "oklch(38% 0.0036 106.63)",
+          "oklch(49% 0.0036 106.63)",
+          "oklch(61% 0.0036 106.63)",
+          "oklch(72% 0.0036 106.63)",
+          "oklch(84% 0.0036 106.63)",
+          "oklch(95% 0.0036 106.63)"
+        ]
+      },
+      "hover": {
+        "role": "neutral",
+        "displayName": "Hover",
+        "tonalRamp": [
+          "oklch(15% 0.0036 106.64)",
+          "oklch(26% 0.0036 106.64)",
+          "oklch(38% 0.0036 106.64)",
+          "oklch(49% 0.0036 106.64)",
+          "oklch(61% 0.0036 106.64)",
+          "oklch(72% 0.0036 106.64)",
+          "oklch(84% 0.0036 106.64)",
+          "oklch(95% 0.0036 106.64)"
+        ]
+      },
+      "selected": {
+        "role": "secondary",
+        "displayName": "Selected",
+        "tonalRamp": [
+          "oklch(15% 0.0422 299.81)",
+          "oklch(26% 0.0422 299.81)",
+          "oklch(38% 0.0422 299.81)",
+          "oklch(49% 0.0422 299.81)",
+          "oklch(61% 0.0422 299.81)",
+          "oklch(72% 0.0422 299.81)",
+          "oklch(84% 0.0422 299.81)",
+          "oklch(95% 0.0422 299.81)"
+        ]
+      },
+      "success": {
+        "role": "secondary",
+        "displayName": "Success",
+        "tonalRamp": [
+          "oklch(15% 0.1011 146.08)",
+          "oklch(26% 0.1011 146.08)",
+          "oklch(38% 0.1011 146.08)",
+          "oklch(49% 0.1011 146.08)",
+          "oklch(61% 0.1011 146.08)",
+          "oklch(72% 0.1011 146.08)",
+          "oklch(84% 0.1011 146.08)",
+          "oklch(95% 0.1011 146.08)"
+        ]
+      },
+      "warning": {
+        "role": "secondary",
+        "displayName": "Warning",
+        "tonalRamp": [
+          "oklch(15% 0.1027 79.88)",
+          "oklch(26% 0.1027 79.88)",
+          "oklch(38% 0.1027 79.88)",
+          "oklch(49% 0.1027 79.88)",
+          "oklch(61% 0.1027 79.88)",
+          "oklch(72% 0.1027 79.88)",
+          "oklch(84% 0.1027 79.88)",
+          "oklch(95% 0.1027 79.88)"
+        ]
+      },
+      "error": {
+        "role": "secondary",
+        "displayName": "Error",
+        "tonalRamp": [
+          "oklch(15% 0.1026 19.70)",
+          "oklch(26% 0.1026 19.70)",
+          "oklch(38% 0.1026 19.70)",
+          "oklch(49% 0.1026 19.70)",
+          "oklch(61% 0.1026 19.70)",
+          "oklch(72% 0.1026 19.70)",
+          "oklch(84% 0.1026 19.70)",
+          "oklch(95% 0.1026 19.70)"
+        ]
+      },
+      "focus": {
+        "role": "secondary",
+        "displayName": "Focus",
+        "tonalRamp": [
+          "oklch(15% 0.1268 296.79)",
+          "oklch(26% 0.1268 296.79)",
+          "oklch(38% 0.1268 296.79)",
+          "oklch(49% 0.1268 296.79)",
+          "oklch(61% 0.1268 296.79)",
+          "oklch(72% 0.1268 296.79)",
+          "oklch(84% 0.1268 296.79)",
+          "oklch(95% 0.1268 296.79)"
+        ]
+      },
+      "chart-risk": {
+        "role": "primary",
+        "displayName": "Chart Risk",
+        "tonalRamp": [
+          "oklch(15% 0.1486 251.50)",
+          "oklch(26% 0.1486 251.50)",
+          "oklch(38% 0.1486 251.50)",
+          "oklch(49% 0.1486 251.50)",
+          "oklch(61% 0.1486 251.50)",
+          "oklch(72% 0.1486 251.50)",
+          "oklch(84% 0.1486 251.50)",
+          "oklch(95% 0.1486 251.50)"
+        ]
+      },
+      "chart-drift": {
+        "role": "primary",
+        "displayName": "Chart Drift",
+        "tonalRamp": [
+          "oklch(15% 0.1502 284.72)",
+          "oklch(26% 0.1502 284.72)",
+          "oklch(38% 0.1502 284.72)",
+          "oklch(49% 0.1502 284.72)",
+          "oklch(61% 0.1502 284.72)",
+          "oklch(72% 0.1502 284.72)",
+          "oklch(84% 0.1502 284.72)",
+          "oklch(95% 0.1502 284.72)"
+        ]
+      },
+      "chart-flag": {
+        "role": "secondary",
+        "displayName": "Chart Flag",
+        "tonalRamp": [
+          "oklch(15% 0.1877 24.72)",
+          "oklch(26% 0.1877 24.72)",
+          "oklch(38% 0.1877 24.72)",
+          "oklch(49% 0.1877 24.72)",
+          "oklch(61% 0.1877 24.72)",
+          "oklch(72% 0.1877 24.72)",
+          "oklch(84% 0.1877 24.72)",
+          "oklch(95% 0.1877 24.72)"
+        ]
+      },
+      "chart-warning": {
+        "role": "secondary",
+        "displayName": "Chart Warning",
+        "tonalRamp": [
+          "oklch(15% 0.1543 70.80)",
+          "oklch(26% 0.1543 70.80)",
+          "oklch(38% 0.1543 70.80)",
+          "oklch(49% 0.1543 70.80)",
+          "oklch(61% 0.1543 70.80)",
+          "oklch(72% 0.1543 70.80)",
+          "oklch(84% 0.1543 70.80)",
+          "oklch(95% 0.1543 70.80)"
+        ]
+      },
+      "chart-correction": {
+        "role": "secondary",
+        "displayName": "Chart Correction",
+        "tonalRamp": [
+          "oklch(15% 0.1232 165.50)",
+          "oklch(26% 0.1232 165.50)",
+          "oklch(38% 0.1232 165.50)",
+          "oklch(49% 0.1232 165.50)",
+          "oklch(61% 0.1232 165.50)",
+          "oklch(72% 0.1232 165.50)",
+          "oklch(84% 0.1232 165.50)",
+          "oklch(95% 0.1232 165.50)"
+        ]
+      },
+      "chart-pending": {
+        "role": "neutral",
+        "displayName": "Chart Pending",
+        "tonalRamp": [
+          "oklch(15% 0.0128 96.47)",
+          "oklch(26% 0.0128 96.47)",
+          "oklch(38% 0.0128 96.47)",
+          "oklch(49% 0.0128 96.47)",
+          "oklch(61% 0.0128 96.47)",
+          "oklch(72% 0.0128 96.47)",
+          "oklch(84% 0.0128 96.47)",
+          "oklch(95% 0.0128 96.47)"
+        ]
+      },
+      "chart-axis": {
+        "role": "neutral",
+        "displayName": "Chart Axis",
+        "tonalRamp": [
+          "oklch(15% 0.0104 100.09)",
+          "oklch(26% 0.0104 100.09)",
+          "oklch(38% 0.0104 100.09)",
+          "oklch(49% 0.0104 100.09)",
+          "oklch(61% 0.0104 100.09)",
+          "oklch(72% 0.0104 100.09)",
+          "oklch(84% 0.0104 100.09)",
+          "oklch(95% 0.0104 100.09)"
+        ]
+      },
+      "health-healthy": {
+        "role": "secondary",
+        "displayName": "Health Healthy",
+        "tonalRamp": [
+          "oklch(15% 0.0690 153.20)",
+          "oklch(26% 0.0690 153.20)",
+          "oklch(38% 0.0690 153.20)",
+          "oklch(49% 0.0690 153.20)",
+          "oklch(61% 0.0690 153.20)",
+          "oklch(72% 0.0690 153.20)",
+          "oklch(84% 0.0690 153.20)",
+          "oklch(95% 0.0690 153.20)"
+        ]
+      },
+      "health-attention": {
+        "role": "secondary",
+        "displayName": "Health Attention",
+        "tonalRamp": [
+          "oklch(15% 0.0828 29.75)",
+          "oklch(26% 0.0828 29.75)",
+          "oklch(38% 0.0828 29.75)",
+          "oklch(49% 0.0828 29.75)",
+          "oklch(61% 0.0828 29.75)",
+          "oklch(72% 0.0828 29.75)",
+          "oklch(84% 0.0828 29.75)",
+          "oklch(95% 0.0828 29.75)"
+        ]
+      },
+      "health-unknown": {
+        "role": "neutral",
+        "displayName": "Health Unknown",
+        "tonalRamp": [
+          "oklch(15% 0.0000 89.88)",
+          "oklch(26% 0.0000 89.88)",
+          "oklch(38% 0.0000 89.88)",
+          "oklch(49% 0.0000 89.88)",
+          "oklch(61% 0.0000 89.88)",
+          "oklch(72% 0.0000 89.88)",
+          "oklch(84% 0.0000 89.88)",
+          "oklch(95% 0.0000 89.88)"
+        ]
+      },
+      "accent": {
+        "role": "secondary",
+        "displayName": "Accent",
+        "tonalRamp": [
+          "oklch(15% 0.1387 296.17)",
+          "oklch(26% 0.1387 296.17)",
+          "oklch(38% 0.1387 296.17)",
+          "oklch(49% 0.1387 296.17)",
+          "oklch(61% 0.1387 296.17)",
+          "oklch(72% 0.1387 296.17)",
+          "oklch(84% 0.1387 296.17)",
+          "oklch(95% 0.1387 296.17)"
+        ]
+      },
+      "accent-soft": {
+        "role": "secondary",
+        "displayName": "Accent Soft",
+        "tonalRamp": [
+          "oklch(15% 0.0802 299.17)",
+          "oklch(26% 0.0802 299.17)",
+          "oklch(38% 0.0802 299.17)",
+          "oklch(49% 0.0802 299.17)",
+          "oklch(61% 0.0802 299.17)",
+          "oklch(72% 0.0802 299.17)",
+          "oklch(84% 0.0802 299.17)",
+          "oklch(95% 0.0802 299.17)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Agent detail title; 26px desktop, 20px short desktop, 18px mobile."
+      },
+      "metric": {
+        "displayName": "Metric",
+        "purpose": "Tabular session statistic."
+      },
+      "metric-current": {
+        "displayName": "Metric Current",
+        "purpose": "Emphasized current-risk value."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Chart title; 16px desktop, 14px mobile."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "General interface copy."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Event rows and statistic labels."
+      },
+      "meta": {
+        "displayName": "Meta",
+        "purpose": "Timestamps and preview provenance."
+      },
+      "control": {
+        "displayName": "Control",
+        "purpose": "Compact chart-window labels."
+      },
+      "page-heading": {
+        "displayName": "Page Heading",
+        "purpose": "Agents title; 28px desktop, 22px mobile."
+      },
+      "home-heading": {
+        "displayName": "Home Heading",
+        "purpose": "Agent overview; 28px desktop, 25px mobile."
+      },
+      "panel-title": {
+        "displayName": "Panel Title",
+        "purpose": "Home panel titles; 18px desktop, 17px mobile."
+      }
+    },
+    "shadows": [],
+    "motion": [
+      {
+        "name": "control-transition",
+        "value": "background-color 150ms ease, color 150ms ease",
+        "purpose": "Session links and chart-window controls; disabled under prefers-reduced-motion."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "stacked-tablet-max",
+        "value": "999px"
+      },
+      {
+        "name": "desktop-plots-min",
+        "value": "1000px"
+      },
+      {
+        "name": "compact-rail-max",
+        "value": "1100px"
+      },
+      {
+        "name": "short-desktop-max-height",
+        "value": "700px"
+      },
+      {
+        "name": "mobile-taskbar-max",
+        "value": "700px"
+      },
+      {
+        "name": "narrow-content-padding-max",
+        "value": "359px"
+      }
+    ],
+    "focus": [
+      {
+        "name": "keyboard-outline",
+        "value": "2px solid var(--focus); outline-offset: 3px; border-radius: 4px",
+        "purpose": "Visible focus on buttons, links and summaries."
+      }
+    ],
+    "review": {
+      "method": "code-led; four supplied images are inspiration, not approved comps; fresh manual finish review",
+      "disposition": "ship",
+      "evidence": [
+        "review/reference-desktop-home.jpg",
+        "review/reference-desktop-agents.jpg",
+        "review/reference-desktop-detail.jpg",
+        "review/reference-compact-detail.jpg",
+        "review/reference-mobile-home.jpg",
+        "review/reference-mobile-agents.jpg",
+        "review/reference-mobile-detail.jpg",
+        "review/reference-narrow-home.jpg",
+        "review/reference-qa.json"
+      ],
+      "qa": "All pages have zero top headers and no horizontal overflow; detail lists550.5<600 and600.5<650; mobile Home footer747.25<pill762; narrow detail603.8<pill618. Last10, correction disclosure and navigation work; console empty; syntax/build pass; renderer hash and model unchanged.",
+      "captureLimitation": "CSS390x844 scrolling detail encodes375x812; CSS320x700 scrolling Home encodes305x667; no image editing/resizing.",
+      "cliDetector": "unavailable; no pass claimed",
+      "scope": "local synthetic preview; no API/GPU/live integration",
+      "contrastRatios": {
+        "body": 16.66,
+        "secondaryOnPanel": 7.83,
+        "metadataOnPanel": 5.46,
+        "selectedNavigation": 8.96
+      },
+      "materialFixes": []
+    },
+    "tonalRampNote": "Synthesized OKLCH inspection ramps, not additional implementation tokens; alpha chart-grid is omitted from ramps.",
+    "healthContract": {
+      "source": "Noah/NOTES-FOR-DAVID-AGENT.md NN-003",
+      "signal": "requires_user_intervention",
+      "authority": "Latest explicit boolean on nonpending result ordered by event sequence.",
+      "states": {
+        "true": "attention",
+        "false": "healthy",
+        "missingOrNull": "unknown"
+      },
+      "reset": "Next genuine new user instruction; approved by Noah, awaiting David agreement and implementation.",
+      "limitation": "Snapshot requests a stop; it does not prove delivery or that an agent stopped."
+    },
+    "openHealthRefinement": {
+      "method": "Manual browser verification",
+      "samples": {
+        "active": 3,
+        "healthy": 2,
+        "attention": 1
+      },
+      "evidence": [
+        "review/open-health-desktop.jpg",
+        "review/open-health-mobile.jpg"
+      ],
+      "layout": "Unboxed pie/summary above Agents panel; total beside breakdown; no health-title icon.",
+      "tooltip": "Hover, focus and tap; fits narrow viewport.",
+      "scope": "Home refinement; graph renderers and health-state rules unchanged."
+    },
+    "fonts": [
+      {
+        "family": "IBM Plex Sans",
+        "source": "fonts/IBMPlexSans.ttf",
+        "weight": "200 800",
+        "license": "fonts/OFL-IBMPlexSans.txt",
+        "origin": "https://github.com/google/fonts/tree/main/ofl/ibmplexsans",
+        "scope": "Home Agents content and Agents directory display type; native metadata and instruments retained"
+      }
+    ],
+    "agentTypography": {
+      "method": "Bounded polish refinement; manual browser verification",
+      "taskTitle": {
+        "family": "IBM Plex Sans",
+        "size": "18px",
+        "weight": 500
+      },
+      "metadata": "IBM Plex Sans 13px",
+      "status": "Plain semantic text with 5px square marker; no pill",
+      "evidence": [
+        "review/neutral-home-desktop.jpg",
+        "review/neutral-home-mobile.jpg"
+      ],
+      "fontLoading": "document.fonts.check(500 18px IBM Plex Sans) true",
+      "scope": "No health-state or graph geometry/calculation changes; drift color amber"
+    },
+    "neutralRefinement": {
+      "visibleHealthTitle": false,
+      "legendDivider": false,
+      "purpleAccents": false,
+      "driftColor": "#BFA574",
+      "desktop": "1280x600 fits",
+      "mobileWidths": [
+        390,
+        320
+      ],
+      "consoleWarningsErrors": 0,
+      "modelTestsPassed": 6
+    },
+    "compactMobileHome": {
+      "headingIcon": false,
+      "directoryLinkLabel": "See all",
+      "mobileRows": 2,
+      "mobileRowMinHeight": "80px",
+      "firstRow": "18px task title followed by dimmed project; project truncates first",
+      "secondRow": "green check or red rounded intervention triangle plus status",
+      "hideOnMobile": [],
+      "desktopLayout": "unchanged",
+      "verifiedWidths": [
+        390,
+        320,
+        1280
+      ],
+      "evidence": [
+        "review/two-row-home-mobile.jpg",
+        "review/two-row-home-desktop.jpg"
+      ]
+    },
+    "centeredHomeDonut": {
+      "headingAlignment": "left",
+      "topPadding": "12px",
+      "healthChart": {
+        "shape": "donut",
+        "outerRadius": 90,
+        "innerRadius": 54,
+        "transparentCenter": true
+      },
+      "seeAll": {
+        "fontSize": "13px",
+        "lineHeight": 1.4,
+        "verticalPadding": "4px",
+        "fixedMinHeight": false,
+        "measuredHeight": "26.2px"
+      },
+      "shortDesktopSectionGap": "16px",
+      "verified": [
+        "390x844 mobile",
+        "1280x600 desktop without overflow"
+      ],
+      "evidence": [
+        "review/donut-home-mobile.jpg",
+        "review/donut-home-desktop.jpg"
+      ]
+    },
+    "projectGroupedCards": {
+      "homeBrand": "VISION",
+      "homeTitleAlignment": "left",
+      "homeRow": {
+        "upperLeft": "task",
+        "upperRight": "folder + project",
+        "lowerLeft": "status icon and text",
+        "lowerRight": "update age"
+      },
+      "directory": "Project folder headings with indented stacks of rounded cards",
+      "retainedFields": [
+        "project",
+        "task",
+        "current risk",
+        "health",
+        "update age"
+      ],
+      "indent": {
+        "desktop": "30px",
+        "mobile": "18px"
+      },
+      "narrowTitles": "Home titles prioritized; directory titles wrap",
+      "verified": [
+        "390x844",
+        "320x700",
+        "1280x600"
+      ],
+      "evidence": [
+        "review/grouped-home-mobile.jpg",
+        "review/grouped-agents-mobile.jpg",
+        "review/grouped-home-desktop.jpg",
+        "review/grouped-agents-desktop.jpg"
+      ]
+    },
+    "inlineRiskLabel": {
+      "label": "Risk:",
+      "layout": "inline before percentage at all widths",
+      "verifiedWidths": [
+        390,
+        320
+      ],
+      "mobileCardHeight": "81.2px at 390px",
+      "evidence": "review/inline-risk-mobile.jpg"
+    },
+    "attentionFilter": {
+      "counts": "Overall healthy/attention totals; unreported shown if present",
+      "inactiveLabel": "View problems",
+      "activeLabel": "Remove filter",
+      "predicate": "sessionHealth(session) === attention",
+      "scope": "Directory only; no agent control or inference",
+      "empty": "No agents need attention.",
+      "hideEmptyProjects": true,
+      "persistence": "In-memory across app navigation; reset on reload",
+      "accessibility": [
+        "aria-pressed",
+        "aria-controls",
+        "polite live results",
+        "restore toggle focus"
+      ],
+      "verified": {
+        "allCards": 3,
+        "filteredCards": 1,
+        "restoredCards": 3,
+        "totals": "2 healthy / 1 needs attention",
+        "mobileWidths": [
+          390,
+          320
+        ],
+        "desktop": "1280x600 fits",
+        "healthTestsPassed": 6
+      },
+      "evidence": [
+        "review/attention-counts-desktop.jpg",
+        "review/attention-filter-mobile.jpg",
+        "review/stacked-counts-mobile.jpg"
+      ],
+      "layout": "Stacked healthy/attention rows; button beside attention row"
+    },
+    "agentTotalPlacement": {
+      "location": "Directly above project list; below summary/filter controls",
+      "heading": "Agents without count",
+      "text": "N agents total",
+      "scope": "All sessions, including when filtered",
+      "fontSize": "13px",
+      "bottomSpacing": "12px",
+      "evidence": "review/agent-total-mobile.jpg"
+    },
+    "liveData": {
+      "default": "live",
+      "preview": "?preview=1 opt-in only",
+      "pollIntervalMs": 1000,
+      "endpoint": "/api/dashboard/sessions",
+      "upstream": "/v1/dashboard/sessions",
+      "auth": "Token retained by local server; uses Mod settings",
+      "persistence": "Modal Dict vision-dashboard-sessions; 2000 points per session; seven-day inactivity expiry",
+      "readsInvokeInference": false,
+      "validation": "9 backend + 9 Node tests; live incoming events and authenticated deployed read"
+    }
+  },
+  "components": [
+    {
+      "name": "Selected session row",
+      "kind": "nav",
+      "refersTo": "session-selected",
+      "description": "Project-grouped compact selected task link.",
+      "html": "<a class=\"ds-session\" href=\"#\" aria-current=\"page\"><svg viewBox=\"0 0 20 20\" aria-hidden=\"true\"><circle cx=\"10\" cy=\"10\" r=\"6.5\"/><circle cx=\"10\" cy=\"10\" r=\"2\"/></svg><span>Speed up the test suite</span><small>now</small></a>",
+      "css": ".ds-session{font-family:\"Segoe UI Variable\",\"Segoe UI\",sans-serif;display:flex;align-items:center;gap:8px;min-height:36px;padding:8px 10px;border-radius:6px;color:var(--text,#f0f0ed);background:var(--selected,#30302d);text-decoration:none;font-size:12px;transition:background-color 150ms ease,color 150ms ease}.ds-session svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.4}.ds-session span{flex:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}.ds-session small{font-size:10px;color:var(--faint,#92928d);font-variant-numeric:tabular-nums}.ds-session:hover{background:var(--hover,#272725)}.ds-session:focus-visible{outline:2px solid var(--focus,#c5c5bd);outline-offset:3px;border-radius:4px;}@media(prefers-reduced-motion:reduce){.ds-session{transition:none}}"
+    },
+    {
+      "name": "Chart-window button",
+      "kind": "button",
+      "refersTo": "window-button",
+      "description": "Quiet window selector with a persistent pressed state.",
+      "html": "<button class=\"ds-window\" type=\"button\" aria-pressed=\"true\">All</button>",
+      "css": ".ds-window{font-family:\"Segoe UI Variable\",\"Segoe UI\",sans-serif;border:0;background:transparent;border-radius:4px;color:var(--muted,#b0b0aa);padding:4px 6px;font-size:10px;line-height:1.5;cursor:pointer;transition:color 150ms ease,background-color 150ms ease}.ds-window:hover{color:var(--text,#f0f0ed);background:#303030}.ds-window[aria-pressed=\"true\"]{background:#3a3a3a;color:var(--text,#f0f0ed)}.ds-window:active{background:#444}.ds-window:focus-visible{outline:2px solid var(--focus,#c5c5bd);outline-offset:3px;border-radius:4px;}@media(prefers-reduced-motion:reduce){.ds-window{transition:none}}"
+    },
+    {
+      "name": "Show more button",
+      "kind": "button",
+      "description": "Text action for expanding an existing event list.",
+      "html": "<button class=\"ds-more\" type=\"button\">Show 21 more</button>",
+      "css": ".ds-more{font-family:\"Segoe UI Variable\",\"Segoe UI\",sans-serif;border:0;background:transparent;padding:3px 0;color:var(--faint,#92928d);font-size:11px;cursor:pointer}.ds-more:hover{color:var(--text,#f0f0ed)}.ds-more:active{color:#fff}.ds-more:focus-visible{outline:2px solid var(--focus,#c5c5bd);outline-offset:3px;border-radius:4px;}"
+    },
+    {
+      "name": "Chart container",
+      "kind": "card",
+      "refersTo": "chart-card",
+      "description": "Flat bordered plotting surface; chart renderer remains separate.",
+      "html": "<section class=\"ds-chart\"><div class=\"ds-chart-heading\"><h2>Risk per action</h2></div><svg viewBox=\"0 0 300 100\" role=\"img\" aria-label=\"Illustration of risk trace\"><path d=\"M20 80H280M20 45H280M20 10H280\" stroke=\"#88878040\"/><path d=\"M20 75L75 65L130 72L185 25L240 60L280 70\" fill=\"none\" stroke=\"#378ADD\" stroke-width=\"2\"/></svg></section>",
+      "css": ".ds-chart{min-width: 0; border: 1px solid var(--border); border-radius: 20px; background: var(--panel); padding: 18px 20px 12px; position: relative;}.ds-chart-heading{display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 28px;}.ds-chart-heading h2{margin: 0; font-size: 16px; font-weight: 450; letter-spacing: -.02em; white-space: nowrap;}.ds-chart{font-family:\"Segoe UI Variable\",\"Segoe UI\",sans-serif;color:var(--text,#f0f0ed)}.ds-chart>svg{display:block;width:100%;margin-top:10px}@media(max-width:700px){.ds-chart{padding-inline:12px}.ds-chart-heading{flex-wrap:wrap}.ds-chart-heading h2{font-size:14px}}"
+    },
+    {
+      "name": "Event disclosure",
+      "kind": "custom",
+      "refersTo": "event-row",
+      "description": "Native expandable event row with timestamp, summary and risk.",
+      "html": "<details class=\"ds-event\"><summary><svg viewBox=\"0 0 20 20\" aria-hidden=\"true\"><path d=\"m7.5 5 5 5-5 5\"/></svg><time>23:41:15</time><span>Removed slow integration tests</span><b>91%</b></summary><p>Action: Removed slow integration tests</p></details>",
+      "css": ".ds-event{font-family:\"Segoe UI Variable\",\"Segoe UI\",sans-serif;color:var(--muted,#b0b0aa);border-bottom:1px solid var(--line,#2a2a28);font-size:12px}.ds-event>summary{display:flex;align-items:center;gap:10px;padding:9px 0;list-style:none;cursor:pointer}.ds-event>summary::-webkit-details-marker{display:none}.ds-event>summary:hover{background:#ffffff03}.ds-event>summary:focus-visible{outline:2px solid var(--focus,#c5c5bd);outline-offset:3px;border-radius:4px;}.ds-event svg{width:12px;height:12px;fill:none;stroke:var(--faint,#92928d);stroke-width:1.4;flex:none}.ds-event[open] svg{transform:rotate(90deg)}.ds-event time{color:var(--faint,#92928d);font-size:11px;font-variant-numeric:tabular-nums}.ds-event span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#bdbdbd}.ds-event b{font-weight:400;color:var(--error,#ed9898);font-variant-numeric:tabular-nums}.ds-event p{margin:4px 0 14px 22px;max-width:72ch;overflow-wrap:anywhere}"
+    },
+    {
+      "name": "Information disclosure",
+      "kind": "custom",
+      "description": "Native chart explanation disclosure with a bordered overlay.",
+      "html": "<details class=\"ds-info\"><summary aria-label=\"About risk per action\"><svg viewBox=\"0 0 20 20\" aria-hidden=\"true\"><circle cx=\"10\" cy=\"10\" r=\"7\"/><path d=\"M10 9v4M10 6.5h.01\"/></svg></summary><div class=\"ds-popup\">How likely each checked action is to break your instructions. Lower is better.</div></details>",
+      "css": ".ds-info{font-family:\"Segoe UI Variable\",\"Segoe UI\",sans-serif;position:relative;display:inline-block}.ds-info>summary{list-style:none;padding:3px;color:var(--faint,#92928d);cursor:pointer}.ds-info>summary::-webkit-details-marker{display:none}.ds-info>summary:hover{color:var(--text,#f0f0ed)}.ds-info>summary:focus-visible{outline:2px solid var(--focus,#c5c5bd);outline-offset:3px;border-radius:4px;}.ds-info svg{display:block;width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.4}.ds-popup{position:absolute;z-index:3;top:29px;right:0;width:min(290px,calc(100vw - 64px));padding:14px 16px;background:#2a2a2a;border:1px solid #4c4c4c;border-radius:8px;font-size:12px;line-height:1.65;color:#c2c2c2}"
+    },
+    {
+      "name": "Page navigation",
+      "kind": "nav",
+      "refersTo": "page-link",
+      "description": "Desktop sidebar links and mobile floating pill island with Back/Home/Agents.",
+      "html": "<nav class=\"ds-pages\" aria-label=\"Pages\"><a href=\"#home\" aria-current=\"page\"><svg viewBox=\"0 0 20 20\" aria-hidden=\"true\"><path d=\"m3 9 7-6 7 6v8h-5v-5H8v5H3z\"/></svg>Home</a><a href=\"#agents\"><svg viewBox=\"0 0 20 20\" aria-hidden=\"true\"><path d=\"M3 3h14v14H3zM7 7h6M7 10h6M7 13h3\"/></svg>Agents</a></nav><nav class=\"ds-taskbar\" aria-label=\"Mobile pages\"><button type=\"button\" disabled><svg viewBox=\"0 0 20 20\" aria-hidden=\"true\"><path d=\"m12 5-5 5 5 5\"/></svg>Back</button><a href=\"#home\" aria-current=\"page\"><svg viewBox=\"0 0 20 20\" aria-hidden=\"true\"><path d=\"m3 9 7-6 7 6v8h-5v-5H8v5H3z\"/></svg>Home</a><a href=\"#agents\"><svg viewBox=\"0 0 20 20\" aria-hidden=\"true\"><path d=\"M3 3h14v14H3zM7 7h6M7 10h6M7 13h3\"/></svg>Agents</a></nav>",
+      "css": ".ds-pages{font-family:\"Segoe UI Variable\",\"Segoe UI\",sans-serif;display:grid;gap:4px}.ds-pages a{display:flex;align-items:center;min-height:40px;padding:9px 12px;border-radius:10px;color:var(--muted,#b0b0aa);font-size:13px;text-decoration:none}.ds-pages a:hover,.ds-taskbar>a:hover{background:var(--hover,#272725);color:var(--text,#f0f0ed)}.ds-pages [aria-current=\"page\"],.ds-taskbar [aria-current=\"page\"]{background:var(--selected,#30302d);color:var(--text,#f0f0ed)}.ds-taskbar{font-family:\"Segoe UI Variable\",\"Segoe UI\",sans-serif;display:grid;grid-template-columns:repeat(3,1fr);position:fixed;z-index:5;left:50%;bottom:calc(16px + env(safe-area-inset-bottom));transform:translateX(-50%);width:min(440px,calc(100% - 32px));padding:6px;border-radius:999px;background:var(--sidebar,#151515);border:1px solid var(--border,#2d2d2a)}.ds-taskbar>a,.ds-taskbar>button{display:flex;align-items:center;justify-content:center;min-height:52px;border:0;border-radius:999px;background:transparent;color:var(--muted,#b0b0aa);font:inherit;font-size:10px;text-decoration:none}.ds-taskbar>button:disabled{color:#656565;cursor:default}.ds-pages a:focus-visible,.ds-taskbar>a:focus-visible,.ds-taskbar>button:focus-visible{outline:2px solid var(--focus,#c5c5bd);outline-offset:3px;border-radius:4px;} .ds-pages svg{width:16px;height:16px;margin-right:10px;fill:none;stroke:currentColor;stroke-width:1.4}.ds-taskbar>a,.ds-taskbar>button{flex-direction:column;gap:5px}.ds-taskbar svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.4}.ds-pages [aria-current=\"page\"]{color:var(--accent-soft,#e7e7e1)}"
+    },
+    {
+      "name": "View agents link",
+      "kind": "button",
+      "refersTo": "home-agents-link",
+      "description": "Quiet directory pill in the Agents panel heading.",
+      "html": "<a class=\"ds-home-agents\" href=\"#agents\">View agents<svg viewBox=\"0 0 20 20\" aria-hidden=\"true\"><path d=\"M4 10h12m-5-5 5 5-5 5\"/></svg></a>",
+      "css": ".ds-home-agents{display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 36px; padding: 7px 10px; border: 0; border-radius: 999px; background: #2a2a28; font-size: 11px; color: #d4d4ce; white-space: nowrap;}.ds-home-agents:hover{background: #353531; color: var(--text);}.ds-home-agents{font-family:\"Segoe UI Variable\",\"Segoe UI\",sans-serif;text-decoration:none}.ds-home-agents svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.4}.ds-home-agents:focus-visible{outline:2px solid var(--focus,#c5c5bd);outline-offset:3px;border-radius:4px;}@media(max-width:700px){.ds-home-agents{min-height:44px}}"
+    },
+    {
+      "name": "Agent health pie and legend",
+      "kind": "custom",
+      "refersTo": "health-pie",
+      "description": "Unboxed two-to-one sample health split, active-agent total beside the breakdown, and hover/focus info description.",
+      "html": "<section class=\"ds-health\"><svg viewBox=\"0 0 200 200\" role=\"img\" aria-label=\"2 healthy agents and 1 needing attention\"><path d=\"M100 100 L100 10 A90 90 0 1 1 22.0577 145 Z\" fill=\"#7eac8b\"/><path d=\"M100 100 L22.0577 145 A90 90 0 0 1 100 10 Z\" fill=\"#cf8d82\"/></svg><div class=\"ds-summary\"><div class=\"ds-summary-heading\"><p><strong>3</strong> active agents</p></div><dl><div><dt>Good health</dt><dd>2 <small>67%</small></dd></div><div><dt>Needs attention <span class=\"ds-info\"><button type=\"button\" aria-label=\"About needs attention\" aria-describedby=\"ds-health-tip\"><svg viewBox=\"0 0 20 20\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.4\" aria-hidden=\"true\"><circle cx=\"10\" cy=\"10\" r=\"7\"/><path d=\"M10 9v4M10 6.5h.01\"/></svg></button><span id=\"ds-health-tip\" role=\"tooltip\">Needs attention indicates that the classifier requested a stop for user input.</span></span></dt><dd>1 <small>33%</small></dd></div></dl></div></section>",
+      "css": ".ds-health{display:grid;grid-template-columns:180px minmax(0,440px);gap:48px;align-items:center;color:var(--text,#f0f0ed);font:13px \"Segoe UI Variable\",\"Segoe UI\",sans-serif}.ds-health>svg{width:180px;height:auto}.ds-summary{position:relative;min-width:0}.ds-summary-heading{display:flex;align-items:baseline;justify-content:space-between;gap:20px;margin-bottom:14px}.ds-summary h2{margin:0;font-size:18px;font-weight:450}.ds-summary p{margin:0;color:var(--muted,#b0b0aa);font-size:12px}.ds-summary p strong{font-size:20px;color:var(--text,#f0f0ed)}.ds-summary dl{margin:0}.ds-summary dl>div{display:flex;justify-content:space-between;gap:16px;padding:12px 0}.ds-summary dd{margin:0}.ds-summary small{margin-left:10px;color:var(--faint,#92928d)}.ds-info button{width:24px;height:24px;padding:4px;border:0;border-radius:50%;background:transparent;color:var(--faint,#92928d)}.ds-info button svg{width:15px;height:15px}.ds-info [role=tooltip]{display:none;position:absolute;top:calc(100% + 8px);right:0;width:min(300px,calc(100vw - 40px));padding:12px 14px;z-index:6;background:#30302c;border:1px solid #494943;border-radius:10px;color:#e5e5df;line-height:1.5}.ds-info:hover [role=tooltip],.ds-info:focus-within [role=tooltip]{display:block}@media(max-width:700px){.ds-health{grid-template-columns:140px minmax(0,1fr);gap:24px}.ds-health>svg{width:140px}.ds-summary-heading{display:block}.ds-summary p{margin-top:5px}.ds-summary small{display:none}}@media(max-width:359px){.ds-health{grid-template-columns:112px minmax(0,1fr);gap:16px}.ds-health>svg{width:112px}}"
+    },
+    {
+      "name": "Home agent-status row",
+      "kind": "custom",
+      "refersTo": "home-status-row",
+      "description": "Compact 18px IBM Plex Sans task name with project metadata, plain health status and an unboxed navigation arrow.",
+      "html": "<a class=\"ds-agent-row\" href=\"#agent/example\"><span class=\"ds-agent-main\"><strong>Connect the classifier</strong><span class=\"ds-agent-badge attention\">Needs attention</span><span class=\"ds-agent-meta\"><span class=\"ds-project\">alignment-monitor</span><span>1 min ago</span></span></span><span class=\"ds-agent-arrow\" aria-hidden=\"true\"><svg viewBox=\"0 0 20 20\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.4\"><path d=\"m7.5 5 5 5-5 5\"/></svg></span></a>",
+      "css": ".ds-agent-row{display:grid;grid-template-columns:minmax(0,1fr) 32px;align-items:center;gap:16px;padding:18px 10px;border-radius:12px;color:var(--text,#f0f0ed);text-decoration:none}.ds-agent-row:hover{background:var(--hover,#272725)}.ds-agent-main{display:grid;gap:8px;min-width:0}.ds-agent-main>strong{font:500 18px/1.3 \"IBM Plex Sans\",\"Segoe UI\",sans-serif;letter-spacing:-.025em}.ds-agent-meta{display:flex;flex-wrap:wrap;align-items:center;gap:10px;color:#aaa9a4;font:13px/1.5 \"Segoe UI\",sans-serif}.ds-project{padding:2px 7px;border-radius:5px;background:#282826;color:#c4c3bd}.ds-agent-badge{display:inline-flex;align-items:center;justify-self:start;gap:7px;font:600 13px/1.2 \"Segoe UI\",sans-serif}.ds-agent-badge::before{content:'';width:5px;height:5px;background:currentColor}.ds-agent-badge.attention{color:#f0b3a7}.ds-agent-arrow{display:grid;place-items:center;width:32px;height:32px;color:#cbc9c2}.ds-agent-arrow svg{width:14px;height:14px}.ds-agent-row:focus-visible{outline:2px solid var(--focus,#c5c5bd);outline-offset:3px}@media(min-width:1000px){.ds-agent-row{min-height:70px;padding-block:8px}.ds-agent-main{grid-template-columns:minmax(0,1fr) auto;gap:4px 24px}.ds-agent-badge{grid-column:2;grid-row:1/3;align-self:center}.ds-agent-meta{grid-column:1}}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The quiet desktop instrument",
+    "overview": "VISION pairs familiar project/session navigation with the dark separated panels, generous corners, clear text hierarchy and neutral gray accents drawn from four user-supplied dashboard images. These images inspire the surrounding UI and typography; they are not approved pixel-matching comps, and their graph details or product features are not requirements. Native interface fonts remain portable.\n\nThis code-led local synthetic preview starts with Agent overview and its health and agent panels. Agents and agent detail share the panel vocabulary. Every page omits the top breadcrumb/Home/Preview strip. Sample-data provenance lives in a quiet footer. Graph rendering, calculations, health semantics and mobile pill geometry remain intact.",
+    "keyCharacteristics": [
+      "Project-grouped compact session navigation.",
+      "Rounded dark panels and clear type hierarchy.",
+      "Violet navigation distinct from monitoring colors.",
+      "Existing graph semantics and progressive disclosure."
+    ],
+    "rules": [
+      {
+        "name": "The Semantic Color Rule",
+        "body": "Use neutral gray for navigation and focus; preserve separate health, risk and drift colors for their data meanings.",
+        "section": "colors"
+      },
+      {
+        "name": "The Instrument Type Rule",
+        "body": "Use compact interface type and tabular numerals for statistics, timestamps and ages; do not introduce a hero display hierarchy.",
+        "section": "typography"
+      },
+      {
+        "name": "The Flat Surface Rule",
+        "body": "Use tonal separation and fine borders for depth; the implemented interface has no box shadows.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do apply Operate guidance to selection, state and the task-to-instrument relationship.",
+      "Do apply layout and distill guidance to clear panel hierarchy, compact session navigation and progressive disclosure.",
+      "Do apply polish and audit guidance to keyboard focus, controls, disclosures, console output and content clearance above the mobile pill.",
+      "Do retain visible sample-data provenance and existing chart/health semantics."
+    ],
+    "donts": [
+      "Don't restore the top breadcrumb/Home/Preview bar on any page or viewport.",
+      "Don't copy financial content, features or graph details from the inspiration images.",
+      "Don't place mobile navigation on desktop or alter its accepted geometry during a skin change.",
+      "Don't claim a CLI/detector pass or live classifier integration from this local preview."
+    ]
+  }
+}

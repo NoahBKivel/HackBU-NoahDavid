@@ -8,6 +8,7 @@ Deploy: C:\\Projects\\NYCAIRRtest\\.venv\\Scripts\\modal deploy Noah/backend/app
 Contract: CONTRACT.md sections 3 and 4.
 """
 
+import asyncio
 import json
 import os
 import random
@@ -17,7 +18,9 @@ from typing import Any, Optional
 
 import modal
 from fastapi import FastAPI, Header, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
+from Noah.backend.dashboard_store import DashboardRepository
 
 # David's classifier: a Modal class with classify(event) and warmup() methods
 # sharing one container (CONTRACT.md section 7, cold starts). His app is
@@ -32,7 +35,9 @@ CLASSIFIER_CLASS = "Classifier"
 CLASSIFY_WAIT_S = 8
 
 app = modal.App("alignment-monitor")
-image = modal.Image.debian_slim(python_version="3.12").pip_install("fastapi[standard]")
+image = (modal.Image.debian_slim(python_version="3.12").pip_install("fastapi[standard]")
+         .add_local_python_source("Noah.backend.dashboard_store"))
+dashboard_sessions = modal.Dict.from_name("vision-dashboard-sessions", create_if_missing=True)
 
 
 class Event(BaseModel):
@@ -358,19 +363,44 @@ def log_event(event: dict, result: dict, error: Optional[str], ms: int) -> None:
     }))
 
 
-# One container that takes many requests at once, so the stand-in's
-# in-memory session state (drift, late results) is shared by every request.
-# It stays up 20 minutes after the last request so that state survives pauses.
-@app.function(
-    image=image,
-    secrets=[modal.Secret.from_name("monitor-token")],
-    max_containers=1,
-    scaledown_window=1200,
-)
-@modal.concurrent(max_inputs=50)
-@modal.asgi_app()
-def api():
+def create_web():
     web = FastAPI(title="Alignment monitor")
+    web.add_middleware(
+        CORSMiddleware,
+        allow_origins=["https://noahbkivel.github.io"],
+        allow_methods=["GET"],
+        allow_headers=["Authorization"],
+    )
+
+    async def load_dashboard_sessions():
+        return [value async for _key, value in dashboard_sessions.items.aio()]
+
+    async def save_dashboard_session(key, value):
+        await dashboard_sessions.put.aio(key, value)
+
+    dashboard = DashboardRepository(load_dashboard_sessions, save_dashboard_session)
+
+    def authorize(authorization):
+        if authorization != f"Bearer {os.environ['MONITOR_TOKEN']}":
+            raise HTTPException(status_code=401, detail="bad or missing token")
+
+    async def record_dashboard(payload, result=None):
+        try:
+            await asyncio.wait_for(dashboard.record(payload, result), timeout=5)
+        except Exception as exc:
+            # Monitoring/corrections must still reach the Mod if storage is unavailable.
+            print(json.dumps({"dashboard": "save failed", "error": type(exc).__name__}))
+
+    @web.get("/v1/dashboard/sessions")
+    async def sessions(cursor: Optional[str] = None, authorization: str = Header(default="")):
+        read_token = os.environ.get("DASHBOARD_TOKEN")
+        if not read_token or authorization != f"Bearer {read_token}":
+            authorize(authorization)
+        try:
+            return await dashboard.snapshot(cursor)
+        except Exception as exc:
+            print(json.dumps({"dashboard": "read failed", "error": type(exc).__name__}))
+            raise HTTPException(status_code=503, detail="Dashboard storage unavailable") from exc
 
     @web.get("/health")
     async def health():
@@ -383,12 +413,27 @@ def api():
 
     @web.post("/v1/events")
     async def events(event: Event, authorization: str = Header(default="")):
-        if authorization != f"Bearer {os.environ['MONITOR_TOKEN']}":
-            raise HTTPException(status_code=401, detail="bad or missing token")
+        authorize(authorization)
         payload = event.model_dump()
         started = time.monotonic()
+        await record_dashboard(payload)
         result, error = await classify(payload)
+        await record_dashboard(payload, result)
         log_event(payload, result, error, int((time.monotonic() - started) * 1000))
         return result
 
     return web
+
+
+# One writer container keeps dashboard snapshot updates serialized. The Dict
+# survives its shutdown; no minimum warm pool or classifier setting is changed.
+@app.function(
+    image=image,
+    secrets=[modal.Secret.from_name("monitor-token"), modal.Secret.from_name("vision-dashboard-read")],
+    max_containers=1,
+    scaledown_window=1200,
+)
+@modal.concurrent(max_inputs=50)
+@modal.asgi_app()
+def api():
+    return create_web()

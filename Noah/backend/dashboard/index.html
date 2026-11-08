@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="dark light">
+    <meta name="description" content="A remote view of the VISION Claude Code Mod.">
+    <title>VISION — Agent monitor</title>
+    <link rel="icon" href="data:,">
+    <link rel="preload" href="./fonts/IBMPlexSans.ttf" as="font" type="font/ttf" crossorigin>
+    <link rel="stylesheet" href="./styles.css">
+    <script type="module" src="./app.js"></script>
+  </head>
+  <body>
+    <div class="workspace" id="workspace">
+      <aside class="agent-sidebar" aria-label="Agent sessions">
+        <a class="wordmark" href="#" aria-label="VISION agent overview">VISION</a>
+        <nav class="page-navigation" aria-label="Main navigation">
+          <a class="page-link" href="#home" data-page="home"><span data-icon="home"></span>Home</a>
+          <a class="page-link" href="#agents" data-page="agents"><span data-icon="agents"></span>Agents</a>
+        </nav>
+        <div class="sidebar-heading"><h2>Active agents</h2><span id="agent-count" class="count"></span></div>
+        <nav id="agents" aria-label="Choose an agent"></nav>
+        <div class="sidebar-footer"><span class="footer-dot"></span><span id="data-status">Connecting…</span></div>
+      </aside>
+      <div class="main-shell">
+        <main id="agent-view" class="agent-view" aria-label="Dashboard" tabindex="-1"></main>
+      </div>
+    </div>
+    <nav class="mobile-taskbar" aria-label="Mobile navigation">
+      <button type="button" id="navigation-back"><span data-icon="back"></span><span>Back</span></button>
+      <a href="#home" data-page="home"><span data-icon="home"></span><span>Home</span></a>
+      <a href="#agents" data-page="agents"><span data-icon="agents"></span><span>Agents</span></a>
+    </nav>
+    <noscript>This dashboard needs JavaScript to display agent statistics.</noscript>
+  </body>
+</html>

@@ -129,3 +129,28 @@ It is a **session-state snapshot**, not just a marker on one event. `true` means
 
 No changes have been made to David's classifier source, deployment, GPU warm pool or the shared contract by Noah's agent for this proposal.
 
+
+---
+
+## NN-004 · 2026-11-08 · Live dashboard connected; existing classifier session error
+
+The backend now records Mod events and the exact responses/late results into
+Modal Dict `vision-dashboard-sessions`, exposed by authenticated GET
+`/v1/dashboard/sessions?cursor=...`. The localhost dashboard polls this endpoint
+through a server-side token proxy. Reads do not invoke classify or warmup.
+This supersedes NN-003's synthetic-only dashboard status; its intervention-field
+proposal remains pending and is still not invented by the backend.
+
+Live traffic from session `27d538a7-eae1-4fbb-b1a9-dfbf31a4192d` repeatedly returned
+`classifier failed: KeyError: 'event_ids'`. FastAPI's existing fallback was
+forwarded unchanged to the Mod and recorded in the dashboard. Please inspect
+compatibility/migration of older classifier session records; no records were
+deleted or modified by Noah's agent to work around the error. Another externally
+created probe session returned a normal skipped result. No extra inference test
+was sent by the dashboard agent. Current results have no explicit
+`requires_user_intervention`, so health is correctly Unreported.
+
+Recording starts with this deployment, without backfilling Mod-local state.
+Sessions already open before recording may lack project/task metadata until a
+session-start/new instruction is received. Pending final results still depend
+on the classifier's existing late_results delivery, exactly like the Mod.
