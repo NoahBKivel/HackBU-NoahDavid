@@ -486,3 +486,8 @@ Home/directory titles are now 17px medium; directory risk is 16px, preserving
 the title as the largest card text. Verified loaded font, computed sizes, mobile
 Home/Agents, 1280x600 fit and empty console. Evidence: review/numeric-type-*.jpg.
 Noah reviewed and approved pushing this revision.
+
+Home card folder icons now hide when the full agent title overflows its rendered
+width. Re-evaluate after render, resize and font loading; measure with icons
+present to prevent oscillation. Verified mobile-hidden and desktop-restored
+states without reload, console empty. Evidence: review/conditional-folder-mobile.jpg.

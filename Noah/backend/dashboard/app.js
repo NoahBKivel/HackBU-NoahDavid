@@ -213,6 +213,17 @@ function healthPie(fleet) {
     '<g mask="url(#home-health-ring)">' + (paths || '<circle cx="100" cy="100" r="90" fill="var(--line)"/>') + '</g></svg>';
 }
 
+function updateHomeFolderIcons() {
+  const rows = [...view.querySelectorAll('.home-activity-row')];
+  // Measure with icons present so hiding one cannot cause a show/hide loop.
+  rows.forEach(row => row.querySelector('.home-agent-project .icon')?.removeAttribute('hidden'));
+  const measured = rows.map(row => {
+    const title = row.querySelector('.home-agent-title');
+    return [row.querySelector('.home-agent-project .icon'), title.scrollWidth > title.clientWidth + 1];
+  });
+  measured.forEach(([folder, truncated]) => folder?.toggleAttribute('hidden', truncated));
+}
+
 function renderHome() {
   if (!sourceLoaded && !sessions.length) {
     view.innerHTML = '<div class="home-overview"><div class="home-heading"><p class="home-wordmark">VISION</p><h1>Agent overview</h1></div>' +
@@ -248,6 +259,10 @@ function renderHome() {
         (attention ? 'Needs attention' : health === 'healthy' ? 'Healthy' : 'Unreported') + '</span><span class="home-agent-time">' +
         esc(relativeTime(session.lastSeenAt ?? point?.ts ?? Date.now()).replace('Last seen ', '')) + '</span></span></a></li>';
     }).join('') + '</ul>' + (recent.length ? '' : '<p class="empty-list">No agents reporting yet.</p>') + '</section></div></div>';
+  resizeObserver = new ResizeObserver(updateHomeFolderIcons);
+  resizeObserver.observe(view.querySelector('.home-activity'));
+  updateHomeFolderIcons();
+  void document.fonts.ready.then(updateHomeFolderIcons);
 }
 
 function renderAgentDirectory() {
