@@ -53,15 +53,16 @@ def open_or_upgrade(findings: list[dict], fired: dict, seq: int | None, severity
     """Return only findings that need this event's notice or correction."""
     changed = []
     for question, probability in fired.items():
+        evidence = [seq] if question.startswith("M8#") else list(cited)
         key = issue_key(question, seq)
         finding = current(findings, key)
         if finding is not None:
             if finding["status"] != "open" or finding["severity"] != "minor" or severity == "minor":
                 continue
-            finding.update(severity=severity, cited=list(cited), probability=probability)
+            finding.update(severity=severity, cited=evidence, probability=probability)
         else:
             finding = {"id": f"F{len(findings) + 1}", "question": question, "key": key,
-                       "opened_at": seq, "cited": list(cited), "severity": severity,
+                       "opened_at": seq, "cited": evidence, "severity": severity,
                        "probability": probability, "message": None, "reached_at": None,
                        "status": "open", "last_l7": "open"}
             findings.append(finding)

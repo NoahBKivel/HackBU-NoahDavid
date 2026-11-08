@@ -40,7 +40,8 @@ class Formats:
         text, detailed, fits = shared.render_state(instructions, session.header["documents"], events, seq,
                                                    findings, self.length - 1, tokenizer=self.tokenizer)
         if not fits:
-            raise OverflowError("Documents require the overflow screen.")
+            from .overflow import screen
+            return screen(session, instructions, event, runner, self.tokenizer, self.length, findings)
         return {"text": text, "detailed": detailed, "events": events, "seq": seq,
                 "row_budget": self.length + 640 - shared.count_tokens(text, self.tokenizer) - 1}
 
@@ -78,6 +79,8 @@ class Formats:
             item = {"question": question, "event_seqs": finding["cited"], "probability": finding["probability"],
                     "severity": finding["severity"], "evidence": evidence,
                     "requirement": "\n".join(str(unit["text"]) for unit in requirements)}
+            if question.startswith("M8#"):
+                item["requirement"] = context["screen_sections"][question.partition("#")[2]]["text"]
             if question.startswith("G2#"):
                 unit = next(unit for unit in session.header["units"] if f"G2#R{unit['k']}" == question)
                 item.update(answer="broken", broken=[unit["text"]])

@@ -2,6 +2,7 @@ from David import monitor_format as shared
 from intent_runtime.formats import Formats
 from intent_runtime.store import SessionStore
 from intent_runtime.service import Runtime
+from intent_runtime.findings import open_or_upgrade
 
 
 class Tokenizer:
@@ -83,3 +84,37 @@ def test_shared_adapter_delivers_a_real_correction_and_tracks_its_arrival():
     runtime.classify({'session_id': 'fixture', 'event_id': 'read', 'seq': 3, 'type': 'tool_completed',
                       'action': {'tool': 'Read', 'args': {'file_path': 'README.md'}, 'denied': None}})
     assert store.get('fixture').header['findings'][0]['reached_at'] == 3
+
+
+def test_overflow_findings_cite_the_latest_action_and_quote_the_section():
+    findings = []
+    opened = open_or_upgrade(findings, {'M8#S1': .9, 'M4': .8}, 9, 'significant', [2, 4])
+    assert opened[0]['cited'] == [9]
+    assert opened[1]['cited'] == [2, 4]
+    formats = Formats(Tokenizer())
+    store = SessionStore({})
+    session = store.get('fixture')
+    event = {'event_id': 'latest', 'seq': 9, 'type': 'tool_completed',
+             'action': {'tool': 'Bash', 'args': {'command': 'rm tests/test_slow.py'}, 'result_text': 'Removed.'}}
+    context = {'events': [event], 'screen_sections': {'S1': {'text': 'Preserve every test file.'}}}
+    message = formats.correction([opened[0]], session, [], context, [])
+    assert 'Preserve every test file.' in message
+    assert 'stated requirement at E9' in message
+
+
+def test_adapter_dispatches_over_budget_documents_to_the_screen():
+    class Runner:
+        def ask_many(self, requests):
+            self.requests = requests
+            return [{key: {'false': .9, 'true': .1} for key in questions} for _, questions in requests]
+    formats = Formats(Tokenizer(), 200)
+    store = SessionStore({})
+    session = store.get('fixture')
+    event = {'event_id': 'latest', 'seq': 1, 'type': 'tool_completed',
+             'action': {'tool': 'Bash', 'args': {'command': 'git status'}, 'result_text': ''}, 'todos': []}
+    store.add(session, event)
+    session.header['documents'] = {'appendix.md': 'Unrelated appendix facts.\n\n' * 200}
+    runner = Runner()
+    context = formats.render(session, [], event, runner)
+    assert context['overflow'] and runner.requests
+    assert context['screen_fired'] == {}
