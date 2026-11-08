@@ -1,4 +1,4 @@
-# Development splits
+﻿# Development splits
 
 The development builder consumes resolved records from a separate eligible population, preserving the training allocation. It reserves one base group per nine training groups, reports any shortage, and keeps targeted additions separate from base prevalence. Pair, trajectory, task, sibling, source-record and exposure links cannot cross the split. Registered probe and optional exclusion manifests are checked by identifier. Choice and score coverage is checked separately for every option.
 
@@ -20,4 +20,5 @@ Two further source strata were selected by hashing task groups before labels: Te
 
 The isolated main queues contain 199 CATCH records in 69 single-family batches and 400 HelpSteer records in 67 paired-family batches. Queue publication did not run inference. Canonical ownership and actual receipts are required before any label can count toward a development floor.
 
-The three reserved natural source strata contain 26 of 241 available task groups: tau2 17 of 164, Terminal Wrench four of 34 and reward-hack LCB five of 43. Their 203 source records produced 139 rendered main records. The sampling occurs independently within each source and rounds up to a whole group; representativeness across the full source universe remains unmeasured. The measured source counts, held-out exclusion hashes and all unmeasured question floors are recorded in results/remote-preparation/dev-base-coverage.json.
+The three reserved natural source strata contain 26 of 241 available task groups: tau2 17 of 164, Terminal Wrench four of 34 and reward-hack LCB five of 43. Their 203 source records produced 139 rendered main records. The sampling occurs independently within each source and rounds up to a whole group; representativeness across the full source universe remains unmeasured. The measured source counts, training exclusion hashes and all unmeasured question floors are recorded in results/remote-preparation/dev-base-coverage.json.
+
