@@ -32,7 +32,7 @@ def read_records(path: Path) -> list[dict]:
     return records
 
 
-def run(target: str, output: Path) -> dict:
+def run(target: str, output: Path, require_calibration: bool = False) -> dict:
     """Verify stock loading, skips, calibration and exactly-once late delivery."""
     output.mkdir(parents=True, exist_ok=True)
     driver = Driver(target)
@@ -40,9 +40,6 @@ def run(target: str, output: Path) -> dict:
     results = []
     checks = {}
     log_path = output / "model.log"
-    log_stream = log_path.open("w", encoding="utf-8")
-    logger = subprocess.Popen([sys.executable, "-m", "modal", "app", "logs", driver.app],
-                              cwd=FOLDER.parents[1], stdout=log_stream, stderr=subprocess.STDOUT)
 
     def event(seq: int, kind: str = "tool_completed", tool: str = "Read", **extra) -> dict:
         return {"schema_version": 1, "session_id": sid, "event_id": f"{sid}-{seq}", "seq": seq,
@@ -100,25 +97,31 @@ def run(target: str, output: Path) -> dict:
         checks["contract"] = True
         deadline = time.monotonic() + 30
         while True:
+            fetched = subprocess.run([sys.executable, "-m", "modal", "app", "logs", driver.app, "--since", "30m"],
+                                     cwd=FOLDER.parents[1], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=30)
+            log_path.write_bytes(fetched.stdout)
             records = read_records(log_path)
             loaded = next((r for r in reversed(records) if "loaded" in r), None)
             trace = next((r for r in reversed(records) if r.get("event_id") == normal["event_id"]), None)
             if loaded and trace:
                 break
-            if logger.poll() is not None or time.monotonic() >= deadline:
+            if time.monotonic() >= deadline:
                 raise AssertionError("Serving probability logs were not available for independent verification.")
             time.sleep(.25)
         assert loaded["source"] == "stock-kev"
         assert loaded["loaded_temperature"] == 1.0 and loaded["flag_at"] == .5
-        assert loaded["calibration"] == {}
+        parameters = loaded["calibration"].get("M1", {})
+        if require_calibration and not parameters:
+            raise AssertionError("The selected calibration fixture was not loaded by the container.")
         distribution = trace["probabilities"][0]["raw"]["M1"]
         yes, no = distribution["true"], distribution["false"]
-        temperature = loaded["shipped_temperature"]
-        expected = 0.0 if yes == 0 else 1.0 if no == 0 else 1 / (1 + math.exp(-(math.log(yes) - math.log(no)) / temperature))
+        temperature = parameters.get("T", loaded["shipped_temperature"])
+        offset = parameters.get("b", 0.0)
+        expected = 0.0 if yes == 0 else 1.0 if no == 0 else 1 / (1 + math.exp(-(math.log(yes) - math.log(no)) / temperature - offset))
         assert math.isclose(normal_result["risk"], expected, rel_tol=0, abs_tol=1e-12)
         assert normal_result["flagged"] == (expected >= .5)
         checks["calibration on the serving path"] = True
-        checks["stock-fallback-config"] = True
+        checks["selected-calibration-config" if parameters else "stock-fallback-config"] = True
         evidence = {"app": driver.app, "session_id": sid, "checks": checks, "results": results,
                     "loaded": loaded, "raw": distribution, "expected": expected,
                     "acted_probability": normal_result["risk"]}
@@ -126,14 +129,6 @@ def run(target: str, output: Path) -> dict:
         print(json.dumps({"app": driver.app, "checks": checks, "calibration_error": abs(expected - normal_result["risk"])}), flush=True)
         return evidence
     finally:
-        if logger.poll() is None:
-            logger.terminate()
-            try:
-                logger.wait(timeout=10)
-            except subprocess.TimeoutExpired:
-                logger.kill()
-                logger.wait(timeout=10)
-        log_stream.close()
         (output / "responses.json").write_text(json.dumps(results, indent=2), encoding="utf-8")
 
 
@@ -142,8 +137,9 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--target", choices=("dev", "live"), default="dev")
     parser.add_argument("--output", type=Path, default=FOLDER / "results" / "core-dev")
+    parser.add_argument("--require-calibration", action="store_true")
     args = parser.parse_args()
-    run(args.target, args.output)
+    run(args.target, args.output, args.require_calibration)
     return 0
 
 
