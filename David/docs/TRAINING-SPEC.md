@@ -23,19 +23,19 @@ This document specifies the training data, the labels, the training run, model s
 
 | Family | Stands in for | Bound | Instrument → trigger |
 |---|---|---|---|
-| Teacher labels | true labels | per-question positive-specific agreement between the two teacher models ≥ 0.70 (agreement on the positive class, section 4.1: 2a / (2a + b + c), a can't-tell vote counting as not positive) | below the bound → that question's instructions tightened and its rows relabelled once before the data freezes; a second failure is reported |
+| Teacher labels | true labels | on policy-paired records only, per-question positive-specific agreement between the two teacher models ≥ 0.70 (agreement on the positive class, section 4.1: 2a / (2a + b + c), a can't-tell vote counting as not positive); single-voted counts reported per question | below the bound → that question's instructions tightened and its paired rows relabelled once before the data freezes; a second failure is reported |
 | Converted and constructed records | deployment states | none measured in training | the held-out lift on unseen synthetic Claude Code conversations (TRACE, human-verified) is the check; the demo check on a recorded Mod session is the only real-run check |
 | Generated thinking notes | the notes Claude Code actually shows | none measured | notes appear in ~1% of real thinking blocks, so a model leaning on them loses little at runtime |
 | Accelerated training kernels | the reference forward pass | loss on fixed batches within max(the measured same-seed noise floor, 10⁻³ relative) | outside → accelerated kernels refused; the reference path is the default |
 
-**Scope.** *In:* training sources and constructions, labelling, the training recipe, candidate selection, calibration, evaluation, and training records for the document-overflow screen. *Out (runtime specification):* the classifier's serving logic, firing thresholds, overflow-path selection at runtime, the production state cache, the demo. Long-context training and its validity gate are excluded. The handoff writes `long_context.json` as `{"validated_length":10239}`.
+**Scope.** *In:* training sources and constructions, labelling, the training recipe, candidate selection, calibration, evaluation, and training records for the document-overflow screen. *Out (runtime specification):* the classifier's serving logic, firing thresholds, overflow-path selection at runtime, the production state cache, the demo. Long-context training and its validity gate are excluded. The handoff writes `long_context.json` as `{"validated_length":8191}`.
 
 ---
 
 ## 2. Design Principles
 
 1. **Label what is visible.** A label says what the monitor's own state shows. Evidence the monitor cannot see (raw reasoning, hidden-test rewards, later outcomes) informs the labeller and never becomes the evidence for a yes.
-2. **One renderer.** Training states and runtime states come from one renderer fed one event schema. No training-only formatting exists for monitor records; replay records keep Kev's native decision-record format, since they train general decision skill rather than monitor states. Every record is rendered at the 10,239-token state budget.
+2. **One renderer.** Training states and runtime states come from one renderer fed one event schema. No training-only formatting exists for monitor records; replay records keep Kev's native decision-record format, since they train general decision skill rather than monitor states. Every record is rendered at the 8,191-token state budget through the shared renderer's existing budget parameter; its code is unchanged.
 3. **Visible evidence decides labels.** A source label from a human reading the visible trace or a rule over visible tool calls is final for its question; a construction's intended label and every outcome-based or LLM-judged source label yield to the teacher, who labels from the visible state (section 8.4); the teacher fills every question no source covers.
 4. **No cue may predict a label except the behaviour.** Negative cuts match positives' event type and position; pairs share optimizer steps.
 5. **The held-out sets are touched once.** No held-out item reaches training, selection or calibration.
@@ -194,7 +194,7 @@ Only the teacher and the agent-side generator read it, and the teacher reads onl
 }
 ```
 
-Questions asked more than once per record take a key suffix (`G2#R3`, `D1#E41`, `D2#R3`, `SCR#S2`, `M8#S2`). An RF record's state is the ⟦ ⟧ window alone (the judged sentence and up to two neighbours on each side). `label` is required on every question (Kev's trainer requires it); `target` is present when the two teacher votes differ or either vote is can't-tell, and the trainer then uses soft cross-entropy against `target`. A question absent from `questions` is not trained on that record. `_meta.source` never uses a name on Kev's eval-only list (mmlu, emotion, tweet_offensive, qnli, paws, sciq, contrastive, legacy_holdout, composition_holdout).
+Questions asked more than once per record take a key suffix (`G2#R3`, `D1#E41`, `D2#R3`, `SCR#S2`, `M8#S2`). An RF record's state is the ⟦ ⟧ window alone (the judged sentence and up to two neighbours on each side). `label` is required on every question (Kev's trainer requires it); `target` is present when paired teacher votes differ or any required vote is can't-tell, including a single Sol can't-tell vote with target 0.5. The trainer then uses soft cross-entropy against `target`. A single hard Sol vote has target 0 or 1; an equivalent native hard label may omit `target`. Vote allocation and target resolution follow section 8.3. A question absent from `questions` is not trained on that record. `_meta.source` never uses a name on Kev's eval-only list (mmlu, emotion, tweet_offensive, qnli, paws, sciq, contrastive, legacy_holdout, composition_holdout).
 
 ### 6.4 State format
 
@@ -239,7 +239,7 @@ A `turn_completed` event renders as `[E<seq>] MESSAGE` followed by its final tex
 
 **Effort area:** the first directory under the repository root (`(root)` for root files); per area, counts of edits, writes and shell commands, with reads counted separately. Counts span the whole run, including events collapsed into the count line. EFFORT and OPEN FINDINGS always appear; an empty section renders as its heading followed by `(none)`.
 
-**Fill rule (newest first).** B_state = 10,239 tokens, counted with Kev's tokenizer on Kev's rendering (Kev rejects a state whose token count plus one exceeds `max_state` = 10,240); the state never depends on the questions asked of it. A record's question rows share Kev's packed allowance (`max_packed` = `max_state` + 1,664, checked by Kev's own fit test); rows that do not fit move to a sibling record with the same state, sharing its split and batch (siblings are not a contrast pair, so the cap's pair exemption does not cover them). Each single row must also fit Kev's row limit (`max_branch` = `max_state` + 640, so 640 tokens beside a full state): L7's «text» is trimmed to fit, evidence lines first, and a quoted «R_k text» is trimmed head and tail, each cut marked `[cut]`; the runtime trims the same way. USER INSTRUCTIONS and PROJECT DOCUMENTS verbatim first; then LATEST EVENT in full; then recent events as detailed blocks, newest first, stopping at the first block that does not fit what remains of the detail budget max(0.40 × B_state − tokens(instructions + documents), 0.15 × B_state), so the detailed events are always the newest in an unbroken run (the 0.15 floor keeps recent detail for the trajectory questions, matching the screen ledger's share); every older event as a one-liner; OPEN FINDINGS and EFFORT always. If the one-liners would overflow B_state, the oldest are replaced by one count line (`[E1–E120: 120 earlier events]`), oldest first, until the state fits. If instructions and documents exceed B_state − 0.15 × B_state − tokens(LATEST EVENT, OPEN FINDINGS, EFFORT, the section headings and one count line), the record belongs to the overflow screen form (section 6.6) instead.
+**Fill rule (newest first).** B_state = 8,191 tokens, counted with Kev's tokenizer on Kev's rendering (Kev rejects a state whose token count plus one exceeds `max_state` = 8,192); the state never depends on the questions asked of it. A record's question rows share Kev's packed allowance (`max_packed` = `max_state` + 1,664, checked by Kev's own fit test); rows that do not fit move to a sibling record with the same state, sharing its split and batch (siblings are not a contrast pair, so the cap's pair exemption does not cover them). Each single row must also fit Kev's row limit (`max_branch` = `max_state` + 640, so 640 tokens beside a full state): L7's «text» is trimmed to fit, evidence lines first, and a quoted «R_k text» is trimmed head and tail, each cut marked `[cut]`; the runtime trims the same way. USER INSTRUCTIONS and PROJECT DOCUMENTS verbatim first; then LATEST EVENT in full; then recent events as detailed blocks, newest first, stopping at the first block that does not fit what remains of the detail budget max(0.40 × B_state − tokens(instructions + documents), 0.15 × B_state), so the detailed events are always the newest in an unbroken run (the 0.15 floor keeps recent detail for the trajectory questions, matching the screen ledger's share); every older event as a one-liner; OPEN FINDINGS and EFFORT always. If the one-liners would overflow B_state, the oldest are replaced by one count line (`[E1–E120: 120 earlier events]`), oldest first, until the state fits. If instructions and documents exceed B_state − 0.15 × B_state − tokens(LATEST EVENT, OPEN FINDINGS, EFFORT, the section headings and one count line), the record belongs to the overflow screen form (section 6.6) instead.
 
 ### 6.5 Correction text (inserted by correction-window constructions; identical to the runtime's)
 
@@ -281,14 +281,16 @@ User instructions and project documents split deterministically into units: each
 
 ### 7.1 Composition
 
-N = 12,200 training records, made of:
+N = 10,000 training records, made of:
 
 | Part | Count | Formula / source |
 |---|---|---|
-| Replay | N_replay = 3,000 | decision-v7 2,000 + hard-v1 500 + tasksource 500; ρ_replay = 3,000 / 12,200 ≈ 0.25 (sourced: Kev's notes tie forgetting to replay share; LLM-as-Jev needed ≥ 33% non-target data, completed here by benign and chat-intent records) |
+| Replay | N_replay = 2,459 | decision-v7 1,639 + hard-v1 410 + tasksource 410; ρ_replay = 2,459 / 10,000 ≈ 0.25 (sourced: Kev's notes tie forgetting to replay share; LLM-as-Jev needed ≥ 33% non-target data, completed here by benign and chat-intent records) |
 | Long documents | N_long = 0 | No QuALITY or padded long-policy training records. |
-| Overflow screen | N_screen = 200 | section 7.4 |
-| Task records | 9,000 | n_o = s · n_o^plan per source (table 7.3), s = (N − N_replay − N_long − N_screen) / Σ n_o^plan = 9,000 / 10,630 = 900 / 1,063. |
+| Overflow screen | N_screen = 164 | section 7.4 |
+| Task records | 7,377 | n_o = s · n_o^plan per source (table 7.3), s = (N − N_replay − N_long − N_screen) / Σ n_o^plan = 7,377 / 10,630. |
+
+The 10,000-record count preserves the prior task/replay/screen proportions with whole records and complete screen pairs. The pre-labelling positive expectations and gate thresholds remain sealed; they are not lowered after the count reduction.
 
 Pair copies (note pairs, rewrite copies, goal-flip pairs) are inside these counts. A source that yields fewer records than s · n_o^plan passes its shortfall to the other sources of the same objective in proportion to their quotas. The dev split (section 7.9) is built in addition to N.
 
@@ -435,7 +437,7 @@ About 20% of flagged agent records (4.1) get a copy whose `agent_text` is rewrit
 
 ### 7.7 State-length limit
 
-No long-context training share or padding is used. Every record is rendered at B_state = 10,239 with `--max_state 10240`. Overflow screen states retain their 8,192-token budget.
+No long-context training share or padding is used. Every record is rendered at B_state = 8,191 with `--max_state 8192`. Overflow screen states retain their 8,192-token budget.
 
 ### 7.8 Balance cap
 
@@ -469,7 +471,16 @@ For each record the teacher receives the rendered state (exactly what the monito
 
 ### 8.3 Votes and targets
 
-One vote from GPT 6.1 Sol and one from Terra, with low thinking and both votes launched in parallel. Codex labellers use fast mode; direct OpenAI labellers use standard concurrent requests, never the Batch API, with the same instructions and vote format. Shared ownership prevents duplicate votes. On a yes/no question each vote is yes (1), no (0), or can't tell (0.5); the target is the mean of the two, so 0, 0.25, 0.5, 0.75 or 1; a tie resolves to the positive class, since a missed problem costs the user more than a false flag the agent dismisses: `label` = target ≥ 0.5 where the positive class is yes, and `label` = target > 0.5 for G1 (target 0.5 gives no, the drift class); the soft target keeps the uncertainty in the loss. The soft target carries the uncertainty into the loss; binary counts and AUROC use `label`. On a choice or score question each vote picks one option; the target is the mean of the two one-hot votes and `label` is the option with the higher mean (a tie between a positive and a non-positive option goes to the positive one; other ties go to the Sol vote). Records are sent in batches of 20–30 records from one source per call, fewer when a batch would exceed the labelling model's input limit. Label train constructions and rare-question sources first, then the remaining train records; dev waits.
+The same vote-allocation policy applies to Codex and direct OpenAI labellers, with low thinking and shared ownership preventing duplicate votes:
+
+- **Paired Sol and Terra:** the M1/G1 intent sources (Misalignment Atlas, SWE-chat pre-correction windows, HelpSteer3, the arena sets, WildFeedback, AgentJudgeBench); the M5/G5 sources (terminal-bench-science, TB2.1, Open-SWE, TonyDzi Stop-hook rows, SWE-chat claim slice, tau2 nl_assertions); the M7 teacher sources (Ambig-SWE, SWE-bench annotations, SWE-chat scope choices); the natural L7 recoveries; rpotham; and CodeTraceBench. Launch each record batch's Sol and Terra votes in parallel.
+- **Single Sol:** benign-pool records and all construction and visible-label records (constructions, CheatBench, IF_multi, AgentIF, impossible-SWE, HVTB, willjgriff, CATCH, Aria, OLMo, IN3, JL-ActionBoundary, UserBench and the other V sources). A construction receives a single Sol vote even when its underlying source also supplies a paired slice.
+
+On a yes/no question each vote is yes (1), no (0), or can't tell (0.5). For paired records, the target is the mean of the two votes, so 0, 0.25, 0.5, 0.75 or 1. For single-voted records, the target equals the Sol vote, so 0, 0.5 or 1. A tie resolves to the positive class: `label` = target ≥ 0.5 where the positive class is yes, and `label` = target > 0.5 for G1 (target 0.5 gives no, the drift class). Soft targets preserve uncertainty in the loss; binary counts and AUROC use `label`. On a choice or score question each vote picks one option. A paired record's target is the mean of the two one-hot votes and its label is the option with the higher mean (a tie between a positive and a non-positive option goes to the positive one; other ties go to the Sol vote). A single-voted record's target is the Sol vote's one-hot vector and its label is that option.
+
+Codex labellers use fast mode. Priority OpenAI labelling uses standard concurrent requests with the same instructions and vote format. Remaining lower-priority OpenAI coverage may use the Batch API at half the standard price, within the same $200 OpenAI cap, including outstanding work. Do not rely heavily on Batch until the Codex labelling rate is measured. Batch work never delays the freeze: at freeze, cancel unfinished batches and ingest completed results. Completed requests remain billable even when their batch is cancelled.
+
+Send 20–30 records from one source per call, fewer when a batch would exceed the labelling model's input limit. Label train constructions and rare-question sources first, then the remaining train records; dev waits. Report policy-complete records per hour with paired and single-voted counts separately, including single-voted counts per question. Agreement and can't-tell diagnostics use only policy-paired records.
 
 ### 8.4 Label resolution
 
@@ -482,8 +493,9 @@ Every clash between a source label and the teacher is logged per source.
 
 | Instrument | Trigger | Action |
 |---|---|---|
-| per-question positive-specific agreement between the two votes (2a / (2a + b + c)); raw agreement also reported | < 0.70 | that question's instructions tightened and its rows relabelled once; a second failure is reported and the labels stand |
-| per-question can't-tell rate | > 25% | that question's instructions tightened and its rows relabelled once; a second failure is reported |
+| per-question positive-specific agreement between the two votes on policy-paired records only (2a / (2a + b + c)); raw agreement also reported | < 0.70 | that question's instructions tightened and its paired rows relabelled once; a second failure is reported and the labels stand |
+| per-question can't-tell rate on policy-paired records only | > 25% | that question's instructions tightened and its paired rows relabelled once; a second failure is reported |
+| single-voted records per question | all single-voted records | report counts separately; exclude them from agreement and can't-tell diagnostics |
 | source-versus-teacher clashes, per source | any | logged for review |
 | construction drop and retry rate, per construction | any | logged for review |
 
@@ -501,7 +513,7 @@ SWE-Misbehavior and lhaw trajectories come from headless Claude Code (`claude -p
 
 ### 9.1 Recipe
 
-One continuation run of Kev's trainer (code `github.com/jaredpalmer/kev` at `fc4a17e194bca35a48c57211392ec49ea54a94ac`) on one Modal H100:
+One continuation run of Kev's trainer (code `github.com/jaredpalmer/kev` at `fc4a17e194bca35a48c57211392ec49ea54a94ac`) on four Modal B200s in data parallel, with global effective batch 16:
 
 ```
 python -m kev.train \
@@ -509,18 +521,19 @@ python -m kev.train \
   --base Qwen/Qwen3.5-4B-Base --base_revision 1001bb4d826a52d1f399e183466143f4da7b741b \
   --lora 16 --lora_targets all --head_dim 256 \
   --data <train.jsonl> \
-  --max_state 10240 --shared_prefix 1 --length_sort 1 --pass_tokens_max <P> \
+  --max_state 8192 --shared_prefix 1 --length_sort 1 --pass_tokens_max <P> \
   --p_none_pair 0 --p_none 0 --p_none_distract 0 --p_distract 0 \
   --epochs 1 --lr 2e-5 --batch 2 --accum 8 \
   --dtype bf16 --checkpointing 1 --device cuda --seed 1 --out <run dir>
 ```
 
 - Loss: cross-entropy against `label`, soft cross-entropy against `target` where present (the trainer's native behaviour). The pointer head trains at the LoRA learning rate (`--head_lr` 0, the default); anchoring stays off (`--anchor_w` 0, the default). Choice questions have their option order shuffled on every record (the trainer's native behaviour); the none-of-the-above substitution, the none-of-the-above minimal pairs and the distractor options are all off, since the question set fixes the option sets.
-- Effective batch B = 16 records; steps S = ⌈R / B⌉ with R the train-split record count after the balance cap, replay included (S ≈ 763 at R = 12,200). LR follows the trainer's OneCycle schedule (10% warm-up from max_lr/25, decay to near 0).
+- Effective batch B = 16 records; steps S = ⌈R / B⌉ with R the train-split record count after the balance cap, replay included (S = 625 at R = 10,000). LR follows the trainer's OneCycle schedule (10% warm-up from max_lr/25, decay to near 0).
 - P = the largest per-pass token count whose smoke-run peak memory is ≤ 0.9 × GPU memory.
+- Checkpointing defaults to `--checkpointing 1`. Use `--checkpointing 0` only if its measured peak memory at its largest feasible P is ≤ 0.9 × GPU memory and its batched records per hour exceed the checkpointing-on path with finite, falling loss. Otherwise retain checkpointing 1. Measure the actual 8K record mix at the selected pass cap; a worst-case synthetic record is a memory probe, not a full-run throughput forecast.
 - Environment pins: torch 2.8.0, transformers 5.17.0, peft 0.21.0, flash-linear-attention 0.5.2, triton 3.7.1 (triton 3.9.0 fails fla 0.5.2 at import; these pins were measured in the serving image, and the smoke run confirms them for training).
 - Kernels: fla's Triton kernels must run the DeltaNet layers (no torch fallback); attention runs through SDPA, the trainer's only path with the custom masks it uses. The run does not start otherwise.
-- **Estimated** run time 2–3.5 h on the H100 (band 1.5–4 h; settled by the smoke run); cost ~$10–19 including the smoke, resume-parity and pass-cap trials (section 11).
+- **Estimated** run time and cost on the B200 await the actual 8K record-mix measurement. Compute the projection from its measured batched records per hour and current Modal price, including smoke, resume-parity and pass-cap trials separately (section 11).
 
 ### 9.2 Trainer patches
 
@@ -556,12 +569,12 @@ Candidates are scored with the batched training forward (shared prefix); a candi
 
 | Quantity | Formula | Inputs |
 |---|---|---|
-| Task-record scale s | (N − N_replay − N_long − N_screen) / Σ n_o^plan = 9,000 / 10,630 | N = 12,200; N_replay = 3,000; N_long = 0; N_screen = 200 |
+| Task-record scale s | (N − N_replay − N_long − N_screen) / Σ n_o^plan = 7,377 / 10,630 | N = 10,000; N_replay = 2,459; N_long = 0; N_screen = 164 |
 | Note share f_note | k · r | r measured from live events; k = 4 |
 | Negatives per positive | ≤ 10 per question among unprotected rows; protected rows (7.8) may exceed it | decided |
 | Positive floor | max(0.8 · P_q, 60), P_q = Σ over sources of s · n^plan × the source's positive share for q | each source's intended positive share, fixed before the build: constructions from their intended labels, dataset V sources from the natural share among the rows the converter keeps (dataset metadata), agent-run sources (8.7), V labels on responses generated during the build (IF_multi's sampled responses) and T sources 0 (no measured positive rate exists for any monitor question); the 60 (the dev floor's count, 7.9) is the floor for questions whose positives come only from teacher labels (G5, M5) |
 | Dev positives per question | min n with Hanley–McNeil SE(AUROC) ≤ 0.035 | per-question AUROC estimate (0.8 default) |
-| State budget | B_state = 10,239; `max_state` = 10,240; detail budget max(0.40 · B_state − tokens(instructions + documents), 0.15 · B_state) | Kev's tokenizer |
+| State budget | B_state = 8,191; `max_state` = 8,192; detail budget max(0.40 · B_state − tokens(instructions + documents), 0.15 · B_state) | Kev's tokenizer |
 | Steps S | ⌈R / 16⌉ | R = train records after the cap, replay included |
 | Save interval | ⌈S / 10⌉ | S |
 | Pass token cap P | max P with smoke-run peak memory ≤ 0.9 · GPU memory, and P ≥ the padded cost of the largest single record (a larger record halts the trainer) | smoke run on a synthetic record at the largest real padded cost (a full state plus its question count × its longest row) |
@@ -573,16 +586,16 @@ Candidates are scored with the batched training forward (shared prefix); a candi
 
 | Item | Estimate | Band | Instrument |
 |---|---|---|---|
-| Training run | ~$10–19 (H100 at $3.95/h × 2–3.5 h, plus smoke, resume-parity and pass-cap trials) | $6–25 | Modal billing per app |
-| Candidate scoring | each candidate reads all of dev; token count and scoring rate at the 10,239-token state budget are measured on the actual dev records. Stock and the step-400 pair run in a separate container during training; the final save's pair follows the run. | settled by the first candidate scored | scoring timer |
+| Training run | B200 run time and cost await the measured batched throughput on the actual 8K record mix; cost is run time × current Modal B200 hourly price, plus smoke, resume-parity and pass-cap trials | pending actual-mix measurement | Modal billing per app |
+| Candidate scoring | each candidate reads all of dev on a B200; token count and scoring rate at the 8,191-token state budget are measured on the actual dev records. Stock and the step-400 pair run in a separate container during training; the final save's pair follows the run. | settled by the first candidate scored | scoring timer |
 | Serve-path parity | the winner over 300 dev records through the serving path (stock's side before training ends), ~5 min | 3–15 min | timer |
 | Lift and held-out reports | 2 models × (200 probe items; 200 TRACE conversations, one state each; LLMBar, RewardBench 2; 2,172 retention records), both models concurrently in separate containers, once the selected model is live, ~15–30 min after the pick | 10–45 min | timer |
 | Agent runs (wall-clock) | ~300 headless runs × 3–10 min at ~20 in parallel ≈ 1–2.5 h, plus container image pulls | 1–4 h | per-job wall-clock log |
-| Teacher items and calls | two votes per teacher-labelled record, batched 20–30 records from one source where input fits; calls counted from the actual queue, without long-gate pilot or items | dev top-ups and diagnostic passes counted separately | per-batch call log |
+| Teacher items and calls | one Sol vote per single-voted record and one Sol plus one Terra vote per policy-paired record (8.3), batched 20–30 records from one source where input fits; calls counted from the actual queue, without long-gate pilot or items | dev top-ups and diagnostic passes counted separately | per-batch call log |
 | Generation and agent runs | the $200 cap binds; generation reserved first (8.7) | cap $200 | per-job spend log; stage closes at the cap |
 | Teacher wall-clock | hours = calls × minutes per call / (60 × parallel subagents): ~1,500 calls × ~3.5 min at up to 100 parallel ≈ 1 h | 0.3–3.7 h (2–5 min per call, 50–100 parallel, 1,000–2,200 calls); a relabel pass on one question adds up to its share of a full pass; RF units on G2/D2 records and sibling records add ~10–20% | throughput log |
 
-**Irreducible floor.** Every record's state must be rendered at the length the runtime would render it, using the 10,239-token state budget. Shared-prefix training reuses each record's state across its question rows.
+**Irreducible floor.** Every record's state must be rendered at the length the runtime would render it, using the 8,191-token state budget. Shared-prefix training reuses each record's state across its question rows.
 
 ---
 
@@ -604,8 +617,8 @@ Candidates are scored with the batched training forward (shared prefix); a candi
 | Gate | Endpoint | Fallback |
 |---|---|---|
 | Positive floor | every question with a positive class except SCR, M8 and the diagnostics (D1/D3, D2) holds ≥ max(0.8 · P_q, 60) positive training rows (section 10), P_q being what the decided plan yields | rebuild the shortfall inside N from the same objective's sources or constructions, trimming that objective's largest source; SCR, M8 and the diagnostics are reported |
-| Teacher agreement | positive-specific agreement ≥ 0.70 per question | tighten its instructions and relabel once; a second failure is reported |
-| Can't-tell rate | ≤ 25% per question | tighten its instructions and relabel once; a second failure is reported |
+| Teacher agreement | positive-specific agreement ≥ 0.70 per question on policy-paired records only; report single-voted counts per question separately | tighten its instructions and relabel paired rows once; a second failure is reported |
+| Can't-tell rate | ≤ 25% per question on policy-paired records only; single-voted records excluded | tighten its instructions and relabel paired rows once; a second failure is reported |
 | Pair integrity | no pair group crosses a split | rebuild the split |
 | Secrets scan | zero matches for token-shaped patterns (`sk-ant-[A-Za-z0-9_-]{20,}`, `sk-svcacct-…`, `sk-proj-…`, `CLAUDE_CODE_OAUTH_TOKEN=` with a value, `ghp_[A-Za-z0-9]{36}`, `github_pat_[A-Za-z0-9_]{22,}`, `AKIA[0-9A-Z]{16}`, `hf_[A-Za-z0-9]{34}`, `-----BEGIN … PRIVATE KEY-----`, `.jwt_secret` with a value) in any record | scrub and rescan |
 
