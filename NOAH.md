@@ -113,9 +113,15 @@ The full requirements are in [Noah/MOD_PRD.md](Noah/MOD_PRD.md). This section is
 - **Test tools:**
   - `Noah/backend/samples/`: four hand-written events in the Mod's format (session start, normal edit, a PowerShell command deleting tests, turn end). They follow CONTRACT.md section 3, are not recorded agent output, and are only for testing the backend. David has his own example inputs, so don't produce samples for him.
   - `Noah/backend/send_event.py`: sends samples and prints each result with its size and latency. `--dev` targets the `modal serve` URL, `--pad-mb N` adds filler to test sizes. It uses certifi's certificates (see build notes).
-- **Mock behavior:**
-  - Flags deleting test files: `rm`, `Remove-Item` or `del` on a path containing "test", or a `file_changes` delete of one. Returns risk 0.93 with the actions `notify_user` (detected), `inject_agent` and `notify_user` (intervened).
-  - Anything else gets risk 0.05 and no actions.
+- **Stand-in classifier** (`mock_classify`, the default while `CLASSIFIER_APP` is None). It makes realistic data so the Mod's whole pipeline runs end to end. Each event's answer is seeded by its `event_id`, so a resend gets the same answer.
+  - **Reads are unscored:** Read, Grep, Glob, WebFetch, WebSearch, LS and NotebookRead tool calls, and `session_started`, get `risk: null`, no actions and `details.classified: false`.
+  - **Deleting tests is flagged:** a delete command (`rm`, `del`, `rmdir`, `Remove-Item`, `unlink`, `git rm`) on a test path, or a `file_changes` delete of one, scores 0.88 to 0.96. It returns `notify_user` (detected), `inject_agent` and `notify_user` (intervened). These are never made pending, so the demo correction always arrives on time.
+  - **Weakening tests is a potential issue:** an edit to a test file that removes assertions or adds a skip scores 0.55 to 0.68, with a `potential` notice and no correction.
+  - **Everything else:** usually 0.03 to 0.30. About 12% of events score 0.40 to 0.65 with a made-up concern, plus a `potential` notice when it's 0.5 or more. Only 0.7 and up is flagged.
+  - **`details`:** `behavior` (the tool and its target), `concern` and `requirement` (the session's latest user instruction), plus `mock: true`, which the Pane hides.
+  - **Drift:** `drift = 0.85 * drift + 0.15 * risk` per session, and `drift_rate` is the change from the previous scored event.
+  - **Slow results:** about 1 in 8 scored tool calls returns `pending` at once, and its real result rides in `late_results` on the next response for that session.
+  - **State** (drift, the latest instruction, late results) is kept in the container's memory per `session_id`. So the API function runs in one container (`max_containers=1`, `@modal.concurrent(max_inputs=50)`) that stays up 20 minutes after the last request (`scaledown_window=1200`). After that, or after a redeploy, drift restarts at 0 and a waiting late result is lost.
 - **API token:**
   - The Modal Secret `monitor-token` (key `MONITOR_TOKEN`).
   - The same value is in `Noah/backend/secrets.local.json`, which is gitignored and **never committed**. The Mod's `apiToken` setting reads it from there.
@@ -129,7 +135,8 @@ The full requirements are in [Noah/MOD_PRD.md](Noah/MOD_PRD.md). This section is
     - `late_results` passed through with `drift` and `drift_rate` intact
     - a malformed late entry was dropped while the valid one was kept
   - the class interface, tested against our own fake `Classifier` class with David's method names (since stopped; David's app was not called): `/health` fired `warmup` on a cold container and returned in about 4 s, a normal result, pending at about 9.7 s, the late result delivered once on the next event, the wrong shape and an exception all behaved as above. Then redeployed on the mock and the four samples passed.
-- **No server-side storage.** David's database holds the history, and the Mod holds the graph data.
+  - the stand-in classifier, deployed: the four samples (the deletion flagged with all three actions, reads and session start unscored, drift rising). In 24 events in one session, 4 came back pending, and each was delivered once, with its drift, on the very next response.
+- **No server-side storage** with the real classifier: David's database holds the history, and the Mod holds the graph data. Only the stand-in keeps per-session state in memory.
 - **Commands** (run from the repo root):
   - `set PYTHONUTF8=1` first in cmd, or prefix `PYTHONUTF8=1` in bash (see build notes).
   - `.venv\Scripts\modal serve Noah/backend/app.py` for development, with hot reload and the `-dev` URL.
