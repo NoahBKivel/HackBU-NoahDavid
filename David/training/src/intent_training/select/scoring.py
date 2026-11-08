@@ -59,7 +59,7 @@ def score_records(model: Any, tokenizer: Any, records: Iterable[dict[str, Any]],
                     raise ValueError("Model output options differ from the request.")
                 if not all(math.isfinite(value) for value in raw):
                     raise ValueError("The scoring forward returned nonfinite logits.")
-                yield {**row, "logits": raw}
+                yield {**row, "logits": raw, "temperature": 1.0}
         batch.clear()
 
     for original in records:
@@ -87,6 +87,11 @@ def load_and_score(checkpoint: str, records: Iterable[dict[str, Any]], *, device
     import torch
     from kev.checkpoint import Checkpoint, LoadOptions
 
-    tokenizer, model = Checkpoint(checkpoint).load(device, LoadOptions(dtype=torch.float32, temperature=1.0))
+    if str(device).startswith("cuda"):
+        from intent_training.kevpatch.kernels import install_required_kernels
+        install_required_kernels()
+    tokenizer, model = Checkpoint(checkpoint).load(
+        device, LoadOptions(dtype=torch.float32, temperature=1.0,
+                            attn="sdpa" if str(device).startswith("cuda") else None))
     yield from score_records(model, tokenizer, records, max_state=max_state, pass_tokens_max=pass_tokens_max,
                             is_base_dev=is_base_dev, intent_ids=intent_ids)

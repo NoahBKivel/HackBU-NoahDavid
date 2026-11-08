@@ -16,7 +16,7 @@ from intent_training.select import (
     auroc, calibrated_probabilities, fit_calibration, fit_question, macro_auroc,
     prior_offset, select_candidate,
 )
-from intent_training.select.scoring import score_records
+from intent_training.select.scoring import load_and_score, score_records
 from intent_training.select.selection import _plans, _sampled_score
 
 
@@ -185,5 +185,37 @@ def test_scoring_batches_full_cap_and_preserves_canonical_row_alignment(monkeypa
     assert [r["record_id"] for r in outputs] == ["0", "1", "2"]
     assert outputs[1]["label"] == "true" and outputs[1]["is_intent"]
     assert outputs[1]["target"] == [0, 1]
+    assert outputs[1]["temperature"] == 1.0
     with pytest.raises(ValueError, match="alone exceeds"):
         list(score_records(Model(), None, records, max_state=400, pass_tokens_max=2))
+
+
+def test_cuda_loader_binds_required_kernels_and_unit_temperature(monkeypatch):
+    import intent_training.select.scoring as scoring
+
+    events = []
+    torch = ModuleType("torch")
+    torch.float32 = "fp32"
+    checkpoint_module = ModuleType("kev.checkpoint")
+    checkpoint_module.LoadOptions = lambda **kwargs: kwargs
+
+    class Checkpoint:
+        def __init__(self, path):
+            assert path == "candidate"
+
+        def load(self, device, options):
+            assert events == ["kernels"]
+            assert options == {"dtype": "fp32", "temperature": 1.0, "attn": "sdpa"}
+            assert device == "cuda"
+            events.append("load")
+            return "tokenizer", "model"
+
+    checkpoint_module.Checkpoint = Checkpoint
+    kernels = ModuleType("intent_training.kevpatch.kernels")
+    kernels.install_required_kernels = lambda: events.append("kernels")
+    for name, module in {"torch": torch, "kev": ModuleType("kev"), "kev.checkpoint": checkpoint_module,
+                         "intent_training.kevpatch.kernels": kernels}.items():
+        monkeypatch.setitem(sys.modules, name, module)
+    monkeypatch.setattr(scoring, "score_records", lambda model, tokenizer, records, **kwargs: iter([{"ok": model == "model"}]))
+    assert list(load_and_score("candidate", [], device="cuda", max_state=400, pass_tokens_max=6)) == [{"ok": True}]
+    assert events == ["kernels", "load"]
