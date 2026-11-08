@@ -1,5 +1,5 @@
 {
-  "name": "alignment-monitor",
+  "name": "vision",
   "version": "0.1.0",
   "description": "Watches what the coding agent does, checks it against the user's instructions, and shows live alignment risk with corrections.",
   "types": "./types/index.d.ts"

@@ -228,6 +228,6 @@ The order doubles as the cut list: each step leaves something you can demo.
 | The Mod sends as much data as possible | No need to agree on a payload first. Only large items are trimmed, and only with Noah's OK. |
 | Docs are split into CONTRACT, NOAH and DAVID, all in the root | Each side keeps its own doc, the bridge is shared, and any agent can read all three |
 | Events send everything raw, with a 5 MB safety cap per event | David's classifier handles large entries. The cap only stops one huge file from breaking the pipeline. See MOD_PRD.md FR-16. |
-| The Mod's pane is titled **VISION** | The project name; what the acronym stands for is still undecided |
+| The Mod is named `vision` and its pane and status line read **VISION** | The project name; what the acronym stands for is still undecided. Mod names must be lowercase, so the internal name is `vision`. Renaming reset the Mod's saved state. |
 | A root CLAUDE.md holds the rules every agent must follow | Claude Code loads it automatically, so new agents find the docs and the update rule without being told |
 | The Mod only sends the most recent events: no checkpoint or batch events, even for long autonomous runs | The classifier analyzes behavior over time from its own history. Events go out after every tool call, so a long run inside one turn is still monitored and corrected action by action. |

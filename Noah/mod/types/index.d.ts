@@ -31,7 +31,7 @@ export type SessionInfo = { id: string; startedAt: number }
 
 declare module 'claude-code' {
   interface PluginState {
-    'alignment-monitor': {
+    'vision': {
       points: Shaped<Point[]>
       conn: Conn
       corrections: Correction[]

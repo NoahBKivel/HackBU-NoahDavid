@@ -3,7 +3,7 @@ import type { EngineInterface, Register } from 'claude-code'
 
 import type { Conn, Correction, Item, Notice, Point, Todo } from '../types'
 
-const PLUGIN = 'alignment-monitor'
+const PLUGIN = 'vision'
 // Tools the mock classifier treats as history only (no score), like David's side does.
 const READ_TOOLS = new Set(['Read', 'Grep', 'Glob', 'WebFetch', 'WebSearch', 'LS', 'NotebookRead'])
 const MAX_EVENT_BYTES = 5_000_000
@@ -29,17 +29,17 @@ type Event = { [key: string]: unknown } & { event_id: string; type: string }
 
 // Change a shape tag whenever that value's fields change, so a reload
 // drops what an older version stored instead of drawing it wrong.
-const points = atom({ plugin: 'alignment-monitor', key: 'points' } as const, [], { shape: 'points-2' })
-const conn = atom({ plugin: 'alignment-monitor', key: 'conn' } as const, 'connecting')
-const corrections = atom({ plugin: 'alignment-monitor', key: 'corrections' } as const, [])
-const pending = atom({ plugin: 'alignment-monitor', key: 'pending' } as const, [])
-const seq = atom({ plugin: 'alignment-monitor', key: 'seq' } as const, 0)
-const instructionCount = atom({ plugin: 'alignment-monitor', key: 'instructionCount' } as const, 0)
-const expanded = atom({ plugin: 'alignment-monitor', key: 'expanded' } as const, null)
-const todos = atom({ plugin: 'alignment-monitor', key: 'todos' } as const, [])
-const session = atom({ plugin: 'alignment-monitor', key: 'session' } as const, null)
-const windows = atom({ plugin: 'alignment-monitor', key: 'windows' } as const, { risk: 'all', trend: 'all' })
-const listsOpen = atom({ plugin: 'alignment-monitor', key: 'listsOpen' } as const, { flags: false, recent: false })
+const points = atom({ plugin: 'vision', key: 'points' } as const, [], { shape: 'points-2' })
+const conn = atom({ plugin: 'vision', key: 'conn' } as const, 'connecting')
+const corrections = atom({ plugin: 'vision', key: 'corrections' } as const, [])
+const pending = atom({ plugin: 'vision', key: 'pending' } as const, [])
+const seq = atom({ plugin: 'vision', key: 'seq' } as const, 0)
+const instructionCount = atom({ plugin: 'vision', key: 'instructionCount' } as const, 0)
+const expanded = atom({ plugin: 'vision', key: 'expanded' } as const, null)
+const todos = atom({ plugin: 'vision', key: 'todos' } as const, [])
+const session = atom({ plugin: 'vision', key: 'session' } as const, null)
+const windows = atom({ plugin: 'vision', key: 'windows' } as const, { risk: 'all', trend: 'all' })
+const listsOpen = atom({ plugin: 'vision', key: 'listsOpen' } as const, { flags: false, recent: false })
 
 // How many rows the flagged and recent lists show before "Show more".
 const FLAGS_SHOWN = 3
@@ -170,7 +170,7 @@ export const register: Register = (on, options) => {
       const event = await toolEvent($, e as unknown as Record<string, unknown>, ran as unknown as Record<string, unknown>)
       void dispatch($, event, describeTool(e as unknown as Record<string, unknown>), isLive)
       if (DEBUG_CONTEXT && answer.deny === undefined) {
-        const note = `[alignment-monitor debug] ${traceLines.slice(-10).join(' | ')}`
+        const note = `[vision debug] ${traceLines.slice(-10).join(' | ')}`
         answer = { ...answer, context: [...(answer.context ?? []), note] } as typeof ran
       }
       return answer
@@ -437,11 +437,11 @@ async function refreshStatus($: $, live: boolean) {
   const fixes = list.filter(p => p.correction !== null).length
   const mode = live ? '' : ' (mock)'
   if (state === 'error') {
-    $.ui.status(`Alignment: offline${mode}`)
+    $.ui.status(`offline${mode}`)
   } else if (!latest) {
-    $.ui.status(`Alignment: waiting${mode}`)
+    $.ui.status(`waiting${mode}`)
   } else {
-    $.ui.status(`Alignment: ${pct(latest.risk)} risk, ${flags} flags, ${fixes} corrections${mode}`)
+    $.ui.status(`${pct(latest.risk)} risk, ${flags} flags, ${fixes} corrections${mode}`)
   }
 }
 
