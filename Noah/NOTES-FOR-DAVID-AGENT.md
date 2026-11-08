@@ -169,3 +169,26 @@ late results): explicit false for healthy session state, true after a human
 stop request, persistent until the next genuine new instruction. Frontend and
 FastAPI storage already support it; no risk threshold or correction-text
 heuristic should substitute for this state. The graph needs no rendering change.
+
+---
+
+## NN-006 · 2026-11-08 · Urgent: G1 calibration drives initial drift near 100%
+
+User reports the tuned model starts almost fully drifted. This is upstream of
+both UIs: they display the response drift unchanged, with a rolling-risk fallback
+only when drift is missing. G1 question asks whether the agent is still pursuing
+the user's goal; pane.py correctly computes drift = 1 - calibrated G1.true.
+
+Live intent-monitor log event toolu_018bT9Yo9JZpjrJWWqDhrAS9:
+- raw G1.true = 0.9686359167098999 (on track), false = 0.031364016234874725.
+- calibrated G1.true = 0.021641773366345193, false = 0.9783582266336548.
+- Hence drift is 0.9783582266336548, about 98%.
+- Loaded G1 calibration: T=4.691364870111693, b=-4.54242950576019.
+- Runtime calibration adds scalar b to the true-option logit after temperature.
+
+Please urgently verify the G1 calibration artifact, prevalence/label polarity and
+model-handoff compatibility. The trace proves calibration reverses this strongly
+on-track raw reading; whether that transform is valid requires your calibration
+evidence. G1 firing also uses calibrated true < .5, so a UI-only inversion would
+leave incorrect intervention decisions and drift_rate behavior. No display
+inversion, calibration bypass, model weights or David files were changed here.
