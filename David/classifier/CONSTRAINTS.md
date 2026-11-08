@@ -1,1 +1,3 @@
 # Durable constraints
+CONSTRAINT 001: Shared dirty worktree / Git integration / Concurrent training edits prevented root pull --rebase; an ignored detached checkout pulled successfully without changing those edits. / Use the isolated checkout and verify upstream ancestry before publishing. / 2026-11-08 02:57:17
+CONSTRAINT 002: Interrupted clone locks / vendor access / Stopping an interrupted checkout left an empty index.lock and partial untracked files. / Confirm the process is gone before removing the lock, then restore only the disposable vendor clone to the fetched pin. / 2026-11-08 02:57:17
