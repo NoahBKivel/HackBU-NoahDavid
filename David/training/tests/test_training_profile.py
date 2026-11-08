@@ -4,9 +4,15 @@ from types import SimpleNamespace
 import unittest
 
 from intent_training.kevpatch.profile_training import event_rows
+from intent_training.kevpatch.prefix_attention import length_groups
 
 
 class ProfileSummaryTests(unittest.TestCase):
+    def test_padding_groups_preserve_original_row_identity(self):
+        self.assertEqual(length_groups([7, 3, 7, 5, 3]), [(7, [0, 2]), (3, [1, 4]), (5, [3])])
+        with self.assertRaises(ValueError):
+            length_groups([0])
+
     def test_operator_ranking_uses_device_time(self):
         events = [SimpleNamespace(key='cpu_wait', count=4, self_cpu_time_total=1000,
                                   self_device_time_total=0, device_time_total=0),

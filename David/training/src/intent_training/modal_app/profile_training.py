@@ -11,19 +11,20 @@ CONFIG = json.loads((ROOT / 'environment.json').read_text(encoding='utf-8-sig'))
 app = modal.App(CONFIG['modal_app'])
 volume = modal.Volume.from_name(CONFIG['modal_volume'])
 image = (modal.Image.from_id(os.environ['INTENT_MEASUREMENT_IMAGE_ID'])
-         .add_local_file(ROOT / 'src/intent_training/kevpatch/profile_training.py',
-                         '/opt/intent-training/src/intent_training/kevpatch/profile_training.py', copy=True)
+         .add_local_dir(ROOT / 'src/intent_training/kevpatch',
+                        '/opt/intent-training/src/intent_training/kevpatch', copy=True)
          if modal.is_local() else modal.Image.debian_slim())
 
 
 @app.function(image=image, gpu='B200', cpu=8, memory=98304,
               timeout=1800, startup_timeout=600, volumes={'/training': volume})
-def profile(records: str, cap: int, projection_records: int) -> dict:
+def profile(records: str, cap: int, projection_records: int, compare: bool = False) -> dict:
     """Profile a real prepared mixture and compare checkpointing at the measured cap."""
     from intent_training.kevpatch.profile_training import run_profile
+    from intent_training.kevpatch.profile_compare import compare as compare_paths
     volume.reload()
     output = '/training/profiling/' + datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S%fZ')
-    return run_profile(records, output, CONFIG, cap, projection_records, volume)
+    return (compare_paths if compare else run_profile)(records, output, CONFIG, cap, projection_records, volume)
 
 
 @app.local_entrypoint()

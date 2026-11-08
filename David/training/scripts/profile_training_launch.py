@@ -15,6 +15,7 @@ def main() -> None:
     parser.add_argument('--image-manifest', type=Path, required=True)
     parser.add_argument('--cap', type=int, required=True)
     parser.add_argument('--projection-records', type=int, required=True)
+    parser.add_argument('--compare', action='store_true')
     args = parser.parse_args()
     sys.path.insert(0, str(Path(__file__).resolve().parent))
     from kev_prepare_upload import available_memory_gib
@@ -27,12 +28,13 @@ def main() -> None:
     sys.path.insert(0, str(root / 'src'))
     from intent_training.modal_app import profile_training as module
     with module.app.run(detach=True):
-        call = module.profile.spawn(args.records, args.cap, args.projection_records)
+        call = module.profile.spawn(args.records, args.cap, args.projection_records, args.compare)
         output = root / 'results/profiling'
         output.mkdir(parents=True, exist_ok=True)
         result = {'function_call_id': call.object_id, 'app_id': module.app.app_id,
                   'image_id': module.image.object_id, 'records': args.records,
                   'cap': args.cap, 'projection_records': args.projection_records,
+                  'compare': args.compare,
                   'available_memory_gib': memory,
                   'submitted_at': datetime.now(timezone.utc).isoformat()}
         (output / 'launch.json').write_text(json.dumps(result, indent=2))
