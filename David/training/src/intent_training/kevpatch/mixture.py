@@ -132,6 +132,17 @@ def load_prepared(directories: list[str], context_paths: dict[str, str] | None =
     return records, construction_by_id, observed
 
 
+def declared_task_plan(plan: dict) -> list[dict]:
+    """Validate source quotas against the composition declared by the caller."""
+    tasks = [entry for entry in plan["sources"] if entry["part"] == "task" and entry["planned_quota"]]
+    expected = plan.get("parts", {}).get("task")
+    if type(expected) is not int or expected <= 0:
+        raise ValueError("The canonical composition must declare a positive task count.")
+    if sum(entry["planned_quota"] for entry in tasks) != expected:
+        raise ValueError("The canonical source quotas do not match the declared task count.")
+    return tasks
+
+
 def build_payload(directories: list[str], plan: dict, destination: str,
                   tokenizer: Any, seed: int) -> dict:
     """Publish one immutable admitted sample with exact replay, task and screen counts."""
@@ -143,9 +154,7 @@ def build_payload(directories: list[str], plan: dict, destination: str,
         raise FileExistsError("The benchmark payload is immutable once written.")
     context_paths = {}
     records, constructions, observed = load_prepared(directories, context_paths)
-    task_plan = [entry for entry in plan["sources"] if entry["part"] == "task" and entry["planned_quota"]]
-    if sum(entry["planned_quota"] for entry in task_plan) != 9000:
-        raise ValueError("The canonical task allocation must total nine thousand records.")
+    task_plan = declared_task_plan(plan)
     candidates, geometry_rows = {}, 0
     predicate = kev_fit(tokenizer, max_state=8192)
     for record in records:
