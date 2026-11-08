@@ -164,7 +164,7 @@ The order doubles as the cut list: each step leaves something you can demo.
 6. [ ] The Pane with the graph
 7. [ ] Demo repo and scenario, rehearsal, **demo video recorded tonight**
 8. [ ] Extras: the browser dashboard served by FastAPI, mobile through Remote Control, packaging the Mod as a marketplace for `/plugin install`
-9. [ ] README and Devpost write-up (morning of 11-08)
+9. [ ] README and Devpost write-up (morning of 11-08). Candidate material is collected in section 8.
 
 ---
 
@@ -242,3 +242,24 @@ The order doubles as the cut list: each step leaves something you can demo.
 | The Mod is named `vision` and its pane and status line read **VISION** | The project name; what the acronym stands for is still undecided. Mod names must be lowercase, so the internal name is `vision`. Renaming reset the Mod's saved state. |
 | A root CLAUDE.md holds the rules every agent must follow | Claude Code loads it automatically, so new agents find the docs and the update rule without being told |
 | The Mod only sends the most recent events: no checkpoint or batch events, even for long autonomous runs | The classifier analyzes behavior over time from its own history. Events go out after every tool call, so a long run inside one turn is still monitored and corrected action by action. |
+
+---
+
+## 8. Write-up material
+
+Engineering decisions and problem solving worth considering for the Devpost description and the README. What actually goes in is decided together by Noah and David, so this is a pool to pick from, not the write-up. **Add to it whenever a decision like these is made.** David's side can collect its own in DAVID.md.
+
+- **Slow results ride on the next response instead of being dropped.**
+  - Problem: the classifier is sometimes slow (a GPU cold start, a change in the user's instructions, very large docs). The Mod can only make requests: nothing can push a result to it later.
+  - Decision: the backend waits 8 s, then answers `pending`. The classifier keeps working, stores the finished result, and attaches it as `late_results` to the next response for that session. The Mod updates the earlier point and runs its notices and correction.
+  - Why it's good: nothing is lost, the fast path is unchanged, and it needs no queue, no extra endpoint, no polling and no storage in the backend.
+- **The UI shows uncertainty honestly.** A pending point stays in a "checking" state until its late result arrives, instead of showing a fake score.
+- **Waking the GPU before it's needed.** The classifier is a Modal class whose `classify` and a no-op `warmup` share one container. The Mod's health check at session start fires `warmup` without waiting, so the 25 s GPU boot overlaps with the user typing their task. Warming one that's already running costs nothing.
+- **A cold-start gap found by reasoning, not by a failure.** The classifier timed "late" from when it started running, so time spent waiting for a container to boot wasn't counted, and the first result after a cold start would be lost. Found by tracing the timing across both sides, confirmed by David's measurements, with a fix proposed (the backend stamps the send time).
+- **The demo never breaks on a classifier failure.** Any classifier error, crash or malformed result becomes a safe "no flag" result with the reason attached, so the agent keeps working and the Pane shows what went wrong. Each late result is validated on its own, so one bad entry can't break the response it rides on.
+- **Contracts checked at the boundary.** Both sides validate against the same Pydantic `Result` model (David's check script copies it verbatim), so shape mismatches surface immediately when the halves connect.
+- **A clean split of responsibilities.** The Mod sends every tool call raw and runs whatever actions come back. The classifier alone decides what matters and when to intervene, and keeps the history. This let the two halves be built in parallel against a written contract.
+- **Corrections reach the agent without pretending to be the user.** A correction is attached to the agent's next tool result, so the agent reads it right after the action it concerns, and the user's own messages stay untouched.
+- **Measuring before relying on data.** The agent's thinking looked like a strong signal, but measurement showed 7 of 644 thinking blocks reach the Mod with any text. The classifier was pointed at visible text, plans, todos and actions instead.
+- **A realistic stand-in to build against.** While the real model wasn't ready, the backend's stand-in classifier produced varied risk, drift and slow results (seeded by event ID, so repeatable). This exercised every path of the Mod end to end without waiting on the model, or using the GPU David was testing on.
+- **Two people and many agents coordinating through docs.** A shared contract, per-side guides, a decisions log and notes files in each direction kept parallel agent sessions consistent, and rules such as "push only once verified" kept the shared branch demoable.
