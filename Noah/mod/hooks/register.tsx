@@ -228,7 +228,10 @@ async function startSession($: $, id: string) {
   await update($, points, () => [])
   await update($, corrections, () => [])
   await update($, pending, () => [])
-  await update($, seq, () => 0)
+  // Continue this session's numbering if the Mod restarted mid-session: the
+  // classifier skips any event numbered at or below one it has already seen.
+  const savedSeq = Number(await $.store.get(`seq:${id}`)) || 0
+  await update($, seq, () => savedSeq)
   await update($, instructionCount, () => 0)
   await update($, expanded, () => null)
   await update($, todos, () => [])
@@ -287,6 +290,7 @@ async function baseEvent($: $, type: string, eventId: string): Promise<Event> {
   const items = await read($, pending)
   await update($, pending, () => [])
   const info = await read($, session)
+  if (info?.id) void $.store.set(`seq:${info.id}`, n).catch(() => {})
   return {
     schema_version: 1,
     session_id: info?.id ?? null,
@@ -358,7 +362,7 @@ async function dispatch(
   }
   await update($, conn, () => 'classifying')
   await refreshStatus($, live)
-  trace($, `dispatch start ${event.type} ${event.event_id}`)
+  trace($, `dispatch start ${event.type} ${event.event_id} seq=${event.seq}`)
 
   try {
     const result = live ? await post($, event) : await mockClassify($, event)
