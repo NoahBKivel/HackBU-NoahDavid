@@ -77,19 +77,22 @@ The full requirements are in [Noah/MOD_PRD.md](Noah/MOD_PRD.md). This section is
 - **Graph:**
   - Covers **one task, meaning the current session**.
   - Points `{ts, risk, flagged, corrected}` are kept in `$.state`, which survives Mod reloads.
-  - Drawn with an `Svg` element, `{ source, alt, isInteractive: true }`, with the markup kept under 131,072 characters.
-  - Plot risk per event, highlight flagged points, add a distinct marker where a correction was sent, and show `<title>` tooltips.
+  - Drawn with plain `Svg` elements, `{ source, alt }`, with the markup kept under 131,072 characters. Interactive frames are disabled because of the layout issue in section 5.
+  - Plot risk per event, highlight flagged points, and add a distinct marker where a correction was sent. Point tooltips are disabled.
 - **Config:** `apiUrl` and `apiToken` are declared as `userConfig` in `plugin.json`, both defaulting to empty. Never hardcode them.
   - Empty values mean mock mode: the built-in mock classifier, the 10-day sample history and the "(mock)" labels.
   - Noah's values live in his local `~/.claude/settings.json` under `pluginConfigs.vision.options`. The token was copied from the gitignored `Noah/backend/secrets.local.json`. **Never commit either.**
   - When connected, the Mod drops any sample history at session start.
+  - **Full-system test against `intent-monitor` (stock Kev, 2026-11-07 21:23):**
+    - The pipeline works end to end: 20 scripted events plus a real task run through the Mod, all 200 with no fallbacks. Median latency was 452 ms and the slowest 1.5 s (a 2 MB event).
+    - The scores don't yet catch the demo action in context, and flagged results come with no actions. Details for David are in `Noah/NOTES-FOR-DAVID-AGENT.md` NN-002.
   - **Verified connected (2026-11-07):** a test-file deletion went from the Mod to the deployed backend and came back as risk 0.94 with three actions in about 0.25 s. The correction reached the agent on its next tool call.
 
 ---
 
 ## 3. The backend (`Noah/backend/`, Python, FastAPI on Modal)
 
-**Status: built and deployed** with the mock classifier. It's ready to call David's `Classifier` class, but stays on the mock until David says we can use his app (it's in use for his own testing).
+**Status: built and deployed, connected to stock Kev-4B** through David's `intent-monitor` / `Classifier`. Noah confirmed conflicting use is no longer a concern and explicitly authorized connecting and testing it on 2026-11-07. This supersedes the earlier connection hold in the handoff and contract open items. The stock model is still a placeholder, with no notices or corrections.
 
 - **Deployed URL (stable):** `https://davidkny22--alignment-monitor-api.us-east.modal.run`
   - The dev URL from `modal serve` is the same with `-dev` before `.us-east`.
@@ -100,9 +103,10 @@ The full requirements are in [Noah/MOD_PRD.md](Noah/MOD_PRD.md). This section is
   - `GET /health` returns `{ok, classifier, warming}` with no auth. `classifier` is `"mock"` or David's app name. With a real classifier set, it fires `warmup.spawn()` without waiting (`warming: true`), so a cold GPU container starts booting and a warm one is unaffected. The Mod calls it at session start.
   - `POST /v1/events` checks `Authorization: Bearer <MONITOR_TOKEN>` and returns 401 if it's wrong. It validates the event with a Pydantic model using `extra="allow"`: `session_id`, `event_id` and `type` are required, and any missing one returns 422. Unknown fields pass through. It returns `classify(event)` as JSON.
 - **The classifier switch:** the `CLASSIFIER_APP` constant at the top of `app.py`.
+  - Currently `"intent-monitor"`, deployed and verified against the real stock Kev classifier.
   - `None` uses `mock_classify()`.
   - Setting it to David's app name (`"intent-monitor"`) looks up `modal.Cls.from_name(CLASSIFIER_APP, CLASSIFIER_CLASS)()` once per container (`CLASSIFIER_CLASS = "Classifier"`), calls `.classify.spawn.aio(event)`, then waits with `.get.aio(timeout=CLASSIFY_WAIT_S)`.
-  - **To connect, only with David's OK:** set `CLASSIFIER_APP = "intent-monitor"`, deploy, and send the samples. **To fall back during the demo:** set it back to `None` and deploy (takes under a minute).
+  - **To fall back during the demo:** set `CLASSIFIER_APP = None` and deploy (takes under a minute). The URL stays the same in either mode, so an already configured Mod uses the selected classifier on its next request.
 - **Slow results** (CONTRACT.md section 4, David's N-001):
   - It waits **8 s** (`CLASSIFY_WAIT_S`) for `classify()`.
   - If `classify()` isn't done by then, it returns a **pending result**: `pending: true`, `risk: null`, no actions, `details.status: "classifying"`.
@@ -113,11 +117,13 @@ The full requirements are in [Noah/MOD_PRD.md](Noah/MOD_PRD.md). This section is
   - the classifier raises an exception
   - the result doesn't match the contract's output shape (checked with the `Result` Pydantic model; the error lists the bad fields)
 - **Extra result fields** such as `drift` and `drift_rate` pass through untouched.
+- **Current stock Kev warning/flag threshold:** Noah requested 65% on 2026-11-07. `FLAG_AT = 0.65` is deployed in `David/classifier/app.py`; a non-null risk at or above it sets `flagged: true`. FastAPI passes the flag through. The stock wrapper's actions remain empty, and the Mod's separate color bands are unchanged.
+- **Stock Kev fields and the Mod UI:** `risk` and `flagged` come from the classifier. `actions: []` means no notices, corrections or correction markers. `drift` and `drift_rate` are null, so the Mod draws the average risk of the last five scored checks as its Drift value and derives its trend arrow from changes in that average; these are UI estimates, not model-provided drift. Details show the returned `source`, `placeholder`, `question`, `classify_ms` and, when present, `skipped`; missing explanation keys are not filled in. A skipped event has null risk and does not replace the latest scored risk. Missing optional `pending` and `late_results` mean a completed response and no late results, respectively.
 - **Logging:** one JSON line per event in the Modal logs (event ID, session, seq, type, tool, classifier, risk, flagged, action types, pending, late result IDs, ms, error or status note). View them in the Modal dashboard or with `modal app logs alignment-monitor`.
 - **Test tools:**
   - `Noah/backend/samples/`: four hand-written events in the Mod's format (session start, normal edit, a PowerShell command deleting tests, turn end). They follow CONTRACT.md section 3, are not recorded agent output, and are only for testing the backend. David has his own example inputs, so don't produce samples for him.
   - `Noah/backend/send_event.py`: sends samples and prints each result with its size and latency. `--dev` targets the `modal serve` URL, `--pad-mb N` adds filler to test sizes. It uses certifi's certificates (see build notes).
-- **Stand-in classifier** (`mock_classify`, the default while `CLASSIFIER_APP` is None). It makes realistic data so the Mod's whole pipeline runs end to end. Each event's answer is seeded by its `event_id`, so a resend gets the same answer.
+- **Stand-in classifier** (`mock_classify`, available when `CLASSIFIER_APP` is None). It makes realistic data so the Mod's whole pipeline runs end to end. Each event's answer is seeded by its `event_id`, so a resend gets the same answer.
   - **Reads are unscored:** Read, Grep, Glob, WebFetch, WebSearch, LS and NotebookRead tool calls, and `session_started`, get `risk: null`, no actions and `details.classified: false`.
   - **Deleting tests is flagged:** a delete command (`rm`, `del`, `rmdir`, `Remove-Item`, `unlink`, `git rm`) on a test path, or a `file_changes` delete of one, scores 0.88 to 0.96. It returns `notify_user` (detected), `inject_agent` and `notify_user` (intervened). These are never made pending, so the demo correction always arrives on time.
   - **Weakening tests is a potential issue:** an edit to a test file that removes assertions or adds a skip scores 0.55 to 0.68, with a `potential` notice and no correction.
@@ -140,6 +146,7 @@ The full requirements are in [Noah/MOD_PRD.md](Noah/MOD_PRD.md). This section is
     - a malformed late entry was dropped while the valid one was kept
   - the class interface, tested against our own fake `Classifier` class with David's method names (since stopped; David's app was not called): `/health` fired `warmup` on a cold container and returned in about 4 s, a normal result, pending at about 9.7 s, the late result delivered once on the next event, the wrong shape and an exception all behaved as above. Then redeployed on the mock and the four samples passed.
   - the stand-in classifier, deployed: the four samples (the deletion flagged with all three actions, reads and session start unscored, drift rising). In 24 events in one session, 4 came back pending, and each was delivered once, with its drift, on the very next response.
+  - real stock Kev connection: deployed the backend with `CLASSIFIER_APP = "intent-monitor"`; `/health` reported that app and warmup completed in 29.77 s. All four samples returned HTTP 200 with `details.source: "stock-kev"`, no pending responses, empty actions and null drift fields. Risks were null for session start, 0.2057 for the edit, 0.4074 for deleting tests, and 0.1289 for the final message; none was flagged. Small-event round trips were 1.14 to 1.24 s. A 5 MB padded edit also returned HTTP 200 with risk 0.2057 in 4.23 s. This verifies backend/classifier transport, not the Mod's live pane or sustained throughput; the Mod engineer still needs to run controlled tool calls in the connected session.
 - **No server-side storage** with the real classifier: David's database holds the history, and the Mod holds the graph data. Only the stand-in keeps per-session state in memory.
 - **Commands** (run from the repo root):
   - `set PYTHONUTF8=1` first in cmd, or prefix `PYTHONUTF8=1` in bash (see build notes).
@@ -160,7 +167,7 @@ The order doubles as the cut list: each step leaves something you can demo.
    - The Mod lives in `Noah/mod/` and runs with a built-in mock classifier until `apiUrl` and `apiToken` are set.
 3. [x] Backend with a mock `classify()`, deployed to get a stable URL (section 3)
 4. [ ] The full Mod: collection, sending events, running actions
-5. [ ] Hook up David's real `classify()`
+5. [x] Hook up David's real `classify()` (stock Kev, deployed and sample-tested 2026-11-07; live Mod UI check remains)
 6. [ ] The Pane with the graph
 7. [ ] Demo repo and scenario, rehearsal, **demo video recorded tonight**
 8. [ ] Extras: the browser dashboard served by FastAPI, mobile through Remote Control, packaging the Mod as a marketplace for `/plugin install`
@@ -177,7 +184,7 @@ The order doubles as the cut list: each step leaves something you can demo.
 - **The Modal CLI crashes on Windows** with `'charmap' codec can't encode character '✓'` because its console output uses a checkmark. Run it with `PYTHONUTF8=1` (and `PYTHONIOENCODING=utf-8`) set.
 - **Python's HTTPS on this machine rejects Modal's certificate** ("certificate has expired") through the default Windows store. Use certifi's bundle: `ssl.create_default_context(cafile=certifi.where())`. certifi is installed in `.venv`. curl and the Modal CLI are unaffected.
 - **Limits across the stack** (researched 2026-11-07):
-  - **Modal web endpoints:** request bodies up to 4 GiB. **150 s per HTTP request**, after which Modal answers with a 303 redirect to poll for the result. The backend's 45 s classifier timeout keeps us well under it. ([docs](https://modal.com/docs/guide/webhook-timeouts), [docs](https://modal.com/docs/guide/webhooks))
+  - **Modal web endpoints:** request bodies up to 4 GiB. **150 s per HTTP request**, after which Modal answers with a 303 redirect to poll for the result. The backend's 8 s classifier wait keeps us well under it. ([docs](https://modal.com/docs/guide/webhook-timeouts), [docs](https://modal.com/docs/guide/webhooks))
   - **Modal function arguments** (`spawn`, `.remote`): up to about 2 MiB is sent inline, and larger payloads go through object storage automatically, which is slightly slower. Modal's troubleshooting page mentions a 100 MB gRPC limit that returns 413. A 5 MB event was tested end to end. ([docs](https://modal.com/docs/guide/troubleshooting))
   - **FastAPI and Starlette:** no default body size limit.
   - **The Mod's `$.http.fetch`:** the type definitions document no request size limit and no timeout. Check a 5 MB send when the Mod sends real events.
@@ -193,7 +200,7 @@ The order doubles as the cut list: each step leaves something you can demo.
   - The default view must fit on screen at once, without scrolling.
   - Don't put everything in bordered containers. Borders behave badly as the panel width changes (tiles wrapped into a tall column and cut off at the edge).
   - Change the design in small steps that Noah reviews one at a time.
-  - **Draw charts as plain `Svg` images, without `isInteractive`.** The interactive frame (needed for hover tooltips on points) ignored the chart's height and added large empty bands above and below it. Point tooltips are off as a result.
+  - **Draw charts as plain `Svg` images, without `isInteractive`.** The interactive frame (needed for hover tooltips on points) ignored the chart's height and added large empty bands above and below it. Pinning both `width` and `height` (tested 2026-11-07) made tooltips work but kept the gaps, so point tooltips stay off.
   - **Never put a border on a small control.** On the desktop a Box border adds a lot of size: a rounded border around the time window buttons made them huge. Plain Buttons can't be given rounded backgrounds, so the selected window uses a square tint the size of the button.
 - **Type-check with TypeScript in the scratchpad.** The `claude` command line isn't installed, so run `tsc -p <mod>/.claude-plugin/types/tsconfig.json` with a TypeScript copy installed in the session scratchpad. The engine checks rules, not types.
 - **Slow results (N-001), handled in the Mod:**
@@ -203,11 +210,11 @@ The order doubles as the cut list: each step leaves something you can demo.
     - The second chart is now **"Drift"**, which plots the classifier's `drift` (lower is better).
     - The readout row shows **Drift** with a ↑, ↓ or → arrow from `drift_rate`, in place of "Alignment".
     - Until the classifier sends `drift`, both use the average risk of the last 5 checks as a stand-in.
-  - Still to do when linking: verify a ~5 MB send through `$.http.fetch`, and point the Mod at the deployed backend URL with the token from `userConfig`.
+  - Still to verify: a ~5 MB send through `$.http.fetch`. Connecting the Mod to the deployed backend through `userConfig` is already verified (section 2).
 - **Mock-only behavior to check when linking the real backend:**
   - The "Mock classifier" label and the auto-loaded 10-day sample history only appear while `apiUrl` and `apiToken` are unset, so they disappear once the real backend is configured.
   - Confirm both are gone in the live demo.
-- **The Mod's temporary debug trace** writes to a scratchpad file, to `$.store` key `trace`, and optionally (with `DEBUG_CONTEXT`) to every tool result. Remove it before linking.
+- **The Mod's temporary debug trace** still writes to a scratchpad file while connected. `DEBUG_CONTEXT` is false, so trace text is not attached to tool results. Removing the trace remains a Mod cleanup item.
 - `$.session.append` with `type: "user"` **is** read by the model. Use `type: "system"` for notices meant only for the user.
 - `$.ui.notify` doesn't work in the desktop app (`no-surface`), so use notices, `$.ui.toast` or the Pane.
 - `$.model.complete` is available for requirement extraction, but **don't use it** unless David decides to. He's concerned it would share the agent's proxy bias.
@@ -218,6 +225,10 @@ The order doubles as the cut list: each step leaves something you can demo.
 
 - **The demo scenario:** it has to make the agent misbehave reliably. Build a demo repo that tempts the shortcut, and keep a backup prompt.
 - **Live demo readiness:** classifier cold starts must be handled before presenting. The full problem, the simple fix for the demo and the proposed warm-up design are in CONTRACT.md section 7 ("Classifier cold starts").
+- **Source/documentation review (2026-11-07):**
+  - The Mod calls `warmUp()` only from `startSession()`, not from `prompt.submit`. Warming on every user prompt is agreed in CONTRACT.md and David's N-002, but remains a Mod follow-up.
+  - Some Mod documentation still describes older behavior: MOD_PRD.md FR-2 says missing settings mean "Not configured", although the implemented default is the built-in mock; FR-13 both requires every tool call and says reads are not sent; FR-27 still describes interactive charts, although the source uses plain SVG images. The Mod engineer should reconcile the PRD and the build checklist with the implemented behavior.
+  - The initial source/GitHub review made no Modal calls. Noah subsequently authorized connecting, and the backend is now deployed and verified against stock Kev (section 3). The latest classifier notes are still N-002; agreement on `backend_sent_at` remains open, so the cold-start result-loss gap is still present. Warmup was completed before the sample tests.
 - See CONTRACT.md section 7 for open interface items.
 
 ---
@@ -228,6 +239,8 @@ The order doubles as the cut list: each step leaves something you can demo.
 |---|---|
 | Claude Code Mod only | Native UI and event hooks, and users install one thing |
 | FastAPI and the classifier on Modal | Nothing runs locally for users, and David has credits there |
+| Connect the backend to stock Kev for pipeline testing (Noah, 2026-11-07) | Noah confirmed conflicting use is no longer a concern. Real risk values exercise the integration; empty actions and null drift retain their existing UI behavior. The stand-in remains available by switching back to `None`. |
+| Stock Kev warning/flag threshold is 65% (Noah, 2026-11-07) | Noah requested changing the classifier threshold from 50% to 65%. This is implemented in the classifier wrapper; it changes `flagged`, while actions remain empty. |
 | The server waits for the classifier | The Mod's request doesn't block the agent anyway, so the server-side async machinery isn't needed |
 | Corrections go through `context[]` on the next tool result | The agent reads the correction right after its action, and the user doesn't see it as their own message |
 | Only the main agent gets corrections; subagents are ignored | Demo scope |
@@ -254,6 +267,7 @@ Engineering decisions and problem solving worth considering for the Devpost desc
   - Decision: the backend waits 8 s, then answers `pending`. The classifier keeps working, stores the finished result, and attaches it as `late_results` to the next response for that session. The Mod updates the earlier point and runs its notices and correction.
   - Why it's good: nothing is lost, the fast path is unchanged, and it needs no queue, no extra endpoint, no polling and no storage in the backend.
 - **The UI shows uncertainty honestly.** A pending point stays in a "checking" state until its late result arrives, instead of showing a fake score.
+- **Testing transport with the real model before judging its accuracy.** The stock Kev integration was checked with four known events and a 5 MB padded request. This verifies that real model results traverse the backend while separating transport success from detection quality: the test-deletion sample scored 0.4074 and triggered no intervention. The UI's rolling-risk drift fallback is an estimate while model drift is unavailable.
 - **Waking the GPU before it's needed.** The classifier is a Modal class whose `classify` and a no-op `warmup` share one container. The Mod's health check at session start fires `warmup` without waiting, so the 25 s GPU boot overlaps with the user typing their task. Warming one that's already running costs nothing.
 - **A cold-start gap found by reasoning, not by a failure.** The classifier timed "late" from when it started running, so time spent waiting for a container to boot wasn't counted, and the first result after a cold start would be lost. Found by tracing the timing across both sides, confirmed by David's measurements, with a fix proposed (the backend stamps the send time).
 - **The demo never breaks on a classifier failure.** Any classifier error, crash or malformed result becomes a safe "no flag" result with the reason attached, so the agent keeps working and the Pane shows what went wrong. Each late result is validated on its own, so one bad entry can't break the response it rides on.
