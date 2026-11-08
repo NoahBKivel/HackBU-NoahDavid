@@ -10,13 +10,16 @@ volume = modal.Volume.from_name(CONFIG["modal_volume"])
 app = modal.App(CONFIG["modal_app"])
 image = (modal.Image.from_id("im-dfB2QMo1vkk6QHDRHLgbVJ")
          .add_local_file(ROOT / "environment.json", "/opt/intent-training/environment.json", copy=True)
+         .add_local_file(ROOT / "scripts/teacher_publish_rf.py", "/opt/intent-training/scripts/teacher_publish_rf.py", copy=True)
+         .add_local_file(ROOT / "scripts/teacher_refresh.py", "/opt/intent-training/scripts/teacher_refresh.py", copy=True)
+         .add_local_file(ROOT / "data/tokenizer/tokenizer.json", "/opt/intent-training/data/tokenizer/tokenizer.json", copy=True)
          .add_local_dir(ROOT / "src", "/opt/intent-training/src", copy=True, ignore=["**/__pycache__/**", "**/*.pyc"])
          .add_local_dir(ROOT / "tests", "/opt/intent-training/tests", copy=True, ignore=["**/__pycache__/**", "**/*.pyc"])
          .add_local_dir(ROOT.parent / "monitor_format", "/opt/monitor_format", copy=True, ignore=["**/__pycache__/**", "**/*.pyc"]))
 
 
 @app.function(image=image, cpu=2, memory=8192, timeout=3600, volumes={"/training": volume})
-def run(folder):
+def run(folder, run_tests=True):
     import hashlib
     import os
     import subprocess
@@ -24,10 +27,13 @@ def run(folder):
     folder = Path(folder)
     if not folder.is_relative_to(Path("/training/prepared")):
         raise ValueError("Development inputs must remain on the training volume.")
-    tests = subprocess.run([sys.executable, "-m", "pytest", "-q", "/opt/intent-training/tests/test_splits_dev.py", "/opt/intent-training/tests/test_splits_grouping.py"],
-                           env={**os.environ, "PYTHONPATH": "/opt/intent-training/src:/opt"}, capture_output=True, text=True)
-    if tests.returncode:
-        raise ValueError(tests.stdout + tests.stderr)
+    test_output = "not requested"
+    if run_tests:
+        tests = subprocess.run([sys.executable, "-m", "pytest", "-q", "/opt/intent-training/tests/test_splits_dev.py", "/opt/intent-training/tests/test_splits_grouping.py"],
+                               env={**os.environ, "PYTHONPATH": "/opt/intent-training/src:/opt"}, capture_output=True, text=True)
+        if tests.returncode:
+            raise ValueError(tests.stdout + tests.stderr)
+        test_output = tests.stdout.strip()
     volume.reload()
     decision_fields = ("state", "questions", "teacher_side", "source", "pass", "purpose", "row_context")
     seen = {}
@@ -51,13 +57,36 @@ def run(folder):
             count += 1
     result = {"requirements": count, "unique": len(seen), "fanout": count,
               "unique_path": str(unique), "fanout_path": str(fanout),
-              "tests": tests.stdout.strip(), "decision_fields": list(decision_fields)}
+              "tests": test_output, "decision_fields": list(decision_fields)}
     (folder / "requirements-dev-dedup-manifest.json").write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
     volume.commit()
     return result
 
 
+@app.function(image=image, cpu=2, memory=8192, timeout=3600, volumes={"/training": volume})
+def queue(folder):
+    import subprocess
+    import sys
+    volume.reload()
+    folder = Path(folder)
+    if not folder.is_relative_to(Path("/training/prepared")):
+        raise ValueError("Development inputs must remain on the training volume.")
+    destination = Path("/training/votes") / (folder.name + "-queue") / "queue.jsonl"
+    if destination.exists():
+        raise FileExistsError("The isolated development queue already exists.")
+    result = subprocess.run([sys.executable, "/opt/intent-training/scripts/teacher_publish_rf.py",
+                             "--input", str(folder / "requirements-dev-unique.jsonl"), "--queue", str(destination)],
+                            capture_output=True, text=True)
+    if result.returncode:
+        raise ValueError(result.stdout + result.stderr)
+    volume.commit()
+    return {"result": result.stdout.strip(), "queue": str(destination)}
+
+
 if __name__ == "__main__":
+    import sys
     with app.run(detach=True):
-        call = run.spawn("/training/prepared/dev-catch-all-cuts-8191")
+        function = queue if "--queue" in sys.argv else run
+        folder = "/training/prepared/dev-helpsteer-all-cuts-8191" if "--helpsteer" in sys.argv else "/training/prepared/dev-catch-all-cuts-8191"
+        call = function.spawn(folder) if "--queue" in sys.argv else function.spawn(folder, False)
         print(json.dumps({"app_id": app.app_id, "function_call_id": call.object_id}), flush=True)
