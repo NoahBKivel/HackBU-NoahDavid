@@ -1,4 +1,4 @@
-# Training Build Log
+﻿# Training Build Log
 
 Append-only format: [YYYY-MM-DD HH:MM] [UNIT] | [PLANNED/IN_PROGRESS/TESTED/INTEGRATED/BLOCKED] | Tests/Evidence: [N]/[M] | [notes]
 
@@ -6,7 +6,7 @@ Maintenance: append at the end; never edit or delete a past row. The Current Val
 
 ## Current Validation Snapshot
 
-(none yet)
+Renderer:23 tests PASS, planted byte mutation FAIL then restored PASS, published codef0239e5. Scaffold:5 safeguards PASS, published codedb7e8d0. Trainer CPU:13 PASS; H100 smoke detached, GPU parity and throughput pending. Active task anchor: TASKLIST.md:L18
 
 ## Log
 
@@ -18,3 +18,7 @@ Maintenance: append at the end; never edit or delete a past row. The Current Val
 [2026-11-08 00:46:08] [setup] | TESTED | Tests/Evidence: 5/5 | Scaffold committed850ebae after targeted tests, compile checks, actual access probes and staged secret scan22files/0findings. Spec bundle d975a45 pushed after destination authorization was verified against CONTRACT. SQ01 closed under2minutes with successful host/container HTTPS and authenticated Harbor JSON. Setup gate remains pending actual task launch. Active task anchor: TASKLIST.md:L18
 [2026-11-08 00:46:57] [agent-runs] | BLOCKED | Tests/Evidence: 0/1 | Independent supervisor ended with blocked_preparation at00:44:31 EST because source extraction remained unavailable. Image is ready; no task trace was produced. Source quotas have the same-objective redistribution fallback. T02 and GPU work continue independently. Active task anchor: TASKLIST.md:L18
 [2026-11-08 00:48:20] [monitor-format] | INTEGRATED | Tests/Evidence: 23/23 | Pure shared interface frozen at1c77479. Golden byte mutation failed, restoration passed, final parent suite passed and staged secret scan23files/0findings. DAVID milestone written. T03/T04 run independently on persistent smoke launcher PID31068. Active task anchor: TASKLIST.md:L18
+[2026-11-08 00:50:35] [trainer] | IN_PROGRESS | Tests/Evidence: 0/1 | Detached smoke callfc-01M6WV8Y5EN1MPVCC7B2623WRY spawned on appap-zxnGssuqlFFloGPPMbwCGg. Earlier flat-module path failure fixed before smoke compute; it is not a training crash. Required git rebase changed publication hashes: scaffolddb7e8d0 and rendererf0239e5, both scoped diff0 versus tested trees. Active task anchor: TASKLIST.md:L18
+
+[2026-11-08 00:51:35] [trainer] | TESTED | Tests/Evidence: 13/13 | Worker reports real torch CPU continuation/interpolation suite passing in5.00seconds after local repair. Detached H100 call ID is saved for restart. GPU gates remain pending. Recap004 records the current publication hashes and live work. Active task anchor: TASKLIST.md:L18
+

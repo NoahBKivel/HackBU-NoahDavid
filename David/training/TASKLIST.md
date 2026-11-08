@@ -1,4 +1,4 @@
-# Training Build Tasklist
+﻿# Training Build Tasklist
 
 Durable completion plan. Status values: pending, in-progress, blocked, done, superseded.
 
@@ -12,9 +12,9 @@ Durable completion plan. Status values: pending, in-progress, blocked, done, sup
 
 | ID | Status | Task | Depends-on | Spec | Evidence | Missing proof | Next action |
 |---|---|---|---|---|---|---|---|
-| T01 | in-progress | Verify access and launch bounded agent runs. | none | 7.1, 7.3, 8.6, 8.7, 9.1, 11, 12.2 | Scaffold850ebae, access probes, effective100 verified on fresh server, generation reserve76 USD. | Actual task trace launch is waiting for source archive. | Read supervisor state, finish source preparation or redistribute unavailable quota. |
-| T02 | done | Freeze shared renderer and exact question interface. | none | 4.2, 6.1, 6.3, 6.4, 6.5, 6.6, 6.7, 12.1 | Code1c77479; renderer-parity PASS in VALIDATION-LOG;23 tests and mutation evidence; DAVID milestone. | none | Import the frozen shared interface for converter rendering. |
-| T03 | in-progress | Patch trainer saves, resume and grouped batching. | none | 9.1, 9.2, 10, 12.1 | Implemented;11 CPU tests pass,2 torch tests skipped; grouping mutation red/green. | Real torch and H100 parity gates. | Launch measured GPU work immediately in parallel with T01 and T02. |
+| T01 | in-progress | Verify access and launch bounded agent runs. | none | 7.1, 7.3, 8.6, 8.7, 9.1, 11, 12.2 | Scaffolddb7e8d0, access probes, effective100 verified on fresh server, generation reserve76 USD. | Actual task trace launch is waiting for source archive. | Read supervisor state, finish source preparation or redistribute unavailable quota. |
+| T02 | done | Freeze shared renderer and exact question interface. | none | 4.2, 6.1, 6.3, 6.4, 6.5, 6.6, 6.7, 12.1 | Codef0239e5; renderer-parity PASS in VALIDATION-LOG;23 tests and mutation evidence; DAVID milestone. | none | Import the frozen shared interface for converter rendering. |
+| T03 | in-progress | Patch trainer saves, resume and grouped batching. | none | 9.1, 9.2, 10, 12.1 | Implemented;13 CPU tests pass including real torch checks; grouping mutation red/green. | Real torch and H100 parity gates. | Launch measured GPU work immediately in parallel with T01 and T02. |
 | T04 | in-progress | Implement interpolation and run GPU smoke measurements. | none; integrates T03 | 9.1, 9.2, 9.3, 10, 12.1 | Interpolation code is implemented; GPU worker dispatched. | Identity and kernel parity, P and throughput. | Launch persistent H100 smoke and recompute the clock from measurements. |
 | T05 | pending | Convert construction bases and visible-label sources. | T02 | 6.1, 6.2, 7.1, 7.2, 7.3, 10, 12.2 | none | Schema validation and source counts. | Dispatch converter workers. |
 | T06 | pending | Build constructions and reserved agent generation. | T05 | 7.4, 7.5, 7.6, 8.6, 8.7 | none | Construction checks and spend ledger. | Generate rare-question records first. |
@@ -34,3 +34,5 @@ Durable completion plan. Status values: pending, in-progress, blocked, done, sup
 1. T01, T02, T03 and T04 proceed independently in parallel, per the owner clarification.
 2. T02 freezes the shared interface before record rendering.
 3. T03 and T04 measure GPU correctness and throughput while source work proceeds.
+
+

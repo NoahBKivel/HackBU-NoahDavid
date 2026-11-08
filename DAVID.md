@@ -1,4 +1,4 @@
-# David's side: the classifier
+﻿# David's side: the classifier
 
 This is the architecture and build guide for `David/`: the alignment classifier on Modal.
 - Shared context, the system overview and the interface with Noah's backend are in [CONTRACT.md](CONTRACT.md). **Read it first.**
@@ -24,7 +24,7 @@ Expose `classify(event: dict) -> dict` as a Modal function (CONTRACT.md section 
 ## 2. Model: kev
 
 **Training handoff milestone, 2026-11-08:** The shared module
-`David/monitor_format/` is available at commit `1c77479`. It exports
+`David/monitor_format/` is available at commit `f0239e5`. It exports
 `build_instructions`, `render_state`, `render_screen`, `split_sections`,
 `split_units`, `rf_window`, question-row fillers, finding and correction
 formatting, schema validation, and the exact question and short-name tables.
@@ -84,3 +84,4 @@ Training checkpoints and calibration files are not available yet.
 - Which event fields are used, and which large items are needed. Tell Noah, so trimming doesn't drop something needed.
 - Requirement extraction approach.
 - Fine-tuned or not, and which kev size.
+
