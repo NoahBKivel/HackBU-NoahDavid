@@ -121,3 +121,19 @@ def test_existing_version_is_not_overwritten(tmp_path):
         copy_handoff(source, target, 'existing')
     assert (version / 'marker').read_text() == 'unchanged'
     assert not (target / 'selected.json').exists()
+
+
+def test_required_fine_tuned_source_rejects_stock_before_target_writes(tmp_path):
+    source, target = tmp_path / 'training', tmp_path / 'runtime'
+    write_handoff(source, source='stock-kev')
+    with pytest.raises(ValueError, match='required model source'):
+        copy_handoff(source, target, 'candidate', required_source='kev-tuned')
+    assert not target.exists()
+
+
+def test_copy_receipt_carries_actual_source_calibration(tmp_path):
+    source, target = tmp_path / 'training', tmp_path / 'runtime'
+    write_handoff(source)
+    receipt = copy_handoff(source, target, 'candidate', required_source='kev-tuned')
+    assert receipt['calibration_parameters'] == read_json(source / 'calibration.json')
+    assert read_json(Path(receipt['selected']['calibration'])) == receipt['calibration_parameters']

@@ -14,7 +14,7 @@ import modal
 FOLDER = Path(__file__).resolve().parents[1]
 
 
-def swap(target: str, source: str | None, receipt_path: Path) -> dict:
+def swap(target: str, source: str | None, receipt_path: Path, required_source: str | None = None) -> dict:
     """Copy a validated remote handoff and deploy its model with the validated length."""
     app_name = "intent-monitor-dev" if target == "dev" else "intent-monitor"
     volume_name = "intent-monitor-model-dev" if target == "dev" else "intent-monitor-model"
@@ -26,9 +26,9 @@ def swap(target: str, source: str | None, receipt_path: Path) -> dict:
              .add_local_dir(FOLDER.parents[0] / "monitor_format", "/root/David/monitor_format"))
 
     @helper.function(image=image, volumes={"/handoff": origin, "/model": destination}, cpu=2, timeout=1800)
-    def copy_selected(version: str, explicit_source: str | None) -> dict:
+    def copy_selected(version: str, explicit_source: str | None, required: str | None) -> dict:
         from intent_runtime.handoff import copy_handoff
-        result = copy_handoff(Path("/handoff"), Path("/model"), version, explicit_source)
+        result = copy_handoff(Path("/handoff"), Path("/model"), version, explicit_source, required)
         destination.commit()
         return result
 
@@ -38,7 +38,7 @@ def swap(target: str, source: str | None, receipt_path: Path) -> dict:
     receipt_path.parent.mkdir(parents=True, exist_ok=True)
     try:
         with helper.run():
-            receipt.update(copy_selected.remote(version, source))
+            receipt.update(copy_selected.remote(version, source, required_source))
         receipt_path.write_text(json.dumps(receipt, indent=2), encoding="utf-8")
         environment = {**os.environ, "PYTHONUTF8": "1", "INTENT_MONITOR_TARGET": target,
                        "INTENT_MONITOR_LENGTH": str(receipt["validated_length"])}
@@ -62,9 +62,10 @@ def main() -> int:
     parser.add_argument("--target", choices=("dev", "live"), required=True)
     parser.add_argument("--source", choices=("stock-kev", "kev-tuned"))
     parser.add_argument("--receipt", type=Path)
+    parser.add_argument("--require-source", choices=("stock-kev", "kev-tuned"))
     args = parser.parse_args()
     receipt_path = args.receipt or FOLDER / "results" / "model-swap" / f"{args.target}-{uuid.uuid4().hex}.json"
-    receipt = swap(args.target, args.source, receipt_path)
+    receipt = swap(args.target, args.source, receipt_path, args.require_source)
     print(json.dumps(receipt), flush=True)
     return 0
 

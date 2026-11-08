@@ -1,0 +1,8 @@
+{
+  "deadline_seconds": 600,
+  "reserve_seconds": 60,
+  "poll_seconds": 15,
+  "required_source": "kev-tuned",
+  "expected_base": "Qwen/Qwen3.5-4B-Base",
+  "expected_base_revision": "1001bb4d826a52d1f399e183466143f4da7b741b"
+}

@@ -75,7 +75,8 @@ def source_identity(metadata: dict, explicit: str | None = None) -> str:
     return values[0]
 
 
-def copy_handoff(source: Path, target: Path, version: str, explicit_source: str | None = None) -> dict:
+def copy_handoff(source: Path, target: Path, version: str, explicit_source: str | None = None,
+                 required_source: str | None = None) -> dict:
     """Validate every handoff input before copying a fresh checkpoint and switching its pointer."""
     if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]*", version):
         raise ValueError("The checkpoint version must be one safe path component.")
@@ -88,6 +89,8 @@ def copy_handoff(source: Path, target: Path, version: str, explicit_source: str 
     length = validated_length(read_json(length_path))
     metadata_path = checkpoint / "selected.json"
     source_name = source_identity(read_json(metadata_path) if metadata_path.exists() else {}, explicit_source)
+    if required_source is not None and source_name != required_source:
+        raise ValueError("The selected checkpoint does not match the required model source.")
     files = list(checkpoint.rglob("*"))
     if any(path.is_symlink() for path in [checkpoint, calibration_path, length_path, *files]):
         raise ValueError("A handoff must contain regular files and directories, without symlinks.")
@@ -103,7 +106,7 @@ def copy_handoff(source: Path, target: Path, version: str, explicit_source: str 
     temporary = target / f".selected-{version}.json.tmp"
     temporary.write_text(json.dumps(pointer), encoding="utf-8")
     os.replace(temporary, target / "selected.json")
-    return {"selected": pointer, "validated_length": length,
+    return {"selected": pointer, "validated_length": length, "calibration_parameters": calibration,
             "long_context": str(destination / "long_context.json"),
             "checkpoint_files": sum(path.is_file() for path in files),
             "checkpoint_bytes": sum(path.stat().st_size for path in files if path.is_file())}
