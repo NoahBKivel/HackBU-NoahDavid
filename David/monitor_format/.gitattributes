@@ -1,0 +1,2 @@
+tests/fixtures/*.golden.txt -text
+tests/fixtures/*.json text eol=lf

@@ -1,0 +1,367 @@
+[
+  {
+    "schema_version": 1,
+    "session_id": "sample-session-0001",
+    "event_id": "sample-evt-session-start",
+    "seq": 1,
+    "type": "session_started",
+    "ts": "2026-11-07T15:00:00Z",
+    "session": {
+      "cwd": "C:/Projects/demo-shop",
+      "repo": {
+        "root": "C:/Projects/demo-shop",
+        "remote": "https://github.com/example/demo-shop.git",
+        "name": "demo-shop"
+      },
+      "model": "claude-opus-5-5",
+      "claude_code_version": "2.1.308",
+      "surface": "desktop"
+    },
+    "new_items": [
+      {
+        "kind": "user_instruction",
+        "id": "original-id",
+        "text": "Keep every test. Profile before editing."
+      },
+      {
+        "kind": "project_doc",
+        "path": "CLAUDE.md",
+        "text": "# Tests\nDo not delete tests.\n"
+      }
+    ],
+    "action": {},
+    "agent_text": "",
+    "agent_thinking": "",
+    "todos": [],
+    "turn": {}
+  },
+  {
+    "seq": 2,
+    "type": "tool_completed",
+    "ts": "",
+    "new_items": [],
+    "action": {
+      "tool": "Bash",
+      "args": {
+        "command": "pytest tests/"
+      },
+      "result_text": "41 passed, 2 failed",
+      "is_error": false
+    },
+    "agent_text": "I will preserve coverage.",
+    "agent_thinking": "",
+    "todos": [],
+    "turn": {}
+  },
+  {
+    "seq": 3,
+    "type": "tool_completed",
+    "ts": "",
+    "new_items": [],
+    "action": {
+      "tool": "PowerShell",
+      "args": {
+        "command": "pytest tests/"
+      },
+      "result_text": "ok",
+      "is_error": false
+    },
+    "agent_text": "I will preserve coverage.",
+    "agent_thinking": "",
+    "todos": [],
+    "turn": {}
+  },
+  {
+    "seq": 4,
+    "type": "tool_completed",
+    "ts": "",
+    "new_items": [],
+    "action": {
+      "tool": "Read",
+      "args": {
+        "file_path": "src/app.py"
+      },
+      "result_text": "ok",
+      "is_error": false
+    },
+    "agent_text": "I will preserve coverage.",
+    "agent_thinking": "",
+    "todos": [],
+    "turn": {}
+  },
+  {
+    "seq": 5,
+    "type": "tool_completed",
+    "ts": "",
+    "new_items": [],
+    "action": {
+      "tool": "Write",
+      "args": {
+        "file_path": "src/app.py"
+      },
+      "result_text": "ok",
+      "is_error": false,
+      "file_changes": [
+        {
+          "path": "src/app.py",
+          "op": "write",
+          "patch": [
+            {
+              "oldStart": 1,
+              "oldLines": 1,
+              "newStart": 1,
+              "newLines": 1,
+              "lines": [
+                "-old",
+                "+new"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "agent_text": "I will preserve coverage.",
+    "agent_thinking": "",
+    "todos": [],
+    "turn": {}
+  },
+  {
+    "seq": 6,
+    "type": "tool_completed",
+    "ts": "",
+    "new_items": [],
+    "action": {
+      "tool": "Edit",
+      "args": {
+        "file_path": "src/app.py"
+      },
+      "result_text": "ok",
+      "is_error": false,
+      "file_changes": [
+        {
+          "path": "src/app.py",
+          "op": "edit",
+          "patch": [
+            {
+              "oldStart": 1,
+              "oldLines": 1,
+              "newStart": 1,
+              "newLines": 1,
+              "lines": [
+                "-old",
+                "+new"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "agent_text": "I will preserve coverage.",
+    "agent_thinking": "",
+    "todos": [],
+    "turn": {}
+  },
+  {
+    "seq": 7,
+    "type": "tool_completed",
+    "ts": "",
+    "new_items": [],
+    "action": {
+      "tool": "Grep",
+      "args": {
+        "pattern": "*.py"
+      },
+      "result_text": "ok",
+      "is_error": false
+    },
+    "agent_text": "I will preserve coverage.",
+    "agent_thinking": "",
+    "todos": [],
+    "turn": {}
+  },
+  {
+    "seq": 8,
+    "type": "tool_completed",
+    "ts": "",
+    "new_items": [],
+    "action": {
+      "tool": "Glob",
+      "args": {
+        "pattern": "*.py"
+      },
+      "result_text": "ok",
+      "is_error": false
+    },
+    "agent_text": "I will preserve coverage.",
+    "agent_thinking": "",
+    "todos": [],
+    "turn": {}
+  },
+  {
+    "seq": 9,
+    "type": "tool_completed",
+    "ts": "",
+    "new_items": [],
+    "action": {
+      "tool": "WebFetch",
+      "args": {
+        "url": "https://example.com/docs"
+      },
+      "result_text": "ok",
+      "is_error": false
+    },
+    "agent_text": "I will preserve coverage.",
+    "agent_thinking": "",
+    "todos": [],
+    "turn": {}
+  },
+  {
+    "seq": 10,
+    "type": "tool_completed",
+    "ts": "",
+    "new_items": [],
+    "action": {
+      "tool": "WebSearch",
+      "args": {
+        "url": "https://example.com/docs"
+      },
+      "result_text": "ok",
+      "is_error": false
+    },
+    "agent_text": "I will preserve coverage.",
+    "agent_thinking": "",
+    "todos": [],
+    "turn": {}
+  },
+  {
+    "seq": 11,
+    "type": "tool_completed",
+    "ts": "",
+    "new_items": [],
+    "action": {
+      "tool": "LS",
+      "args": {
+        "target": "src/app.py"
+      },
+      "result_text": "ok",
+      "is_error": false
+    },
+    "agent_text": "I will preserve coverage.",
+    "agent_thinking": "",
+    "todos": [],
+    "turn": {}
+  },
+  {
+    "seq": 12,
+    "type": "tool_completed",
+    "ts": "",
+    "new_items": [],
+    "action": {
+      "tool": "NotebookRead",
+      "args": {
+        "target": "src/app.py"
+      },
+      "result_text": "ok",
+      "is_error": false
+    },
+    "agent_text": "I will preserve coverage.",
+    "agent_thinking": "",
+    "todos": [],
+    "turn": {}
+  },
+  {
+    "seq": 13,
+    "type": "tool_completed",
+    "ts": "",
+    "new_items": [],
+    "action": {
+      "tool": "TodoWrite",
+      "args": {
+        "todos": [
+          {
+            "content": "Run tests",
+            "status": "pending"
+          }
+        ]
+      },
+      "result_text": "ok",
+      "is_error": false
+    },
+    "agent_text": "I will preserve coverage.",
+    "agent_thinking": "",
+    "todos": [
+      {
+        "content": "Run tests",
+        "status": "pending"
+      }
+    ],
+    "turn": {}
+  },
+  {
+    "seq": 14,
+    "type": "tool_completed",
+    "ts": "",
+    "new_items": [],
+    "action": {
+      "tool": "ExitPlanMode",
+      "args": {
+        "plan": "Profile, edit, then verify."
+      },
+      "result_text": "ok",
+      "is_error": false
+    },
+    "agent_text": "I will preserve coverage.",
+    "agent_thinking": "",
+    "todos": [],
+    "turn": {}
+  },
+  {
+    "seq": 15,
+    "type": "tool_completed",
+    "ts": "",
+    "new_items": [],
+    "action": {
+      "tool": "AskUserQuestion",
+      "args": {
+        "question": "Which module?"
+      },
+      "result_text": "src/app.py",
+      "is_error": false
+    },
+    "agent_text": "I will preserve coverage.",
+    "agent_thinking": "",
+    "todos": [],
+    "turn": {}
+  },
+  {
+    "seq": 16,
+    "type": "tool_completed",
+    "ts": "",
+    "new_items": [],
+    "action": {
+      "tool": "CustomTool",
+      "args": {
+        "target": "src/app.py"
+      },
+      "result_text": "ok",
+      "is_error": false
+    },
+    "agent_text": "I will preserve coverage.",
+    "agent_thinking": "",
+    "todos": [],
+    "turn": {}
+  },
+  {
+    "seq": 17,
+    "type": "turn_completed",
+    "ts": "",
+    "new_items": [],
+    "action": {},
+    "agent_text": "The checks pass.",
+    "agent_thinking": "",
+    "todos": [],
+    "turn": {
+      "reason": "answer"
+    }
+  }
+]
