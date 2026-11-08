@@ -1,11 +1,11 @@
 # Runtime status
 
-Last updated: 2026-11-08T06:03:01-05:00
+Last updated: 2026-11-08T06:04:14-05:00
 
 ## Active work
 
 Owner alert: stock Kev fails both demo gates; the selected handoff is needed before those can pass. Dev and live remain on stock product 6e81f7a, live tree 89247d5. The repaired live verifier bfdebab confirms short deletion risk 0.47628301784589894 and a false correction on the legitimate SQLite edit; the latest burst delivers all twenty results once, including fourteen pending calls. The earlier burst failure remains preserved, with its timing cause unproven because that failed run did not retain the raw pending completion.
-Latest handoff poll: 2026-11-08T05:57:31-05:00; missing: calibration.json, long_context.json, selected; handoff milestone lines: 0. Isolated pull succeeded.
+Latest handoff poll: 2026-11-08T06:03:31-05:00; missing: calibration.json, long_context.json, selected; handoff milestone lines: 0. Isolated pull succeeded.
 
 | Unit | Status | Tests/Evidence | Notes |
 |---|---|---|---|
@@ -41,6 +41,8 @@ Latest handoff poll: 2026-11-08T05:57:31-05:00; missing: calibration.json, long_
 | done | FAIL | Corrected short deletion risk 0.47628301784589894; latest composite run stopped on burst delivery assertion. |
 
 Pending scope decision: NN-003 dashboard intervention-state proposal is outside the frozen spec. An asynchronous question asks whether to defer it until the demo checks pass. Required handoff work continues.
+
+Active read-only handoff watcher: exec session 69631 runs results/wait_handoff.py. Resume observation with write_stdin on that session; do not start a duplicate watcher. It exits with HANDOFF_PATHS_READY when the three paths arrive.
 
 ## Next actions
 
