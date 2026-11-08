@@ -45,8 +45,11 @@ const listsOpen = atom({ plugin: 'vision', key: 'listsOpen' } as const, { flags:
 const FLAGS_SHOWN = 3
 const RECENT_SHOWN = 3
 
-// Time windows a chart can show, by the label drawn next to its title.
+// Windows a chart can show, by the label drawn next to its title. "last10"
+// is a count, not a time span: the ten most recent checks on the chart.
+const LAST_COUNT = 10
 const WINDOWS: { id: string; label: string; ms: number }[] = [
+  { id: 'last10', label: 'Last 10', ms: Infinity },
   { id: 'hour', label: '1h', ms: 60 * 60 * 1000 },
   { id: 'day', label: '1d', ms: 24 * 60 * 60 * 1000 },
   { id: 'week', label: '1w', ms: 7 * 24 * 60 * 60 * 1000 },
@@ -1160,14 +1163,16 @@ function chartAlt(list: Point[]) {
   return `Risk chart of ${scored.length} checks, latest ${pct(last?.risk ?? null)}, ${list.filter(p => p.flagged).length} flagged`
 }
 
-// Checks inside the chosen time window.
+// Checks inside the chosen window. "last10" keeps the ten most recent
+// checks the chart draws (scored or still checking), skipping unscored reads.
 function inWindow(list: Point[], window: string, now: number) {
+  if (window === 'last10') return list.filter(p => p.risk !== null || p.isPending).slice(-LAST_COUNT)
   const ms = WINDOWS.find(w => w.id === window)?.ms ?? Infinity
   return ms === Infinity ? list : list.filter(p => p.ts >= now - ms)
 }
 
 function windowName(window: string) {
-  return { hour: 'the past hour', day: 'the past day', week: 'the past week' }[window] ?? 'this session'
+  return { last10: 'the last 10 checks', hour: 'the past hour', day: 'the past day', week: 'the past week' }[window] ?? 'this session'
 }
 
 // Keeps a chart readable over long windows: splits the time span into
