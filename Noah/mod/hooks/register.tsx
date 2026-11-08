@@ -90,7 +90,7 @@ export const register: Register = (on, options) => {
         const current = await read($, points)
         if (!current.some(p => p.eventId.startsWith('sample-'))) await loadSample($)
       }
-      void $.ui.open({ id: 'alignment', title: 'Alignment' })
+      void $.ui.open({ id: 'alignment', title: 'VISION' })
       await refreshStatus($, isLive)
     } catch (error) {
       debug($, 'session.start', error)
@@ -99,7 +99,7 @@ export const register: Register = (on, options) => {
   })
 
   on('command.run', { command: 'alignment' }, async ($, e) => {
-    await $.ui.open({ id: 'alignment', title: 'Alignment', focus: true })
+    await $.ui.open({ id: 'alignment', title: 'VISION', focus: true })
     if (e.args.trim() === 'sample') {
       if (isLive) return { text: 'Sample history is only available with the mock classifier.' }
       const count = await loadSample($)
