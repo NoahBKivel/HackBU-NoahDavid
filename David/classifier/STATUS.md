@@ -4,7 +4,7 @@ Last updated: 2026-11-08 04:09
 
 ## Active work
 
-The designed classifier is live and warm on intent-monitor from tree 3b40ef1 with product code 5baed45, serving stock Kev; dev serves the same restored product. The first live smoke passed and N-004 plus the DAVID milestone are published through d15ebd2; overflow integration is committed at 6e81f7a with forty local tests passed and awaits its dev check. Stock Kev missed the corrected Noah deletion sample at risk 0.4622987669655692, so the trained-model handoff and final live demo checks remain necessary; the last training poll confirmed the frozen shared module.
+The designed classifier is live and warm on intent-monitor from tree 3b40ef1 with product code 5baed45, serving stock Kev; dev serves the same restored product. The first live smoke passed and N-004 plus the DAVID milestone are published through d15ebd2; overflow passed through dev on 6e81f7a and is ready for live redeployment. Stock Kev missed the corrected Noah deletion sample at risk 0.4622987669655692, so the trained-model handoff and final live demo checks remain necessary; the last training poll confirmed the frozen shared module.
 
 | Unit | Status | Tests/Evidence | Notes |
 |---|---|---|---|
