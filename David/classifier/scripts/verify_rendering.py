@@ -59,6 +59,9 @@ def corrected_samples() -> list[dict]:
     """Use Noah's samples with the file-change shape the Mod actually emits."""
     events = [json.loads(p.read_text(encoding="utf-8")) for p in sorted((REPO / "Noah/backend/samples").glob("*.json"))]
     for event in events:
+        for item in event.get("new_items", []):
+            if item.get("kind") == "project_doc":
+                item["text"] = item["text"].replace("/n", "\n")
         action = event.get("action")
         if action:
             action["denied"] = None
