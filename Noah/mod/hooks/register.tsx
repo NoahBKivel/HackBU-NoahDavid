@@ -980,7 +980,7 @@ const C = {
 }
 const W = 640
 const H = 160
-const PAD = { left: 40, right: 14, top: 14, bottom: 22 }
+const PAD = { left: 54, right: 22, top: 14, bottom: 28 }
 
 function frame(inner: string, yLabels: [number, string][], times: number[] = []) {
   const plotH = H - PAD.top - PAD.bottom
@@ -988,7 +988,7 @@ function frame(inner: string, yLabels: [number, string][], times: number[] = [])
     .map(([v, text]) => {
       const y = PAD.top + plotH * (1 - v)
       return `<line x1="${PAD.left}" y1="${y}" x2="${W - PAD.right}" y2="${y}" stroke="${C.grid}" stroke-width="1"/>` +
-        `<text x="${PAD.left - 6}" y="${y + 4}" text-anchor="end" font-size="11" fill="${C.axis}" font-family="sans-serif">${text}</text>`
+        `<text x="${PAD.left - 6}" y="${y + 6}" text-anchor="end" font-size="16" fill="${C.axis}" font-family="sans-serif">${text}</text>`
     })
     .join('')
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">${grid}${timeAxis(times)}${inner}</svg>`
@@ -1022,7 +1022,7 @@ function timeAxis(times: number[]) {
   const span = last - first
   const y = H - 6
   const label = (x: number, text: string, anchor = 'middle') =>
-    `<text x="${x.toFixed(1)}" y="${y}" text-anchor="${anchor}" font-size="11" fill="${C.axis}" font-family="sans-serif">${text}</text>`
+    `<text x="${x.toFixed(1)}" y="${y}" text-anchor="${anchor}" font-size="16" fill="${C.axis}" font-family="sans-serif">${text}</text>`
   if (span <= 0) return label(PAD.left + plotW / 2, timeLabel(first, MINUTE, false))
 
   const step = STEPS.find(s => span / s <= 5) ?? 30 * DAY
