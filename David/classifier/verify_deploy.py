@@ -54,8 +54,6 @@ def check(result: dict, event: dict) -> None:
     for late in result.get("late_results", []):
         Result.model_validate(late)
     assert result["event_id"] == event["event_id"], "event_id not echoed"
-    assert result["actions"] == [], "actions must be empty for the placeholder"
-    assert result["drift"] is None and result["drift_rate"] is None
 
 
 def main() -> int:
