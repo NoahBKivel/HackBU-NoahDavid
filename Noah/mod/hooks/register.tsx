@@ -46,6 +46,11 @@ const timeFormat = atom({ plugin: 'vision', key: 'timeFormat' } as const, '12h')
 // The chart clock format for the drawing being built ('24h' or '12h').
 // Set by renderPane before the charts are drawn; the axis labels read it.
 let chartClock = '12h'
+// The time the pane is drawn at, for telling a stale "checking" point apart.
+let chartNow = 0
+// A check still waiting after this long has been dropped by the backend
+// (its late result never came), so the charts stop drawing it.
+const STALE_PENDING_MS = 2 * 60 * 1000
 
 // How many rows the flagged and recent lists show before "Show more".
 const FLAGS_SHOWN = 3
@@ -732,6 +737,7 @@ async function renderPane($: $, elements: Elements, live: boolean) {
   const isSettingsOpen = await read($, settingsOpen)
   const clockFormat = await read($, timeFormat)
   chartClock = clockFormat
+  chartNow = now
   const toggleSettings = () => update($, settingsOpen, v => !v)
   const chooseFormat = (format: string) => setTimeFormat($, format)
   const expandList = (which: 'flags' | 'recent') => () => update($, listsOpen, v => ({ ...v, [which]: !v[which] }))
@@ -885,7 +891,7 @@ async function renderPane($: $, elements: Elements, live: boolean) {
 // infoReveal card, floating over the chart so nothing else moves.
 // The bar sits 4 px right of the image's left edge, so centering the image
 // nudges the bar 2 px right to line up under the button's label.
-const UNDERLINE = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="2" viewBox="0 0 20 2"><rect x="4" width="16" height="2" rx="1" fill="#9C9A92"/></svg>'
+const UNDERLINE = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="1" viewBox="0 0 20 1"><rect x="4" width="16" height="1" fill="#9C9A92"/></svg>'
 
 function chartTitle(Text: any, Box: any, Button: any, Svg: any, title: string, scope: string, current: string, onPick: (id: string) => unknown, note: unknown = null) {
   return (
@@ -901,7 +907,7 @@ function chartTitle(Text: any, Box: any, Button: any, Svg: any, title: string, s
           // options stay in line with the title.
           <Box key={`${scope}-${w.id}-opt`} position="relative">
             <Button key={`${scope}-${w.id}`} plain dimColor={w.id !== current} onPress={() => onPick(w.id)}>
-              <Text color="inactive" dimColor size="footnote">
+              <Text color="inactive" dimColor size="caption">
                 {w.label}
               </Text>
             </Button>
@@ -1152,8 +1158,14 @@ function empty(message: string) {
   )
 }
 
+// Whether a check is drawn on the risk chart: it has a score, or it is
+// still being classified and recent enough to still get one.
+function isDrawn(p: Point) {
+  return p.risk !== null || (p.isPending && chartNow - p.ts < STALE_PENDING_MS)
+}
+
 function riskChart(all: Point[], window: string) {
-  const list = downsample(all)
+  const list = downsample(all.filter(isDrawn))
   if (list.length === 0) return empty(all.length === 0 && window === 'all' ? 'Risk appears here as the agent acts' : `No checks in ${windowName(window)}`)
   const xs = xPositions(list)
   const scored = list.map((p, i) => ({ p, i })).filter(({ p }) => p.risk !== null)
@@ -1187,7 +1199,7 @@ function riskChart(all: Point[], window: string) {
 }
 
 function trendChart(all: Point[], window: string) {
-  const list = downsample(all)
+  const list = downsample(all.filter(p => p.risk !== null))
   const scored = list.map((p, i) => ({ p, i })).filter(({ p }) => p.risk !== null)
   if (scored.length === 0) return empty(window === 'all' ? 'Drift appears after the first check' : `No checks in ${windowName(window)}`)
   const xs = xPositions(list)
@@ -1235,7 +1247,7 @@ function chartAlt(list: Point[]) {
 // Checks inside the chosen window. "last10" keeps the ten most recent
 // checks the chart draws (scored or still checking), skipping unscored reads.
 function inWindow(list: Point[], window: string, now: number) {
-  if (window === 'last10') return list.filter(p => p.risk !== null || p.isPending).slice(-LAST_COUNT)
+  if (window === 'last10') return list.filter(isDrawn).slice(-LAST_COUNT)
   const ms = WINDOWS.find(w => w.id === window)?.ms ?? Infinity
   return ms === Infinity ? list : list.filter(p => p.ts >= now - ms)
 }
