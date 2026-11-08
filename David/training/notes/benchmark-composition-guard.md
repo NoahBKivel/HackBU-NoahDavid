@@ -1,0 +1,3 @@
+# Benchmark composition guard
+
+The real CPU sampler returned WAITING_INPUT because it required9000 task records after the owner authorized7377 task records within N10000. Code03f3b1c checks the source sum against the declared plan.parts.task instead. Two focused regressions passed in0.05seconds and the staged two-file credential scan found zero matches. No GPU timing or production training is established by these checks. The next sampler uses the same seed and actual prepared records; its new handle and result must be observed before a runtime forecast is claimed.

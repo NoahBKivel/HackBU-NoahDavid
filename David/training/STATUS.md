@@ -15,7 +15,7 @@ Root owns this dashboard. All API work is exempt from both local workload gates.
 | Measure | Actual artifact count | Qualification |
 |---|---:|---|
 | Main labels resolved | 7117 parents / 81476 question rows | Canonical assembly report05:45; raw pool6908 at05:51:57 is a separate receipt counter. |
-| All required labels complete | 1329 parents | Followup report06:17:38; more passes are still running. |
+| All required labels complete | 1702 parents | Followup report07:02:31; more passes are still running. |
 | Encoder admitted | 1197 parents / 1197 sibling records / 8620 rows | Actual pinned tokenizer and Kev fit,06:01:34,0errors; SHA bf1faad22a5ba4f355ed79cb690002dac696bc0b078a1f9c499a13fddf0c8449. |
 | Native replay prepared | 3000 / 3000 original pool | Targeted88 recovery finished0/errors0; accepted2912 unchanged. Select proportional2459 for authorized N10000. Prepared is not encoder admitted. |
 | Correct-budget screens prepared | 192 / 200 | 8 inputs lack genuine project documents; real replacements required. Screens ask SCR/M8 only. |
@@ -25,7 +25,7 @@ Root owns this dashboard. All API work is exempt from both local workload gates.
 
 | Work | State and dependency | Current owner / job | Duration or uncertainty |
 |---|---|---|---|
-| Matching private contexts | 4199 parents pending in last followup; blocks exact dependent passes | preparation + assembly; existing private atomic Modal outputs | All4remoteprojectionjobs FINISHED:6737contexts. Ingest/join immediately; instruction3.7MB,intent25.5MB,gaming19.3MB,benign157.8MB. Avoid localfull-dictionaryRAM; remoteCPU/stream groups. |
+| Matching private contexts | 6926/7117contexts joined; remainingparentsflowthroughrequiredpasses | preparation + assembly; existing private atomic Modal outputs | All4remoteprojectionjobs FINISHED:6737contexts. Ingest/join immediately; instruction3.7MB,intent25.5MB,gaming19.3MB,benign157.8MB. Avoid localfull-dictionaryRAM; remoteCPU/stream groups. |
 | Main labels | Continuous Codex queue; recover23 API batches/30 missing families after explicit delegation | label_pool + teacher; seven captains | Last measured pool gain518/9m27, about3287/h; not full-label rate. Fresh interval requested. |
 | RF and ordered diagnostics | Last followup914 requirements parents,397 localization,9D2;28 flow holds | teacher + assembly; at least20 Terra auxiliary workers retained | Completion forecast waits fresh ready-queue counts; no global RF wait for main. |
 | Native88 repair | Original intent/relation/topic/sentiment/rating/answer validation seam | preparation | Exact repair ETA pending; do not rerender accepted2912. |
@@ -60,7 +60,7 @@ latest_training_start = UNRESOLVED pending representative real-mix throughput. N
 
 ## Spend
 
-Anthropic local actual-known69.76174453USD; unknown-settled6.294982USD plus active/unsettled0.118308USD give conservative exposure76.17503453USD, leaving123.82496547USD under200. These are existing ledger/status values; provider actual balance is being queried. All prepared generation queues settled; no active generation calls. Owner MSG086 authorizes reviewed auxiliary Sonnet payloads with an80USD additional label ceiling within the unchanged200USD total cap. Candidate full-set conservative byte/output bound97.751082USD; ownership/selection revalidated before each call. Actual calls/results pending start, preserve generation reserve. Provider balance owner-confirmed sufficient.
+Anthropic local actual-known69.76174453USD; unknown-settled6.294982USD plus active/unsettled0.118308USD give conservative exposure76.17503453USD, leaving123.82496547USD under200. These are existing ledger/status values; provider actual balance is being queried. All prepared generation queues settled; no active generation calls. Owner MSG086 authorizes reviewed auxiliary Sonnet payloads with an80USD additional label ceiling within the unchanged200USD total cap. 5800local-schemaRFoutputsheldpendingwrongclaimsdirreconciliation; nofurtherpaidSonnetcalls. ActualresponsesNOTadmitted/policycomplete.150childnetworkfailuresretain57.289875unknownholds,notactualcost. Preservegenerationreserve. Provider balance owner-confirmed sufficient.
 
 OpenAI provider balance differs from local ledger; owner reports negative46. No further spend. Batch disabled. Modal current billing remains uncollected; actual representative run forecast and cost are pending, never assumed fourfold speed or equal total cost.
 
@@ -73,4 +73,9 @@ OpenAI provider balance differs from local ledger; owner reports negative46. No 
 
 Active task anchor: TASKLIST.md:L18
 Parallel active task anchor: TASKLIST.md:L22
-Campaign recovery pointer: recaps/recap-dawn-008.md. Read it in addition to filename-newest module recap.
+Campaign recovery pointer: recaps/recap-dawn-009.md. Read it in addition to filename-newest module recap.
+## Owner-requested distributed-throughput handoff (2026-11-08 07:03:40 -0500)
+
+A completed side measurement achieved **15,540.66 records/hour on four B200s**, about **2.12 times** the historical single-B200 reference. Conditional N=10,000 training compute is **38.61 minutes**, excluding startup, checkpoint saves, scoring and evaluation. This uses the existing **46-record nonrepresentative fixture**, with three warm-up and six timed updates; it does not replace the final representative-mixture forecast. Configuration: Accelerate, max_state8192, P46080, checkpointingON, globalB16. Losses were finite and fell within every repeated group; peak allocated memory was56.18GB/device.
+
+Evidence: `results/side-distributed-throughput/summary.json` and `result.json`; remote `/training/accelerate/20261108T115844636246Z`; completed call `fc-01M6XGCPT4HBZN3P63ERETCKA5`. VALIDATION-LOG and BUILD-LOG carry the measurement. No production training was launched and no trainer configuration changed. Owner requested that the main agent see this result. Active task anchor: TASKLIST.md:L47.
