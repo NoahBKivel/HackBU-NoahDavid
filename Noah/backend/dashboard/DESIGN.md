@@ -447,3 +447,13 @@ backend redeployment via Modal Dict; charts, list expansions, windows and filter
 state are retained during updates. Missing health signals stay Unreported.
 Earlier Mod-only history and metadata cannot be inferred. The existing classifier
 session KeyError event_ids is documented in Noah/NOTES-FOR-DAVID-AGENT.md NN-004.
+
+## Analytics semantic colors
+
+The six top statistics match Mod display bands and HEADLINE_COLORS: green
+#53C556, amber #E49C06, red #F17778, scoped to .metrics. Current risk percentage
+and label share a tone; drift/max/average use riskColor(value, false). Nonzero
+flags are red, nonzero corrections green, zeros neutral and missing values muted.
+This changes no classifier threshold, calculation or chart trace. Verified against
+the same live screenshot values (44/13/68/48 percent, 4 flags, 0 corrections).
+Evidence: review/metric-colors-desktop.jpg.

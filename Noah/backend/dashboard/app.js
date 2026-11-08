@@ -168,14 +168,14 @@ function renderView() {
     '<div class="connection">' + (checking ? '<span class="connection-line warning"><span class="mini-dot"></span>Checking...</span>' : '') +
     '<span class="last-seen">' + relativeTime(selected.points.at(-1)?.ts ?? Date.now()) + '</span></div></div>' +
     '<dl class="metrics" aria-label="Session statistics">' +
-    '<div class="metric current-risk"><dt class="metric-label">Current risk</dt><dd class="metric-value"><span>' + pct(risk) +
+    '<div class="metric current-risk"><dt class="metric-label">Current risk</dt><dd class="metric-value ' + color + '"><span>' + pct(risk) +
     '</span><span class="risk-label ' + color + '">' + (stats.latest ? riskLabel(risk, stats.latest.flagged) : 'Unscored') +
     '</span></dd></div>' +
-    metric('Drift', pct(stats.drift === null ? null : Math.min(1, stats.drift)) + (stats.arrow ? ' ' + stats.arrow : ''), '') +
-    metric('Max risk', pct(stats.peak), '') +
-    metric('Average risk', pct(stats.average), '') +
+    metric('Drift', pct(stats.drift === null ? null : Math.min(1, stats.drift)) + (stats.arrow ? ' ' + stats.arrow : ''), riskColor(stats.drift)) +
+    metric('Max risk', pct(stats.peak), riskColor(stats.peak)) +
+    metric('Average risk', pct(stats.average), riskColor(stats.average)) +
     metric('Flags', String(stats.flags), stats.flags ? 'error' : '') +
-    metric('Corrections', String(stats.corrections), '') +
+    metric('Corrections', String(stats.corrections), stats.corrections ? 'success' : '') +
     '</dl><div class="charts">' + chartCard('risk') + chartCard('drift') + '</div>' +
     '<div class="event-lists"><section class="list-section" id="flags-list" aria-label="Flagged actions">' +
     eventList('flags') + '</section><section class="list-section" id="recent-list" aria-label="Recent checks">' +

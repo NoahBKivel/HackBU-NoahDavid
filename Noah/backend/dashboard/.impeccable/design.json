@@ -691,6 +691,18 @@
       "persistence": "Modal Dict vision-dashboard-sessions; 2000 points per session; seven-day inactivity expiry",
       "readsInvokeInference": false,
       "validation": "9 backend + 9 Node tests; live incoming events and authenticated deployed read"
+    },
+    "analyticsColors": {
+      "scope": ".metrics",
+      "success": "#53C556",
+      "warning": "#E49C06",
+      "error": "#F17778",
+      "bands": "<0.4 green, <0.7 amber, >=0.7 red; flagged current risk red",
+      "flags": "red when nonzero",
+      "corrections": "green when nonzero",
+      "zero": "neutral",
+      "missing": "muted",
+      "evidence": "review/metric-colors-desktop.jpg"
     }
   },
   "components": [
