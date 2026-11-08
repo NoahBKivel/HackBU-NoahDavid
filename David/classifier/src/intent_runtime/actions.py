@@ -5,13 +5,13 @@ from collections.abc import Callable
 from .findings import close_minor_actions
 
 
-def compose(changed: list[dict], short_names: dict[str, str], correction: Callable[[list[dict]], str],
+def compose(changed: list[dict], short_names: Callable[[list[str]], str], correction: Callable[[list[dict]], str],
             header: dict, event_id: str) -> list[dict]:
     """Return the notices and shared correction for new or upgraded issues."""
     if not changed:
         return []
     severity = changed[0]["severity"]
-    names = ", ".join(dict.fromkeys(short_names["M2" if f["question"].startswith("M8") else f["question"].split("#")[0]] for f in changed))
+    names = short_names([finding["question"] for finding in changed])
     cited = sorted({seq for f in changed for seq in f["cited"]})
     references = ", ".join(f"E{seq}" for seq in cited)
     if severity == "minor":

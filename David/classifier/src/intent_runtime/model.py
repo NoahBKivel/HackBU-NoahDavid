@@ -1,6 +1,7 @@
 """Load runtime model selection and score rows through Kev's unrounded path."""
 
 import json
+import hashlib
 import threading
 from pathlib import Path
 
@@ -46,10 +47,18 @@ class QuestionRunner:
             return {}
         record, metadata = self.prepare(state, questions)
         probabilities, _ = self.server.probs(record)
-        return self.decode(probabilities, metadata)
+        answers = self.decode(probabilities, metadata)
+        if hasattr(self, "trace"):
+            self.trace.last["state_sha256"] = hashlib.sha256(state.encode("utf-8")).hexdigest()
+        return answers
 
     def ask_many(self, requests: list[tuple[str, dict]]) -> list[dict]:
         """Submit independent states back to back before awaiting any answer."""
         encoded = [self.prepare(state, questions) for state, questions in requests]
         pending = [(self.server.submit(record), metadata) for record, metadata in encoded]
-        return [self.decode(future.result()[0], metadata) for future, metadata in pending]
+        results = []
+        for (state, _), (future, metadata) in zip(requests, pending):
+            results.append(self.decode(future.result()[0], metadata))
+            if hasattr(self, "trace"):
+                self.trace.last["state_sha256"] = hashlib.sha256(state.encode("utf-8")).hexdigest()
+        return results

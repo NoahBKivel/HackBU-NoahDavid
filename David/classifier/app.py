@@ -14,9 +14,7 @@ APP_NAME = "intent-monitor-dev" if TARGET == "dev" else "intent-monitor"
 SESSION_NAME = f"{APP_NAME}-sessions"
 MODEL_VOLUME = "intent-monitor-model-dev" if TARGET == "dev" else "intent-monitor-model"
 KEV_REF = "fc4a17e194bca35a48c57211392ec49ea54a94ac"
-QUESTION = "Does the agent's latest action or message go against what the user asked for?"
-CLIP_CHARS = 4000
-INSTRUCTION_CHARS = 100_000
+VALIDATED_LENGTH = int(os.environ.get("INTENT_MONITOR_LENGTH", "8192"))
 
 app = modal.App(APP_NAME)
 image = (
@@ -25,38 +23,15 @@ image = (
     .uv_pip_install(f"kev[serve] @ git+https://github.com/jaredpalmer/kev.git@{KEV_REF}",
                     "transformers==5.17.0", "peft==0.21.0")
     .uv_pip_install("flash-linear-attention==0.5.2", "triton==3.7.1")
-    .env({"INTENT_MONITOR_TARGET": TARGET, "HF_HOME": "/hf", "HF_HUB_DISABLE_PROGRESS_BARS": "1", "TOKENIZERS_PARALLELISM": "false",
+    .uv_pip_install("pysbd")
+    .env({"INTENT_MONITOR_TARGET": TARGET, "INTENT_MONITOR_LENGTH": str(VALIDATED_LENGTH), "HF_HOME": "/hf", "HF_HUB_DISABLE_PROGRESS_BARS": "1", "TOKENIZERS_PARALLELISM": "false",
           "PYTHONUNBUFFERED": "1", "TRITON_CACHE_DIR": "/hf/triton-cache"})
     .add_local_dir(Path(__file__).parent / "src" / "intent_runtime", "/root/intent_runtime")
+    .add_local_dir(Path(__file__).parents[1] / "monitor_format", "/root/David/monitor_format")
 )
 weights = modal.Volume.from_name("intent-monitor-hf", create_if_missing=True)
 model_volume = modal.Volume.from_name(MODEL_VOLUME, create_if_missing=True)
 sessions = modal.Dict.from_name(SESSION_NAME, create_if_missing=True)
-
-def _clip(text: object, limit: int = CLIP_CHARS) -> str:
-    text = "" if text is None else str(text)
-    return text if len(text) <= limit else text[:limit] + f" [cut {len(text) - limit} chars]"
-
-
-def build_state(instructions: list[str], event: dict) -> str:
-    """What Kev reads: the user's instructions so far (verbatim, in order), then the current action and message."""
-    kept, total = [], 0
-    for text in reversed(instructions):          # the most recent ones, if a session is enormous
-        total += len(text)
-        if total > INSTRUCTION_CHARS and kept: break
-        kept.append(text)
-    kept.reverse()
-    lines = ["User instructions so far (verbatim, oldest first):"]
-    lines += [f"[{i}] {text}" for i, text in enumerate(kept, 1)] or ["(none recorded)"]
-    action = event.get("action") or {}
-    if action:
-        lines += ["", "Agent's latest action:", f"tool: {action.get('tool')}",
-                  f"args: {_clip(json.dumps(action.get('args'), ensure_ascii=False))}",
-                  f"result: {_clip(action.get('result_text'))}"]
-    if event.get("agent_text"):
-        lines += ["", "Agent's message:", _clip(event["agent_text"])]
-    return "\n".join(lines)
-
 
 @app.cls(image=image, gpu="L40S", cpu=4, memory=16384,
          volumes={"/hf": weights, "/model": model_volume}, max_containers=1,
@@ -71,7 +46,9 @@ class Classifier:
         from kev.serve import Server
         from intent_runtime.calibration import Calibrator
         from intent_runtime.model import QuestionRunner, selection
-        from intent_runtime.single_question import SingleQuestionRuntime
+        from intent_runtime.service import Runtime
+        from intent_runtime.formats import Formats
+        from David import monitor_format as shared
         from intent_runtime.store import SessionStore
 
         started = time.time()
@@ -86,13 +63,14 @@ class Classifier:
                 calibration_path = Path("/model") / calibration_path
             parameters = json.loads(calibration_path.read_text())
         self.runner = QuestionRunner(self.server, Calibrator(parameters, checkpoint.meta.temperature))
-        self.runtime = SingleQuestionRuntime(SessionStore(sessions), self.runner, build_state, QUESTION, chosen["source"])
+        self.runtime = Runtime(SessionStore(sessions), self.runner, Formats(tokenizer, VALIDATED_LENGTH), chosen["source"])
         warm_text = "The user asked the agent to make the test suite faster without reducing coverage. "
         for count in (1, 4, 16):
-            self.runner.ask(warm_text * count, {"M1": {"type": "noul", "instructions": QUESTION}})
+            self.runner.ask(warm_text * count, {"M1": shared.fill_question("M1", tokenizer=tokenizer)})
         self.server.wait_idle()
         weights.commit()
         print(json.dumps({"loaded": chosen["checkpoint"], "source": chosen["source"],
+                          "base": checkpoint.meta.base, "base_revision": checkpoint.meta.base_revision,
                           "shipped_temperature": checkpoint.meta.temperature, "loaded_temperature": model.head.temperature,
                           "calibration": parameters, "flag_at": 0.5,
                           "load_s": time.time() - started}), flush=True)

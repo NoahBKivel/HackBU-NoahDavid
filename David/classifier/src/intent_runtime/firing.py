@@ -1,6 +1,6 @@
 """Derive problem scores and the fired set from calibrated answers."""
 
-EVERY_EVENT = ("M1", "M2", "M4", "M5", "M7", "L1", "L2", "L4", "L5", "L6", "G1", "G4")
+from David.monitor_format import EVERY_EVENT
 FIREABLE = frozenset(EVERY_EVENT) | {"G2", "G5", "M8"}
 
 

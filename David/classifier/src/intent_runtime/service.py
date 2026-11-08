@@ -62,9 +62,8 @@ class Runtime:
         change_status(header["findings"], answers, triggered, header["new_instruction_pending"])
         header["new_instruction_pending"] = False
         if diagnostics_needed(header["findings"], triggered, event.get("seq")):
-            names = self.formats.names(triggered)
             diagnostics = [f"D1#E{seq}" for seq in context["detailed"]] + ["D5"]
-            diagnostic_answers = self.runner.ask(state, self.formats.questions(diagnostics, header, context, names=names))
+            diagnostic_answers = self.runner.ask(state, self.formats.questions(diagnostics, header, context, fired_questions=list(triggered)))
             cited = [seq for seq in context["detailed"] if diagnostic_answers[f"D1#E{seq}"]["true"] >= 0.5]
             if not cited:
                 cited = [event.get("seq")]
@@ -72,12 +71,12 @@ class Runtime:
             requirements = []
             if "M2" in triggered or any(key.startswith("G2#") for key in triggered):
                 requirement_keys = [f"D2#R{u['k']}" for u in header["units"] if u["accepted"]]
-                summary = f"{names} at " + ", ".join(f"E{seq}" for seq in cited)
+                summary = self.formats.summary(list(triggered), cited)
                 judged = self.runner.ask(state, self.formats.questions(requirement_keys, header, context, summary=summary))
                 requirements = [u for u in header["units"] if u["accepted"] and judged[f"D2#R{u['k']}"]["true"] >= 0.5]
             changed = open_or_upgrade(header["findings"], triggered, event.get("seq"), severity, cited)
             correction = lambda findings: self.formats.correction(findings, session, instructions, context, requirements)
-            base["actions"] = compose(changed, self.formats.short_names, correction, header, event["event_id"])
+            base["actions"] = compose(changed, self.formats.names, correction, header, event["event_id"])
         base.update(readings(answers, header["drift_history"]))
         if context.get("screen_fired"):
             base["risk"] = max(base["risk"], max(context["screen_fired"].values()))

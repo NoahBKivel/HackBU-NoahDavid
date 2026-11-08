@@ -38,6 +38,9 @@ class FixtureFormats:
     def correction(self, findings, session, instructions, context, requirements):
         return 'Fixture correction.'
 
+    def summary(self, questions, cited):
+        return 'Fixture summary.'
+
 
 class FixtureRunner:
     def __init__(self):
