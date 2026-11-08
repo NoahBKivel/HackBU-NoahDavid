@@ -49,7 +49,7 @@ def prefix_sdpa(module: Any, query: Any, key: Any, value: Any, attention_mask: A
     if not isinstance(attention_mask, PrefixMask):
         raise TypeError("The specialized attention path requires a shared-prefix mask.")
     mask = attention_mask
-    result = torch.zeros_like(query)
+    result = None
     for length, indices in mask.groups:
         q = query.index_select(0, indices)
         k = key.index_select(0, indices)
@@ -67,7 +67,11 @@ def prefix_sdpa(module: Any, query: Any, key: Any, value: Any, attention_mask: A
             enable_gqa=q.shape[1] != k.shape[1])
         if mask.state:
             answer = functional.pad(answer, (0, 0, left, 0))
+        if result is None:
+            result = torch.zeros_like(query, dtype=answer.dtype)
         result.index_copy_(0, indices, answer)
+    if result is None:
+        raise ValueError("A shared-prefix attention batch must not be empty.")
     return result.transpose(1, 2).contiguous(), None
 
 

@@ -51,11 +51,15 @@ def attention_check() -> dict[str, Any]:
         checks.append({'state': state, 'output_max_abs': output_gap,
                        'input_gradient_max_abs': gradient_gap,
                        'status': 'PASS' if output_gap < 2e-5 and gradient_gap < 2e-5 else 'FAIL'})
+        with torch.autocast('cuda', dtype=torch.bfloat16):
+            mixed, _ = prefix_sdpa(None, *source, prefix_mask(allow, source[0].dtype, 'sdpa'))
+        checks.append({'state': state, 'mixed_precision_dtype': str(mixed.dtype),
+                       'status': 'PASS' if mixed.dtype == torch.bfloat16 else 'FAIL'})
     return {'status': 'PASS' if all(row['status'] == 'PASS' for row in checks) else 'FAIL', 'checks': checks}
 
 
 def compare(records_path: str, output: str, config: dict[str, Any], pass_tokens: int,
-            projection_records: int, volume: Any) -> dict[str, Any]:
+            projection_records: int, volume: Any, prior_output: str = '') -> dict[str, Any]:
     """Measure production grouping, padding-free attention and checkpointing on fixed records."""
     import torch
     from .batched_measure import _arguments, _optimizer, _seed, _step
@@ -102,12 +106,22 @@ def compare(records_path: str, output: str, config: dict[str, Any], pass_tokens:
 
     args = _arguments(8192, pass_tokens)
     args.batch, args.accum = 16, 1
-    parity = []
-    for name in ('reference', 'repeat', 'padding_free'):
+    parity = json.loads((Path(prior_output) / 'parity-progress.json').read_text()) if prior_output else []
+    if parity and [row['name'] for row in parity] != ['reference', 'repeat']:
+        raise ValueError('Only the two immutable reference runs may be reused.')
+    for name in (('padding_free',) if parity else ('reference', 'repeat', 'padding_free')):
         context = padding_free_attention if name == 'padding_free' else nullcontext
         with context():
             optimizer, scheduler = reset(True)
-            _step(model, tokenizer, groups[0], args, optimizer, scheduler, 0)
+            if name == 'padding_free':
+                with torch.profiler.profile(activities=[torch.profiler.ProfilerActivity.CPU,
+                                                       torch.profiler.ProfilerActivity.CUDA]) as profiler:
+                    _step(model, tokenizer, groups[0], args, optimizer, scheduler, 0)
+                kernels = sorted({event.name for event in profiler.events()
+                                  if 'CUDA' in str(getattr(event, 'device_type', ''))})
+                save('attention-kernels', {'kernels': kernels})
+            else:
+                _step(model, tokenizer, groups[0], args, optimizer, scheduler, 0)
             del optimizer, scheduler
             optimizer, scheduler = reset(True)
             rows = [_step(model, tokenizer, groups[0], args, optimizer, scheduler, 0) for _ in range(2)]
