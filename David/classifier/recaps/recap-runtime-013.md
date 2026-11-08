@@ -21,3 +21,9 @@ Both serve stock product 6e81f7a, live tree 89247d5. Runtime code and evidence d
 Observe session69631. On source arrival, validate actual formats and source, swap dev, warm and run verify_selection.py with the receipt and actual calibration file, followed by a burst. Switch live only after those pass, warm immediately, validate, alert and publish model/L notes. Repeat the same corrected-input live done probe. Follow any new owner answer to the optional scope question.
 
 Active task anchor: TASKLIST.md:L25
+
+## Owner decision
+
+MSG-007 explicitly defers NN-003 until demo checks pass. STATUS and SIDEQUESTS record that timing. No intervention-state implementation is active; continue the required model handoff work.
+
+Active task anchor: TASKLIST.md:L25

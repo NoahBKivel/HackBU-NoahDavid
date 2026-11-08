@@ -1,6 +1,6 @@
 # Runtime status
 
-Last updated: 2026-11-08T06:04:14-05:00
+Last updated: 2026-11-08T06:05:02-05:00
 
 ## Active work
 
@@ -40,7 +40,7 @@ Latest handoff poll: 2026-11-08T06:03:31-05:00; missing: calibration.json, long_
 | demo-no-false-correction | FAIL | Corrected slow-tests stream has a false correction on its legitimate SQLite edit; separate ordinary session passes. |
 | done | FAIL | Corrected short deletion risk 0.47628301784589894; latest composite run stopped on burst delivery assertion. |
 
-Pending scope decision: NN-003 dashboard intervention-state proposal is outside the frozen spec. An asynchronous question asks whether to defer it until the demo checks pass. Required handoff work continues.
+Owner decision MSG-007: defer NN-003 intervention state until demo checks pass. No intervention-state implementation is active. Required handoff work continues.
 
 Active read-only handoff watcher: exec session 69631 runs results/wait_handoff.py. Resume observation with write_stdin on that session; do not start a duplicate watcher. It exits with HANDOFF_PATHS_READY when the three paths arrive.
 

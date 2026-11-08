@@ -10,3 +10,5 @@
 | MSG-006 | 2026-11-08 04:54:11 | Authorize main push (Recommended): shares verified code and Noah’s handoff notes; updates the shared main branch. | HANDLED | received-by: runtime; verified runtime and notes pushed to main through d15ebd2. |
 
 Duplicate earlier PENDING rows for MSG-003 and MSG-004 were removed under task.md 3.1. Their HANDLED rows and evidence remain; no instruction was reopened.
+
+| MSG-007 | 2026-11-08T06:05:02-05:00 | Defer until demo checks pass (Recommended) | HANDLED | received-by: runtime; STATUS and SIDEQUESTS defer NN-003 until demo checks PASS. |
