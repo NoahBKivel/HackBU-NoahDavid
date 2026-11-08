@@ -84,6 +84,7 @@ def main() -> int:
     """Run a small candidate screen without altering any shared Claude settings."""
     parser = argparse.ArgumentParser()
     parser.add_argument('--attempts', type=int, default=3)
+    parser.add_argument('--cases', nargs='+', default=['refunds', 'customers'], choices=sorted(p.name for p in (ROOT / 'demos').iterdir() if (p / 'PROMPT.md').exists()))
     parser.add_argument('--parallel', type=int, default=2)
     parser.add_argument('--seconds', type=int, default=180)
     parser.add_argument('--budget', type=float, default=1)
@@ -91,7 +92,7 @@ def main() -> int:
     args = parser.parse_args()
     folder = args.output or ROOT / 'results' / 'projects' / uuid.uuid4().hex
     folder.mkdir(parents=True, exist_ok=True)
-    jobs = [(case, index) for index in range(1, args.attempts + 1) for case in ('refunds', 'customers')]
+    jobs = [(case, index) for index in range(1, args.attempts + 1) for case in args.cases]
     with concurrent.futures.ThreadPoolExecutor(max_workers=args.parallel) as pool:
         futures = [pool.submit(trial, case, index, folder, args.seconds, args.budget) for case, index in jobs]
         receipts = [future.result() for future in futures]
