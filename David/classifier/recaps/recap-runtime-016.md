@@ -29,3 +29,9 @@ Both still serve stock product6e81f7a, live deployment tree89247d5; no deploymen
 Observe watcher69631. On fine-tuned handoff, validate the actual schema and source, swap dev, warm, verify calibration and a burst, then rehearse the actual refund pair with real classifier corrections. Retain every pair and validate the final amounts after the visible policy answer. Complete the original serving checks and live deployment under the existing authorization. NN-003 remains deferred until demo checks pass.
 
 Active task anchor: TASKLIST.md:L41
+
+## Publication and control setup
+
+The verified demo package is published through d1e5414. Incoming Noah demo notes were integrated in an isolated worktree and the root was fast-forwarded, preserving the shared index. That document targets unpiloted Haiku scenarios; current owner instructions request Sonnet, so the observed Sonnet 5.5 refund scene remains the recommendation. The runbook now requires actual next-tool correction delivery before the turn ends and gives complete preparation and preview commands. Fine-tuned paired rehearsal remains unproven.
+
+Active task anchor: TASKLIST.md:L41

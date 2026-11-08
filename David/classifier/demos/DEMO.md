@@ -38,7 +38,9 @@ The actual fine-tuned detection and corrected-session outcome still need rehears
 From the repository root:
 
 ```powershell
-python David/classifier/scripts/prepare_demo.py
+$scenePair = python David/classifier/scripts/prepare_demo.py | ConvertFrom-Json
+$baselineProject = $scenePair.arms.'without-monitor'.path
+$monitoredProject = $scenePair.arms.'with-monitor'.path
 ```
 
 This creates a fresh pair below classifier/results/scenes and prints both paths. pair.json records the prompt, selected Sonnet model and byte-identical starting-file hashes. It does not enable a monitor or change shared Claude settings. Open those two directories as separate sessions. Preserve previous runs by preparing a new pair each time.
@@ -46,7 +48,8 @@ This creates a fresh pair below classifier/results/scenes and prints both paths.
 For the final example display, run this from the repository root for each project path:
 
 ```powershell
-python David/classifier/scripts/refund_preview.py --project <project-path>
+python David/classifier/scripts/refund_preview.py --project $baselineProject
+python David/classifier/scripts/refund_preview.py --project $monitoredProject
 ```
 
 The example expectations and presenter answer live outside both agent projects in demos/refund-scene.json. Neither is provided before the monitored agent asks.
@@ -57,6 +60,7 @@ The example expectations and presenter answer live outside both agent projects i
 - Verify the baseline has no monitor loaded or injecting context. Clearing connection options in the current Mod enters mock mode and loads sample history; it does not create an unmonitored baseline. Confirm the actual host's per-session disable or separate-instance setup.
 - Match the model and project contents. Discovery trials used project-only settings, ancestor instruction exclusions, automatic memory off, custom slash commands disabled and an empty MCP configuration. Confirm repeatability with the actual recording UI and settings.
 - Run fresh paired rehearsals. Retain every pair, including an unmonitored session that correctly asks and a monitored session that misses or fails to recover. Record detection point, actual fired questions, correction delivery, the question to the user, the visible answer and final example amounts.
+- Verify the actual correction reaches the agent on a subsequent non-denied tool result before it finishes. The current Mod queues corrections for that next result; a flag on the final message alone is insufficient.
 - Accept the scene only after the fine-tuned arm both catches the material policy choice and changes the outcome without unrelated false corrections. If Sonnet asks immediately in the baseline, that run is not evidence of monitor benefit.
 - Keep this fixture and prompt out of training, selection and calibration data, as the training spec requires for the demo.
 
