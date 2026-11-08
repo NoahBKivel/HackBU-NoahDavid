@@ -25,7 +25,8 @@ def main():
     ordered = sorted(groups, key=lambda key: hashlib.sha256(("dev:tau2:" + key).encode()).hexdigest())
     selected = set(ordered[:math.ceil(len(ordered) / 10)])
     remaining = Counter(row["meta"]["slice"] for task, rows in groups.items() if task not in selected for row in rows)
-    if remaining["claim"] < 100 or remaining["policy_order"] < 100:
+    plan = json.loads((ROOT / "src/intent_training/sources/entries/tau2.json").read_text(encoding="utf-8"))
+    if any(remaining[item["name"]] < item["planned_count"] for item in plan["slices"]):
         raise ValueError("The remaining source cannot satisfy its existing slice plan.")
     rows = [row for task in ordered if task in selected for row in groups[task]]
     destination = ROOT / "data/dev_candidates/tau2.jsonl"
