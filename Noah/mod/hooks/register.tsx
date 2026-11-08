@@ -718,7 +718,7 @@ async function renderPane($: $, elements: Elements, live: boolean) {
   const status = {
     connecting: ['Connecting', 'subtle'],
     live: ['Live', 'success'],
-    classifying: ['Checking...', 'warning'],
+    classifying: ['Updating...', 'warning'],
     error: ['Backend unreachable', 'error'],
   }[state as Conn] ?? ['Unknown', 'subtle']
 
@@ -739,6 +739,16 @@ async function renderPane($: $, elements: Elements, live: boolean) {
 
   return (
     <Box flexDirection="column" gap="sm" paddingX={1} position="relative">
+      {/* Header row: status, then the settings gear at the far right. */}
+      <Box flexDirection="row" justifyContent="flex-end" alignItems="center">
+        <Box flexDirection="row" alignItems="center" gap="sm">
+          <Text dimColor wrap="truncate">Status:</Text>
+          <Text color={status[1]} wrap="truncate">{status[0]}</Text>
+          <Button key="settings-gear" plain dimColor={!isSettingsOpen} onPress={toggleSettings}>
+            <Text color="inactive" dimColor>⚙</Text>
+          </Button>
+        </Box>
+      </Box>
       <Box flexDirection="row" justifyContent="space-between" alignItems="flex-start">
         <Box flexDirection="column">
           <Text dimColor size="caption">Current risk</Text>
@@ -756,15 +766,6 @@ async function renderPane($: $, elements: Elements, live: boolean) {
           </Box>
         </Box>
         <Box flexDirection="column" alignItems="flex-end">
-          <Box flexDirection="row" gap="sm" alignItems="center">
-            <Box flexDirection="row" gap="xs">
-              <Text color={status[1]} wrap="truncate">●</Text>
-              <Text color={status[1]} wrap="truncate">{status[0]}</Text>
-            </Box>
-            <Button key="settings-gear" plain dimColor={!isSettingsOpen} onPress={toggleSettings}>
-              <Text color="inactive" dimColor>⚙</Text>
-            </Button>
-          </Box>
           {!live && <Text dimColor size="caption">Mock classifier</Text>}
         </Box>
       </Box>
