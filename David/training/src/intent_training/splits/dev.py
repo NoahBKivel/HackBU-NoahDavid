@@ -17,7 +17,8 @@ INTENT_SOURCES = frozenset({"swe_chat", "helpsteer3", "misalignment_atlas", "goa
 
 def _ids(record):
     meta = record.get("_meta", {})
-    return {str(value) for field in ("source_id", "source_record_id", "trajectory_id", "conversation_id", "task_id", "record_id", "exposure_id", "group_id")
+    source = str(meta.get("source") or record.get("source") or "").lower().split("@", 1)[0]
+    return {(source, str(value)) for field in ("source_id", "source_record_id", "trajectory_id", "conversation_id", "task_id", "record_id", "exposure_id", "group_id")
             for value in (meta.get(field), record.get(field)) if value is not None}
 
 

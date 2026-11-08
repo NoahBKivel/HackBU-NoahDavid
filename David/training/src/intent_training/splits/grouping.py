@@ -21,7 +21,8 @@ def grouped_records(records):
     seen = {}
     for index, record in enumerate(records):
         meta = record.get("_meta", {})
-        keys = [(field, str(meta[field])) for field in
+        keys = [(field, str(meta[field]) if field in {"pair_id", "sibling_group", "group_id"}
+                 else (str(meta.get("source", "")), str(meta[field]))) for field in
                 ("pair_id", "trajectory_id", "task_id", "sibling_group", "group_id",
                  "source_id", "source_record_id", "exposure_id") if meta.get(field) is not None]
         if not any(field in {"pair_id", "trajectory_id", "task_id"} for field, _ in keys):

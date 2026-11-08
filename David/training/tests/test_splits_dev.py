@@ -24,11 +24,18 @@ def test_additional_base_and_planted_leaks():
     assert len(result["base_dev"]) == 1 and len(train) == 1
     assert not manifest["passed"]
     with pytest.raises(ValueError, match="held-out"):
-        prepare(train, pool, [], [{"record_id": "1"}], seed="seed", questions=["M1"])
+        prepare(train, pool, [], [{"source": "swe_chat", "record_id": "1"}], seed="seed", questions=["M1"])
     leaked = deepcopy(pool[0])
     leaked["_meta"]["trajectory_id"] = "100"
     with pytest.raises(ValueError, match="crosses a split"):
         prepare(train, [leaked], [], [], seed="seed", questions=["M1"])
+
+
+def test_source_local_identifiers_do_not_collide_between_datasets():
+    train = [row(100)]
+    candidate = row(101, source="in3", trajectory_id="100")
+    result, _ = prepare(train, [candidate], [], [], seed="seed", questions=["M1"])
+    assert len(result["base_dev"]) == 1
 
 
 def test_categorical_floor_requires_each_option():
