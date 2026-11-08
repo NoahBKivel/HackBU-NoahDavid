@@ -1,0 +1,11 @@
+.venv/
+data/
+results/
+vendor/
+__pycache__/
+.pytest_cache/
+*.safetensors
+*.pt
+*.pth
+*.pyc
+.env

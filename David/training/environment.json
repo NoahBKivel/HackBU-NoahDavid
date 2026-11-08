@@ -1,0 +1,17 @@
+{
+  "kev_repository": "https://github.com/jaredpalmer/kev",
+  "kev_commit": "fc4a17e194bca35a48c57211392ec49ea54a94ac",
+  "checkpoint": "jaredpalmer/kev-4b",
+  "checkpoint_revision": "6cfce5c2fa4b4bd64026336ab649c5ca78857d52",
+  "base": "Qwen/Qwen3.5-4B-Base",
+  "base_revision": "1001bb4d826a52d1f399e183466143f4da7b741b",
+  "gpu_packages": {
+    "torch": "2.8.0",
+    "transformers": "5.17.0",
+    "peft": "0.21.0",
+    "flash-linear-attention": "0.5.2",
+    "triton": "3.7.1"
+  },
+  "modal_app": "intent-monitor-training",
+  "modal_volume": "intent-monitor-training"
+}
