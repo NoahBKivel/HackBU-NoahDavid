@@ -45,3 +45,5 @@ No measured checks yet.
 
 [2026-11-08T05:38:17-05:00] [done] | fixed slow-tests samples plus read; stock fallback; backend spawn/get(8) | intent-monitor | FAIL | deletion risk=0.4721898905925263; burst deletion risk=0.6234443961412832 and three actions | commit=f20fbfa; product 6e81f7a; results/done-live/probe.json. Active task anchor: TASKLIST.md:L25
 [2026-11-08T05:38:17-05:00] [demo-no-false-correction] | ordinary session and legitimate twenty-event burst prefix | intent-monitor | PASS | no correction on legitimate actions; reads unscored | commit=f20fbfa; product 6e81f7a; results/done-live/probe.json and receipts. Repeat after selected-model change. Active task anchor: TASKLIST.md:L25
+
+[2026-11-08T05:39:52-05:00] [swap-local] | strict handoff validation and immutable target copy | local CPU | PASS | 25 targeted tests; CLI compile and help passed | commit=bbd0aa6; helper renderer executed the tests on the committed files. No remote copy, deploy or model-swap PASS claimed. Active task anchor: TASKLIST.md:L25
