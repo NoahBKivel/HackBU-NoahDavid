@@ -27,12 +27,14 @@ def source_candidates(record: dict, construction: str | None, plan: list[dict]) 
     unsliced = [entry["id"] for entry in entries if entry.get("slice") is None]
     if unsliced:
         return unsliced
+    eligible = set(map(str, meta.get("eligible_slices", [])))
+    if eligible:
+        return [entry["id"] for entry in entries if str(entry.get("slice")) in eligible]
     objectives = set(meta.get("objective", []))
     compatible = [entry["id"] for entry in entries if objectives == set(entry.get("objective", []))]
     if compatible:
         return compatible
-    eligible = set(map(str, meta.get("eligible_slices", [])))
-    return [entry["id"] for entry in entries if str(entry.get("slice")) in eligible]
+    return []
 
 
 def sample_units(records: list[dict], candidates: dict[int, list[str]],
@@ -68,7 +70,7 @@ def sample_units(records: list[dict], candidates: dict[int, list[str]],
     return chosen, dict(assignment)
 
 
-def load_prepared(directories: list[str]) -> tuple[list[dict], dict[str, str], dict]:
+def load_prepared(directories: list[str], context_paths: dict[str, str] | None = None) -> tuple[list[dict], dict[str, str], dict]:
     """Read stable prepared prefixes and retain only construction types from private context."""
     records, construction_by_id, observed, seen = [], {}, {}, set()
     for directory in directories:
@@ -99,7 +101,11 @@ def load_prepared(directories: list[str]) -> tuple[list[dict], dict[str, str], d
                         value = json.loads(line)
                         identity = value.get("record_id") or value.get("_meta", {}).get("id")
                         if name == "main.jsonl" and not value.get("_meta", {}).get("native_record") and identity not in context_ids:
-                            continue
+                            immediate = root / "contexts" / f"{identity}.json"
+                            if not immediate.is_file():
+                                continue
+                            if context_paths is not None:
+                                context_paths[identity] = str(immediate)
                         if identity is None:
                             identity = hashlib.sha256(line.encode()).hexdigest()
                         if identity in seen:
@@ -126,7 +132,8 @@ def build_payload(directories: list[str], plan: dict, destination: str,
     target = Path(destination)
     if target.exists():
         raise FileExistsError("The benchmark payload is immutable once written.")
-    records, constructions, observed = load_prepared(directories)
+    context_paths = {}
+    records, constructions, observed = load_prepared(directories, context_paths)
     task_plan = [entry for entry in plan["sources"] if entry["part"] == "task" and entry["planned_quota"]]
     if sum(entry["planned_quota"] for entry in task_plan) != 9000:
         raise ValueError("The canonical task allocation must total nine thousand records.")
@@ -165,6 +172,15 @@ def build_payload(directories: list[str], plan: dict, destination: str,
         raise RuntimeError("The admitted mixture has the wrong record count.")
     admitted = []
     for record in selected:
+        identity = record["record_id"]
+        if identity in context_paths:
+            private = json.loads(Path(context_paths[identity]).read_text())
+            if private.get("record_id") != identity:
+                raise ValueError("An immediate context does not match its selected record.")
+            construction = private.get("side", {}).get("construction", {})
+            if isinstance(construction, dict) and construction.get("type"):
+                if construction["type"] != record["_meta"].get("construction"):
+                    raise ValueError("A selected construction lacks its published construction metadata.")
         for question in record["questions"].values():
             if "label" not in question:
                 question["label"] = (next(iter(question["criteria"])) if question["type"] == "choice"

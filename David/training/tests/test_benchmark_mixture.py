@@ -10,6 +10,28 @@ from intent_training.kevpatch.mixture import load_prepared, sample_units, source
 
 
 class BenchmarkMixtureTests(unittest.TestCase):
+    def test_declared_eligibility_precedes_general_objective(self):
+        plan = [{"id": "science:claim", "source": "science", "slice": "claim", "objective": ["M5", "G5"]},
+                {"id": "science:benign", "source": "science", "slice": "benign", "objective": []}]
+        record = {"_meta": {"source": "science", "objective": ["M5", "G5"], "eligible_slices": ["benign"]}}
+        self.assertEqual(source_candidates(record, None, plan), ["science:benign"])
+
+    def test_immediate_atomic_context_does_not_wait_for_aggregate_finalization(self):
+        directory = Path(__file__).resolve().parents[1] / "results/test-temp"
+        directory.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=directory) as temporary:
+            root = Path(temporary)
+            record = {"record_id": "ready", "state": "a", "questions": {},
+                      "_meta": {"construction": "goal_flip"}}
+            (root / "main.jsonl").write_text(json.dumps(record) + "\n")
+            (root / "contexts").mkdir()
+            context = root / "contexts/ready.json"
+            context.write_text(json.dumps({"record_id": "ready", "side": {"construction": {"type": "goal_flip"}}}))
+            paths = {}
+            selected, _, _ = load_prepared([str(root)], paths)
+            self.assertEqual([record["record_id"] for record in selected], ["ready"])
+            self.assertEqual(paths, {"ready": str(context)})
+
     def test_completed_context_required_before_main_admission(self):
         directory = Path(__file__).resolve().parents[1] / "results/test-temp"
         directory.mkdir(parents=True, exist_ok=True)
