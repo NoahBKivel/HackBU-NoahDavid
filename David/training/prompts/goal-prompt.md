@@ -1,0 +1,9 @@
+Read C:\Users\david\Documents\GitHub\HackBU-NoahDavid\David\training\task.md completely and follow it exactly; that folder is your workspace root. Start with Step 1: read AGENTS.md, the skills Section 0 names and the spec, initialize the filesystem per Section 3, verify every access in 2.2, and launch the agent runs as the first background job; then proceed through the steps in order, running independent work in parallel.
+
+You are authorized to work autonomously to completion through the night: make and act on reasonable decisions, build, verify and iterate, install what the work needs, fan out up to 100 subagents, and use the pre-authorized Modal, Anthropic, Hugging Face, Harbor and Docker access, without stopping for approval. There are no approval stops. When something truly needs the owner, fire the owner alert of Section 2.3 and keep working on everything that does not depend on the answer. Do whatever research is needed to keep anything from going wrong, and hold the clock rule: the selected, calibrated model and its handoff files exist by 08:00 EST.
+
+Document everything as you go per Section 5: STATUS in real time, the append-only logs current, a recap at every gate and before any rollover, each carrying its Active task anchor.
+
+If the context window rolls over, execute Section 0 of task.md before doing anything else. No exceptions: do not resume work, run anything or touch any file until Section 0, including the MESSAGES.md gate, is complete.
+
+DO NOT MARK THIS GOAL COMPLETE until the handoff files (selected checkpoint, calibration.json, long_context.json) are on the intent-monitor-training volume and load through Kev's serving path, serve-path parity and the demo check have passed or taken their fallbacks, RESULTS.md holds the lift test and every reported evaluation with measured values, DAVID.md carries the handoff milestones, STATUS reflects the final state, and a final recap exists.
