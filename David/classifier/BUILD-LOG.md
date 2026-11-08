@@ -17,3 +17,5 @@ No checks have passed yet. See VALIDATION-LOG.md for append-only evidence.
 
 As of 2026-11-08 02:57:17, setup passed. The core fixture suite passed 23 tests and rejected ten deliberate defects at commit 69206d78d7e3c3131f02719380c759749b50bda0. No dev deployment or GPU serving check has run. Active task anchor: TASKLIST.md:L6
 [2026-11-08 02:58] [publication] | BLOCKED | Tests/Evidence: 0/1 | Automatic approval review rejected the checkpoint push to main for insufficient explicit branch authorization. The local documentation closeout can proceed. The owner requested a pause at this checkpoint. Active task anchor: TASKLIST.md:L6
+[2026-11-08 03:57] [core] | IN_PROGRESS | Tests/Evidence: 23/23 | Resumed core deployment to dev. Added full eight-second ordering measurements for one and two missing events. Active task anchor: TASKLIST.md:L6
+[2026-11-08 03:58] [core] | TESTED | Tests/Evidence: 25/25 | Ordering deadline commit e7fa6853629e485ca8dc680a7feba2cb32cc4b08; dev deployed with product code from 69206d7. The dev model volume listing is empty. GPU warmup and serving checks are running. Active task anchor: TASKLIST.md:L6

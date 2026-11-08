@@ -8,7 +8,7 @@
 | warmup | pending | Warmup | setup | runtime 6.1, 10 | None yet. | Required check pending. | Execute the named check. |
 | calibration | pending | Calibration on the serving path | setup | runtime 6.4, 7.4, 10; training 9.5 | None yet. | Required check pending. | Execute the named check. |
 | skipped | done | Skipped events | setup | runtime 7.1, 10; training 6.1 | VALIDATION-LOG.md; 69206d7 | None for the recorded local scope. | Continue the service-core serving checks. |
-| ordering | pending | Ordering | setup | runtime 6.5, 7.10, 10 | None yet. | Required check pending. | Execute the named check. |
+| ordering | done | Ordering | setup | runtime 6.5, 7.10, 10 | VALIDATION-LOG.md; e7fa685 | None. | Continue GPU checks. |
 | late | pending | Late results | setup | runtime 7.10, 10 | None yet. | Required check pending. | Execute the named check. |
 | stock | pending | Stock-fallback-config | setup | runtime 6.4, 7.11, 10; training 9.5 | None yet. | Required check pending. | Execute the named check. |
 | dismissal | done | No-reopen-after-dismissal | setup | runtime 7.6, 10 | VALIDATION-LOG.md; 69206d7 | None for the recorded local scope. | Continue the service-core serving checks. |

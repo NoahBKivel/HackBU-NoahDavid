@@ -1,10 +1,10 @@
-# Runtime status
+ï»¿# Runtime status
 
 Last updated: 2026-11-08 02:57:17
 
 ## Active work
 
-Work is paused at the owner's requested checkpoint. Setup passed, and core commit 69206d7 passed 23 local tests and rejected ten deliberate defects. Live intent-monitor remains the existing stock Kev placeholder; its deployed commit has not been established. Dev has not been deployed. The latest training check found renderer-parity PASS at f0239e5 and the shared-module milestone; model handoff polling has not started. The new checkpoint commits remain local because automatic approval review rejected publication to main for insufficient explicit branch authorization. Existing scaffold commits are published.
+Work resumed from the tested checkpoint. Dev deployment of core commit 69206d7 is in progress. Setup passed, and core commit 69206d7 passed 23 local tests and rejected ten deliberate defects. Live intent-monitor remains the existing stock Kev placeholder; its deployed commit has not been established. Dev is deployed with core product code from 69206d7; its GPU serving checks are running. The latest training check found renderer-parity PASS at f0239e5 and the shared-module milestone; model handoff polling has not started. The new checkpoint commits remain local because automatic approval review rejected publication to main for insufficient explicit branch authorization. Existing scaffold commits are published.
 
 | Unit | Status | Tests/Evidence | Notes |
 |---|---|---|---|
@@ -20,7 +20,7 @@ Work is paused at the owner's requested checkpoint. Setup passed, and core commi
 | no-reopen-after-dismissal | PASS | Dismissals suppress repeats until reset, including an instruction on a skipped read. |
 | minor upgrade | PASS | A minor run finding upgrades and sends its correction. |
 | turn-end-no-nag | PASS | Not-done requirements appear without a correction. |
-| ordering | pending | Local reduced-time fixtures passed; the required full wait measurement remains. |
+| ordering | PASS | Full eight-second waits measured for one and two missing events; the restored suite passed 25 tests. |
 | warmup | pending | No GPU call has run. |
 | calibration on the serving path | pending | Local math and runner checks passed; serving evidence remains. |
 | late results | pending | Local timestamp and once-only delivery fixtures passed; serving checks remain. |
@@ -33,3 +33,4 @@ Work is paused at the owner's requested checkpoint. Setup passed, and core commi
 3. Complete the service-core closeout, then confirm the frozen shared-format interface.
 
 Active task anchor: TASKLIST.md:L6
+
