@@ -154,3 +154,18 @@ Recording starts with this deployment, without backfilling Mod-local state.
 Sessions already open before recording may lack project/task metadata until a
 session-start/new instruction is received. Pending final results still depend
 on the classifier's existing late_results delivery, exactly like the Mod.
+
+---
+
+## NN-005 · 2026-11-08 · Health donut waiting on NN-003 response field
+
+The local and Pages dashboards are receiving real results. User reports that the
+health pie is not populating. The saved feed checked contained three sessions,
+zero explicit requires_user_intervention booleans, and one session with 20 scored
+points. Home correctly renders 100% Unreported, not healthy or stopped.
+
+Please implement the NN-003 field on completed results (including skipped and
+late results): explicit false for healthy session state, true after a human
+stop request, persistent until the next genuine new instruction. Frontend and
+FastAPI storage already support it; no risk threshold or correction-text
+heuristic should substitute for this state. The graph needs no rendering change.
