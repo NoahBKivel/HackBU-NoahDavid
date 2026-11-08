@@ -15,12 +15,12 @@
 | upgrade | done | Minor upgrade | setup | runtime 7.5-7.7, 10 | VALIDATION-LOG.md; 69206d7 | None for the recorded local scope. | Continue the service-core serving checks. |
 | no-nag | done | Turn-end-no-nag | setup | runtime 7.3-7.7, 10 | VALIDATION-LOG.md; 69206d7 | None for the recorded local scope. | Continue the service-core serving checks. |
 | interface | done | Interface-check | core | runtime 6.3; training 4.2, 6.1, 6.3-6.7 | notes/monitor-format-interface.md; 51dd732 | None. | Bind the shared formats. |
-| formats | in-progress | Shared formats and requirement filter | core | runtime 6.3, 7.2-7.3, 7.7, 13; training 4.2, 6.1, 6.3-6.7 | CPU suite 32 passed; 5baed45; results/shared-local.xml | Deployed renderer parity, instruction numbering, turn-end and burst checks. | Deploy dev and run the real-path checks. |
-| renderer | pending | Shared renderer | core | runtime 6.3, 10; training 6.4 | None yet. | Required check pending. | Execute the named check. |
-| numbering | pending | Instruction numbering | core | runtime 6.3, 10; training 6.1, 6.4 | None yet. | Required check pending. | Execute the named check. |
-| turns | pending | Turn ends | core | runtime 7.1, 7.3, 10 | None yet. | Required check pending. | Execute the named check. |
-| burst | pending | Burst-backlog | core | runtime 7.10, 10 | None yet. | Required check pending. | Execute the named check. |
-| live-stock | pending | Designed classifier live on stock Kev | core | runtime 13; task 4.4 | None yet. | Required check pending. | Execute the named check. |
+| formats | done | Shared formats and requirement filter | core | runtime 6.3, 7.2-7.3, 7.7, 13; training 4.2, 6.1, 6.3-6.7 | VALIDATION-LOG.md; d65fd4b | None. | First live deployment. |
+| renderer | done | Shared renderer | core | runtime 6.3, 10; training 6.4 | VALIDATION-LOG.md; d65fd4b | None. | First live deployment. |
+| numbering | done | Instruction numbering | core | runtime 6.3, 10; training 6.1, 6.4 | VALIDATION-LOG.md; d65fd4b | None. | First live deployment. |
+| turns | done | Turn ends | core | runtime 7.1, 7.3, 10 | VALIDATION-LOG.md; d65fd4b | None. | First live deployment. |
+| burst | done | Burst-backlog | core | runtime 7.10, 10 | VALIDATION-LOG.md; d65fd4b | None. | First live deployment. |
+| live-stock | in-progress | Designed classifier live on stock Kev | core | runtime 13; task 4.4 | None yet. | Required check pending. | Deploy live, warm, validate and append required shared notes. |
 | overflow | pending | Overflow | core | runtime 7.9, 10, 13; training 6.6 | None yet. | Required check pending. | Execute the named check. |
 | swap | pending | Serving trained model and model-swap | core | runtime 6.4, 7.11, 13; training 9.5 | None yet. | Required check pending. | Execute the named check. |
 | done | pending | Done agent-run | core | runtime 10, 12, 13 | None yet. | Required check pending. | Execute the named check. |
