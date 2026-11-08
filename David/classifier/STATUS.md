@@ -1,11 +1,11 @@
 # Runtime status
 
-Last updated: 2026-11-08T06:05:02-05:00
+Last updated: 2026-11-08T06:30:58-05:00
 
 ## Active work
 
-Owner alert: stock Kev fails both demo gates; the selected handoff is needed before those can pass. Dev and live remain on stock product 6e81f7a, live tree 89247d5. The repaired live verifier bfdebab confirms short deletion risk 0.47628301784589894 and a false correction on the legitimate SQLite edit; the latest burst delivers all twenty results once, including fourteen pending calls. The earlier burst failure remains preserved, with its timing cause unproven because that failed run did not retain the raw pending completion.
-Latest handoff poll: 2026-11-08T06:03:31-05:00; missing: calibration.json, long_context.json, selected; handoff milestone lines: 0. Isolated pull succeeded.
+Blocked on the training handoff: selected/, calibration.json and long_context.json are absent after repeated checks, including a fresh read at 06:25:50 Eastern. The available stock model still fails the short deletion and legitimate-edit checks, so it cannot meet the completion bar. The read-only watcher remains live in exec session69631; model copy, dev/live deployment and final verification require those external files.
+Latest handoff poll: 2026-11-08T06:23:55-05:00; missing: calibration.json, long_context.json, selected; handoff milestone lines: 0. Isolated pull succeeded.
 
 | Unit | Status | Tests/Evidence | Notes |
 |---|---|---|---|
@@ -13,8 +13,8 @@ Latest handoff poll: 2026-11-08T06:03:31-05:00; missing: calibration.json, long_
 | Service core | complete | 25 CPU tests and deployed serving checks. | Calibration and lateness verified on dev. |
 | Shared formats | complete | Eight states match; numbering, turn ends and twenty-event burst pass. | The actual one-byte renderer mutation was rejected. |
 | Overflow | complete | 40 local tests and deployed oversized-document check. | Live rollout and N-005 published. |
-| Selected model | active | 25 targeted swap tests passed. | Actual handoff files are missing. |
-| Live done bar | active | results/done-live/probe.json | Short deletion fails; burst deletion and legitimate actions pass. |
+| Selected model | blocked | 25 targeted swap tests passed. | Actual handoff files are missing. |
+| Live done bar | blocked | results/done-live-capture/probe.json | Short deletion misses and legitimate SQLite edit falsely receives correction; ordinary and burst legitimate prefixes pass. |
 | Desktop demo | blocked | Needs owner live run. | David and Noah run the desktop app. |
 
 | Gate | Status | Current measured result |
@@ -34,11 +34,11 @@ Latest handoff poll: 2026-11-08T06:03:31-05:00; missing: calibration.json, long_
 | shared renderer | PASS | Eight deployed states match byte for byte; actual mutation rejected. |
 | instruction numbering | PASS | AskUserQuestion answer appears once; late instruction uses seq order. |
 | turn ends | PASS | Answer and aborted row selection measured. |
-| burst-backlog | PASS | Twenty original results delivered once, with ten pending calls in the dev run. |
+| burst-backlog | PASS | Latest live run delivered twenty results once with fourteen pending calls. Earlier failed timing incident remains preserved. |
 | overflow | PASS | Two screen states; sixteen sections picked before fitting; valid deployed result. |
 | model-swap | pending | Handoff absent; pure validation and copy tests pass. |
 | demo-no-false-correction | FAIL | Corrected slow-tests stream has a false correction on its legitimate SQLite edit; separate ordinary session passes. |
-| done | FAIL | Corrected short deletion risk 0.47628301784589894; latest composite run stopped on burst delivery assertion. |
+| done | FAIL | Corrected short deletion risk 0.47628301784589894; burst deletion risk 0.6234443961412832 with actions. |
 
 Owner decision MSG-007: defer NN-003 intervention state until demo checks pass. No intervention-state implementation is active. Required handoff work continues.
 

@@ -47,3 +47,9 @@ As of 2026-11-08 02:57:17, setup passed. The core fixture suite passed 23 tests 
 [2026-11-08T06:05:02-05:00] [coordination] | BLOCKED | Tests/Evidence: 1/1 | Owner MSG-007 defers NN-003 until required demo checks pass. No intervention-state implementation is active; the original live-model handoff remains the current work. Active task anchor: TASKLIST.md:L25
 
 [2026-11-08T06:06:40-05:00] [publication-incident] | INTEGRATED | Tests/Evidence: 1/1 | Commit b8135cf included six foreign training files through a shared-index race and was pushed. The owner was informed; the source files and published history are preserved. Future ordinary runtime commits use explicit --only paths so concurrent staged work remains outside the commit. No foreign-file verification claim is made. Active task anchor: TASKLIST.md:L25
+
+## Current Validation Snapshot
+
+As of 2026-11-08T06:30:58-05:00, setup, service core, shared formats and overflow have their recorded evidence. Four named binding tests remain passing in results/overflow-local.xml on source unchanged from 6e81f7a; deployed parity and correction receipts cover the three stale binding build rows, now reconciled. The selected-model gate is unrun because all three handoff paths are missing. Both live model-quality checks remain FAIL. This snapshot supersedes the initial setup placeholder, not any historical failed check.
+
+[2026-11-08T06:30:58-05:00] [blocked-audit] | BLOCKED | Tests/Evidence: 4/4 existing named binding checks inspected; no rerun | Required work is at an external impasse after repeated missing handoff checks. The latest source listing is saved; stock fallback does not pass the live done bar. Watcher69631 remains running read-only. TASKLIST records exact missing resources and owner desktop work. No completion is claimed. Active task anchor: TASKLIST.md:L25
