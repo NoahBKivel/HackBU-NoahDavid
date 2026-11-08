@@ -82,8 +82,10 @@ def main():
     temp = destination.with_suffix(".tmp")
     temp.write_bytes(payload)
     os.replace(temp, destination)
-    report = b"".join(volume.read_file(result["report_path"].removeprefix("/training/")))
-    (ROOT / "results/sources/catch_hacking.json").write_bytes(report)
+    report = json.loads(b"".join(volume.read_file(result["report_path"].removeprefix("/training/"))))
+    report["regenerated_output_sha256"] = report["output_sha256"]
+    report["output_sha256"] = hashlib.sha256(baseline.read_bytes()).hexdigest()
+    (ROOT / "results/sources/catch_hacking.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
 
 
 if __name__ == "__main__":
