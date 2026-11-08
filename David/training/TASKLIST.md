@@ -12,7 +12,7 @@ Durable completion plan. Status values: pending, in-progress, blocked, done, sup
 
 | ID | Status | Task | Depends-on | Spec | Evidence | Missing proof | Next action |
 |---|---|---|---|---|---|---|---|
-| T01 | in-progress | Verify access and launch bounded agent runs. | none | 7.1, 7.3, 8.6, 8.7, 9.1, 11, 12.2 | Access proofs and3actual isolated task results exist; old legacy jobs exited0. | Final setup/quota closeout. | Resumed under MSG052; do not relaunch oldjobs or Docker. |
+| T01 | done | Verify access and launch bounded agent runs. | none | 7.1, 7.3, 8.6, 8.7, 9.1, 11, 12.2 | Access proofs and3actual isolated task results exist; old legacy jobs exited0. | None. | SetupPASS; owner-omitted Docker quotas redistributed in T30. |
 | T02 | done | Freeze shared renderer and exact question interface. | none | 4.2, 6.1, 6.3, 6.4, 6.5, 6.6, 6.7, 12.1 | Codef0239e5; renderer-parity PASS in VALIDATION-LOG;23 tests and mutation evidence; DAVID milestone. | none | Import the frozen shared interface for converter rendering. |
 | T03 | in-progress | Patch trainer saves, resume and grouped batching. | none | 9.1, 9.2, 10, 12.1 | Trainer saves/interpolation/grouping/full-Ppacking implemented;14nonTorch tests;identityPASS;resumeFAILfallback. | Production closeout and remaining gates. | Resumed under MSG052; no resume claim; crash reruns. |
 | T04 | in-progress | Implement interpolation and run GPU smoke measurements. | none; integrates T03 | 9.1, 9.2, 9.3, 10, 12.1 | B2008K ON5833.7041records/hour,P115200;OFFOOM;identity426+4PASS. | Mix only6replay; native-fixedrepeat unlaunched;Unslothuncollected. | Resumed under MSG052; readrecap009; freeze/N notchosen. |
@@ -45,7 +45,7 @@ Durable completion plan. Status values: pending, in-progress, blocked, done, sup
 
 | T28 | in-progress | Implement four-B200 torchrun distributed LoRA training. | none; existing pinned trainer | 9.1, 9.2, 12.1; MSG056 | Owner authorizes fourGPU data parallel. | Same fixed-batch per-step loss against oneGPU, real8Kthroughput. | Independent DDP implementation; first verified approach wins. |
 | T29 | in-progress | Implement four-B200 Accelerate LoRA training. | none; existing pinned trainer | 9.1, 9.2, 12.1; MSG056 | Owner authorizes fourGPU data parallel. | Same fixed-batch per-step loss against oneGPU, real8Kthroughput. | Independent Accelerate implementation; first verified approach wins. |
-| T30 | in-progress | Redistribute omitted Docker agent-run quotas within objectives and close setup. | none | 7.1, 8.7; MSG056 | Owner omits Docker agent runs. | Exact quota redistribution and setup closeout. | Preserve N12200 and each objective. |
+| T30 | done | Redistribute omitted Docker agent-run quotas within objectives and close setup. | none | 7.1, 8.7; MSG056 | MappingSHA473cca48; exact totals preserved; setupPASS. | None for redistribution; converted gaps stayT05–T08. | Fulfill per-source targets and gates. |
 
 ## Next Slices
 

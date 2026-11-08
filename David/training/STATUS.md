@@ -33,7 +33,7 @@ Labelling is the critical path. MSG055 requires a continuous queue, batch claims
 
 | Gate | Status | Current measured result |
 |---|---|---|
-| setup | pending | Docker omission redistribution authorized; exact mapping/closeout due. |
+| setup | PASS | Existing access proofs retained; exact same-objective Docker quota redistribution complete, mappingSHA473cca48. |
 | renderer-parity | PASS | Existing gate retained. |
 | identity-parity | PASS | Existing real checkpoint426+4 tensors retained. |
 | resume-parity | FAIL | Explicit no-resume fallback; a crash reruns. |
@@ -56,7 +56,7 @@ Root read ledgers at03:48EST: OpenAI26.695418USD, separate200USDcap. Anthropic c
 4. Assemble all passes, preserve provenance, run required data gates, freeze12200at06:00 and launch the selected fourB200 path.
 5. Finish dev/intent and downstream scoring/calibration/serving/evaluation implementation while labels proceed; held-out scoring occurs only after selection.
 
-Saved remote IDs and historical qualifications remain in recaps/recap-009.md. ExistingAPI97809 is confirmed terminal. Current context and owner changes are in recaps/recap-dawn-002.md. No completion claim is made.
+Saved remote IDs and historical qualifications remain in recaps/recap-009.md. ExistingAPI97809 is confirmed terminal. Current context and owner changes are in recaps/recap-dawn-003.md. No completion claim is made.
 
 Active task anchor: TASKLIST.md:L18
 Parallel active task anchor: TASKLIST.md:L22

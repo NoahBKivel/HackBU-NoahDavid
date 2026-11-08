@@ -1,0 +1,26 @@
+# Dawn checkpoint: setup closed and distributed parity launched
+
+## Accomplished
+
+Candidate codeb88a541 and essentialconfiguration53c178f are committed, with11coretests and2targetedconfiguration tests passing. Adjacentdocumentation records unrunactualmodelscoring. Evaluationimplementation has27distinct tests passing; itscodecommit follows thiscloseout. No actualevaluationgatepassed.
+
+SetupnowlogsPASS: existingaccessproofs retained; MSG056omitsDocker. T30exactquota redistribution SHA473cca48cf785fb2986f27fb11bcaf02f97f3bbace461998d630af1c0de3aaa9 preservesrequirements1269/ambiguity720/full12200 andsealedpositivefloors. Preparedcapacity is notcompleteddata. DATA-REPORTlists remainingconversion gaps.
+
+Accelerate4B200parity actuallylaunched03:52:49EST, callfc-01M6X5RF1YJX648HM3ADPNQ40R, appap-lZuX4dhv4NxMC6MRZjSX9G, imageim-tubIanB1qlUzPfJE2gSlFI. Code d20041a/doc0eede60. Poll03:53:50pending. No productionrun orparityPASSyet. TrainerDDP approachimplemented, launchETA~03:57. Bothfirst16fixture,3steps,seeds1+step*4+shard. SameglobalB16/normalization mustpassbeforechosen.
+
+## Label pipeline and data
+
+Root confirmed onlyoneactualresumedCodexworker asof teacher03:56-statedsnapshot (messagearrived~03:53–55). Only3newmainvotes, zeroRFnew. Thisisnotacceptablethroughput. Rootdirected immediate60persistentworkerfanout on verified2260RFwindows, withoutserializedreadleases orqueueperfection. Teacherdispatchloop andAPIclientbatchclaims muststopidlegaps. APIclient exclusivelyownsclaims.py; teacherownsCodexcontinuousdispatch. AllAPIworkexemptlocal8cap. APIONLYpairedintent/judgmentstandardcalls; noBatch.
+
+NamedcauseofSolcost now proven:22,446,879teacher_sidebytes versus3,089,852statebytes across142records;rawreasoning22,417,379bytes. Exactreasoningduplicates40.96percentwithinbatches/83.01percentacrossqueue. APIclientimplementslosslesssharedreasoningdictionary/stablecontextgrouping/memoryprompts andunitroundtrip, nottruncation. Existing40calls7430574input/76280cached/77143output cost16.8775574USDexactly,2longsingletoncalls. CumulativeOpenAI26.695418USD;173.304582remaining. No newpaidSol-onlyCwork.
+
+Assembly reports182mainrecords/2136askedrows,169single/13paired;only40contextsadmittedfornextpasses. Prep recoveredatomicCpacketentries10,15–107+ andbotholdC900remotejobs finished0. No newduplicatewriter. Nativefixed12replay+42task exists;actualscreenroutingfixrequired. Constructioncurrentgoalflip270,goalsplice282,correction9,omission14;constraint400,priority300,screen200. Pressure/compositepositivecoverage stillunproven. UserBench100,Ambig25,IFRF195nowconverted;IFanswercheckerexisting56requestsneedsremoteexecution. Sourceworkerreleasedslotawaitnextcacheconsume.
+
+Generationsolecentral11743runs20APIworkers, first140IFmulticompleted by03:49reported. Itmustalsoexecute7newbenigncorrectionIDs, notcompletedrareexecutor. Anthropic03:49reportedactual48.74748703, settledunknownreservations6.12117, active0.877536,totalexposure55.74619303. Prior53.2129wasexposure,notactual. Caps200Anthropic/200OpenAI,generation76. AllAPIworkerlaunchesexemptlocalcompute cap; noapproval neededforlightAPIprocesses.
+
+## Clock and next actions
+
+FullN12200freeze06:00EST, allworkincludingfullevaluationdone09:00. MSG057authorizesjudgmentcalls preservingquality/demoandcaps. FourGPUactual8Kmixture forecastawaitsmeasurement; no assumed4xspeedup. Rootreportdue03:56. Finishcontinuouslabelscale, full8Ksource/nativepreparation, rareconstructiongaps, orderedpassesandfreeze gates. Thenrun/score/calibrate/serve/evaluate. No selectedmodel exists. RecoverSection0beforeanyworkaftercompaction.
+
+Parallel active task anchor: TASKLIST.md:L22
+Active task anchor: TASKLIST.md:L18
