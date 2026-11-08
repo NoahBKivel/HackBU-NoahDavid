@@ -43,6 +43,8 @@ declare module 'claude-code' {
       session: SessionInfo | null
       windows: { risk: string; trend: string }
       listsOpen: { flags: boolean; recent: boolean }
+      settingsOpen: boolean
+      timeFormat: string
     }
   }
 }

@@ -153,6 +153,10 @@ The full requirements are in [Noah/MOD_PRD.md](Noah/MOD_PRD.md). This section is
   - `set PYTHONUTF8=1` first in cmd, or prefix `PYTHONUTF8=1` in bash (see build notes).
   - `.venv\Scripts\modal serve Noah/backend/app.py` for development, with hot reload and the `-dev` URL.
   - `.venv\Scripts\modal deploy Noah/backend/app.py` updates the stable URL.
+- **Local dashboard visual preview:** built in `Noah/backend/dashboard/`. Run `node Noah/backend/dashboard/serve.mjs` from the repo root and open `http://127.0.0.1:4173/`. No dependency installation is needed. `node Noah/backend/dashboard/build.mjs` produces a static, gitignored `dist/` directory with relative asset paths for future GitHub Pages deployment.
+  - This pass is a local UI preview with two explicitly labeled sample sessions, not live agent data. It makes no FastAPI, Modal, warmup or inference requests. Dashboard persistence, live polling, saved-call result collection and GitHub Pages publication are still pending.
+  - It follows the latest Mod's colors, risk bands, five readouts, risk/drift charts, Last 10/1h/1d/1w/All windows, flag details and recent-check disclosures. Drift uses the same five-check average fallback when absent. Desktop adds only an agent sidebar and side-by-side charts when space permits; mobile opens a compact Mod-style detail view from the agent list.
+  - Verified in the browser at 320 px and 390 px phone widths, 768 px tablet width, and 1280 px desktop width without horizontal overflow. Agent selection/back navigation, Last 10 filtering, expanded flag details, recent-check show-more/show-less, pending and empty-flag displays all worked. Browser warnings/errors were empty. JavaScript syntax and the static build passed. The local server was left running for Noah to review; source changes rebuild automatically and appear after a browser refresh.
 
 ---
 
@@ -171,7 +175,7 @@ The order doubles as the cut list: each step leaves something you can demo.
 5. [x] Hook up David's real `classify()` (stock Kev, deployed and sample-tested 2026-11-07; live Mod UI check remains)
 6. [ ] The Pane with the graph
 7. [ ] Demo repo and scenario, rehearsal, **demo video recorded tonight**
-8. [ ] Extras: the browser dashboard served by FastAPI, mobile through Remote Control, packaging the Mod as a marketplace for `/plugin install`
+8. [ ] Companion web dashboard: local visual preview built; live data integration and GitHub Pages deployment pending. Other extras remain later: mobile through Remote Control and marketplace packaging.
 9. [ ] README and Devpost write-up (morning of 11-08). Candidate material is collected in section 8.
 
 ---
@@ -202,6 +206,7 @@ The order doubles as the cut list: each step leaves something you can demo.
   - Don't put everything in bordered containers. Borders behave badly as the panel width changes (tiles wrapped into a tall column and cut off at the edge).
   - Change the design in small steps that Noah reviews one at a time.
   - **Draw charts as plain `Svg` images, without `isInteractive`.** The interactive frame (needed for hover tooltips on points) ignored the chart's height and added large empty bands above and below it. Pinning both `width` and `height` (tested 2026-11-07) made tooltips work but kept the gaps, so point tooltips stay off.
+  - **A floating box (`position: "absolute"`) is painted over the elements *before* it, and under the ones after it.** To cover the pane and take its own clicks, like the settings menu, it must be the **last** child of the pane's outer box (`position="relative"`). Drawn earlier, the later sections were painted over it, so it looked see-through and they caught its clicks. The ⓘ cards work because each is the last child of its own chart section.
   - **Never put a border on a small control.** On the desktop a Box border adds a lot of size: a rounded border around the time window buttons made them huge. Plain Buttons can't be given rounded backgrounds, so the selected window uses a square tint the size of the button.
 - **Type-check with TypeScript in the scratchpad.** The `claude` command line isn't installed, so run `tsc -p <mod>/.claude-plugin/types/tsconfig.json` with a TypeScript copy installed in the session scratchpad. The engine checks rules, not types.
 - **Slow results (N-001), handled in the Mod:**
@@ -224,7 +229,7 @@ The order doubles as the cut list: each step leaves something you can demo.
 
 ## 6. Open items
 
-- **Dashboard scope agreed with Noah (design discussion; implementation not started):** a phone-friendly read-only UI lists all reporting Mod sessions, with a detail view for each showing the same statistics as the Mod pane. Separate agent instances are supported; subagents, notifications of any kind and user authentication are out of scope for the demo. Correction delivery is assumed successful; no acknowledgement protocol is required. Without a heartbeat, activity should be described using last-seen timestamps rather than claiming certainty that a session is still running.
+- **Dashboard scope agreed with Noah (local visual preview built; live data integration pending):** a phone-friendly read-only UI lists all reporting Mod sessions, with a detail view for each showing the same statistics as the Mod pane. Noah requested starting with the visual style and a local testing port, with no added product functionality beyond remote viewing of the Mod. Separate agent instances are supported; subagents, notifications of any kind and user authentication are out of scope for the demo. Correction delivery is assumed successful; no acknowledgement protocol is required. Without a heartbeat, activity should be described using last-seen timestamps rather than claiming certainty that a session is still running.
 - **Dashboard storage accepted by Noah:** use a new Modal Dict for session metadata and individual `(session_id, event_id)` records. It is native persistent storage that survives container shutdowns and app redeploys, so a third-party database is unnecessary for this demo. Entries expire after seven days with no reads or writes. Keep event summaries compact and persist each result separately rather than appending all history through a shared read-modify-write list. Dashboard reads reuse saved results, not additional classifier inference. See [Modal Dicts](https://modal.com/docs/guide/dicts).
 - **Keep-warm decision:** Noah explicitly wants the minimum warm pool left off while building the dashboard. Enable it only for testing/recording/presenting when requested. `min_containers=1` can keep a classifier container warm despite `scaledown_window=600`; the ten-minute setting is an idle scale-down window, not a fixed container lifetime. Modal 1.6.3 supports this parameter. Initial warmup is still needed, and additional autoscaled containers can cold-start. Keep-warm has not been enabled; the current source has no minimum warm pool. Normal classifier calls can still boot a GPU and leave it idle until the scale-down window elapses.
 - **Dashboard result collection approved conditionally by Noah:** preserve the existing Mod response contract and functionality, verify the change before deployment, and avoid additional inference. The backend currently stops waiting after eight seconds. Cold-start and queue time are not included in the classifier's late-result clock, and a genuinely late final event has no subsequent response to ride on. These are delivery gaps, not necessarily destruction of the result: Modal retains spawned-call results for seven days. Persist the spawned call ID and retrieve its result later, independently of new Mod events, then update the original event entry. The installed Modal 1.6.3 supports `FunctionCall.from_id` and `get`. This is approved subject to verification, not implemented yet. See [Modal invocation methods](https://modal.com/docs/guide/function-invocation-methods).
@@ -261,8 +266,9 @@ The order doubles as the cut list: each step leaves something you can demo.
 | Host the dashboard on GitHub Pages and poll FastAPI for persisted updates (Noah, 2026-11-07) | Noah accepted initial history loading and approximately one-second incremental updates. GitHub serves the app files while Modal handles live session data. |
 | No toggle | Installing the Mod means the user wants monitoring |
 | The classifier decides when to intervene | The Mod and backend just pass things along and run actions |
-| The browser dashboard is an extra | Not core to the demo |
-| The graph's data stays in the Mod, for one task | No backend storage needed |
+| Start the companion dashboard with a local visual preview of the existing Mod (Noah, 2026-11-07) | Match the Mod closely on mobile and use a simple desktop arrangement. No additional product features; review the visual baseline before live data integration. |
+| Use dependency-free static HTML, CSS and JavaScript for the dashboard preview | The UI only needs read-only rendering, charts and existing Mod disclosures. This starts locally without an installation step and builds static files suitable for GitHub Pages. |
+| The Mod keeps its own graph data for one session | The future dashboard will keep a separate persisted copy of event/result summaries. |
 | Classifier context history stays on David's side | Dashboard storage will separately hold session metadata and event/result summaries, without taking over the classifier's context history. |
 | The Mod sends as much data as possible | No need to agree on a payload first. Only large items are trimmed, and only with Noah's OK. |
 | Docs are split into CONTRACT, NOAH and DAVID, all in the root | Each side keeps its own doc, the bridge is shared, and any agent can read all three |

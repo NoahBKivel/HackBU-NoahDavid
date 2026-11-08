@@ -40,6 +40,12 @@ const todos = atom({ plugin: 'vision', key: 'todos' } as const, [])
 const session = atom({ plugin: 'vision', key: 'session' } as const, null)
 const windows = atom({ plugin: 'vision', key: 'windows' } as const, { risk: 'all', trend: 'all' })
 const listsOpen = atom({ plugin: 'vision', key: 'listsOpen' } as const, { flags: false, recent: false })
+const settingsOpen = atom({ plugin: 'vision', key: 'settingsOpen' } as const, false)
+const timeFormat = atom({ plugin: 'vision', key: 'timeFormat' } as const, '12h')
+
+// The chart clock format for the drawing being built ('24h' or '12h').
+// Set by renderPane before the charts are drawn; the axis labels read it.
+let chartClock = '12h'
 
 // How many rows the flagged and recent lists show before "Show more".
 const FLAGS_SHOWN = 3
@@ -96,6 +102,9 @@ export const register: Register = (on, options) => {
         // Connected to the real backend: drop any sample history from mock mode.
         await update($, points, list => list.filter(p => !p.eventId.startsWith('sample-')))
       }
+      const savedFormat = await $.store.get('clockFormat')
+      // A saved choice wins; otherwise the default is 12-hour time.
+      await update($, timeFormat, () => (savedFormat === '24h' ? '24h' : '12h'))
       void $.ui.open({ id: 'alignment', title: 'VISION' })
       await refreshStatus($, isLive)
     } catch (error) {
@@ -720,11 +729,16 @@ async function renderPane($: $, elements: Elements, live: boolean) {
   const trendList = inWindow(list, chosen.trend, now)
   const pick = (chart: 'risk' | 'trend') => (id: string) => update($, windows, w => ({ ...w, [chart]: id }))
   const lists = await read($, listsOpen)
+  const isSettingsOpen = await read($, settingsOpen)
+  const clockFormat = await read($, timeFormat)
+  chartClock = clockFormat
+  const toggleSettings = () => update($, settingsOpen, v => !v)
+  const chooseFormat = (format: string) => setTimeFormat($, format)
   const expandList = (which: 'flags' | 'recent') => () => update($, listsOpen, v => ({ ...v, [which]: !v[which] }))
   const recent = [...list].reverse()
 
   return (
-    <Box flexDirection="column" gap="sm" paddingX={1}>
+    <Box flexDirection="column" gap="sm" paddingX={1} position="relative">
       <Box flexDirection="row" justifyContent="space-between" alignItems="flex-start">
         <Box flexDirection="column">
           <Text dimColor size="caption">Current risk</Text>
@@ -742,9 +756,14 @@ async function renderPane($: $, elements: Elements, live: boolean) {
           </Box>
         </Box>
         <Box flexDirection="column" alignItems="flex-end">
-          <Box flexDirection="row" gap="xs">
-            <Text color={status[1]} wrap="truncate">●</Text>
-            <Text color={status[1]} wrap="truncate">{status[0]}</Text>
+          <Box flexDirection="row" gap="sm" alignItems="center">
+            <Box flexDirection="row" gap="xs">
+              <Text color={status[1]} wrap="truncate">●</Text>
+              <Text color={status[1]} wrap="truncate">{status[0]}</Text>
+            </Box>
+            <Button key="settings-gear" plain dimColor={!isSettingsOpen} onPress={toggleSettings}>
+              <Text color="inactive" dimColor>⚙</Text>
+            </Button>
           </Box>
           {!live && <Text dimColor size="caption">Mock classifier</Text>}
         </Box>
@@ -846,6 +865,11 @@ async function renderPane($: $, elements: Elements, live: boolean) {
         ))}
         {!lists.recent && recent.length > RECENT_SHOWN && <Box paddingLeft={4}><Text dimColor>...</Text></Box>}
       </Box>
+      {isSettingsOpen && (
+        <Box position="absolute" top={2} right={1}>
+          {settingsMenu(Text, Box, Button, clockFormat, chooseFormat, toggleSettings)}
+        </Box>
+      )}
     </Box>
   )
 }
@@ -940,6 +964,35 @@ function bigNumber(text: string, color: string) {
   const width = Math.max(52, text.length * 27 + 4)
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="42" viewBox="0 0 ${width} 42">` +
     `<text x="0" y="37" font-size="40" font-weight="700" font-family="Segoe UI, sans-serif" fill="${HEADLINE_COLORS[color] ?? '#888780'}">${esc(text)}</text></svg>`
+}
+
+// The settings menu. It floats under the gear as the pane's last child: a
+// floating box is painted over the elements before it, so drawn last it
+// covers everything and takes the clicks (drawn earlier, later sections
+// painted over it and caught its clicks).
+function settingsMenu(Text: any, Box: any, Button: any, clockFormat: string, onFormat: (f: string) => unknown, onClose: () => unknown) {
+  const option = (id: string, label: string) => (
+    <Button key={`fmt-${id}`} plain dimColor={clockFormat !== id} onPress={() => onFormat(id)}>
+      {`${clockFormat === id ? '●' : '○'} ${label}`}
+    </Button>
+  )
+  return (
+    <Box flexDirection="column" borderStyle="round" borderColor="subtle" backgroundColor="inverseText" paddingX={1} gap="xs">
+      <Text weight="semibold">Settings</Text>
+      <Text dimColor size="footnote">Chart times</Text>
+      <Box flexDirection="row" gap="sm">
+        {option('24h', '24-hour (14:30)')}
+        {option('12h', '12-hour (2:30 PM)')}
+      </Box>
+      <Button key="settings-done" plain dimColor onPress={onClose}>Done</Button>
+    </Box>
+  )
+}
+
+// Saves the clock format for this session and for later sessions.
+async function setTimeFormat($: $, format: string) {
+  await update($, timeFormat, () => format)
+  await $.store.set('clockFormat', format)
 }
 
 function readout(Text: any, Box: any, label: string, value: string, color: string) {
@@ -1068,7 +1121,16 @@ function timeLabel(ts: number, step: number, withDate: boolean) {
   const two = (n: number) => String(n).padStart(2, '0')
   const date = `${MONTHS[d.getMonth()]} ${d.getDate()}`
   if (step >= DAY) return date
-  const time = step < MINUTE ? `${two(d.getHours())}:${two(d.getMinutes())}:${two(d.getSeconds())}` : `${two(d.getHours())}:${two(d.getMinutes())}`
+  let time: string
+  if (chartClock === '12h') {
+    const hour = d.getHours() % 12 || 12
+    const suffix = d.getHours() < 12 ? 'AM' : 'PM'
+    time = step < MINUTE
+      ? `${hour}:${two(d.getMinutes())}:${two(d.getSeconds())} ${suffix}`
+      : d.getMinutes() === 0 && step >= HOUR ? `${hour} ${suffix}` : `${hour}:${two(d.getMinutes())} ${suffix}`
+  } else {
+    time = step < MINUTE ? `${two(d.getHours())}:${two(d.getMinutes())}:${two(d.getSeconds())}` : `${two(d.getHours())}:${two(d.getMinutes())}`
+  }
   return withDate ? `${date} ${time}` : time
 }
 
