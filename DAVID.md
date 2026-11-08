@@ -14,7 +14,7 @@ This is the architecture and build guide for `David/`: the alignment classifier 
 
 **Runtime deployment milestone, 2026-11-08 04:52:37 -0500:** The designed classifier is live and warmed on stock Kev, deployed from `3b40ef1` with product code `5baed45`. A fresh backend-style stream validated the results.
 
-**Deployed now:** app `intent-monitor`, class `Classifier` (`classify` + `warmup`), serves the designed classifier on stock Kev-4B. Reads are unscored; classified events return calibrated risk and drift, with notices and corrections for qualifying findings. The trained-model swap has not run.
+**Deployed now:** app `intent-monitor`, class `Classifier` (`classify` + `warmup`), serves the designed classifier on stock Kev-4B. Reads are unscored; classified events return calibrated risk and drift, with notices and corrections for qualifying findings. The trained-model swap has not run. Oversized documents now use the verified screen-and-merge path, with `details.overflow` on those results. Product commit: `6e81f7a`.
 
 Expose `classify(event: dict) -> dict` as a Modal function (CONTRACT.md section 4):
 - It takes the event exactly as the Mod sent it. Pick the fields you need from CONTRACT.md section 5 and ignore the rest.

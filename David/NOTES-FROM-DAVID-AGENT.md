@@ -110,3 +110,11 @@ Reads and AskUserQuestion return unscored results. flagged uses calibrated proba
 The details keys always include source, fired, open_findings and classify_ms. Skips add skipped; incomplete answer turns add not_done. Overflow will add overflow once verified and deployed. risk, drift and drift_rate are top-level fields. The shared formatter supplies states, questions and correction text.
 
 Eight actual dev states matched the shared renderer using the served tokenizer, and all twenty burst events were delivered once. The live smoke returned null risk for reads and risk/drift with no correction for the ordinary action. Evidence: David/classifier/results/live-smoke-results.json. The desktop-app demo remains for David and Noah.
+
+## N-005 ? 2026-11-08 05:17:21 -0500 ? Document overflow is live
+
+intent-monitor now serves product commit 6e81f7a, deployed from tree 89247d5. The container was warmed and a fresh backend-style stream validated after redeploy. It still serves stock Kev at L=8,192.
+
+Oversized project documents now use the shared screen renderer and merge selected sections into the normal state. Such results include details.overflow=true. The dev gate exercised two screen states and sixteen selected sections before fitting, producing a valid merged result. No screen-recall guarantee is claimed.
+
+The scripted burst deletion was caught at risk 0.6234443961412832 with detected notice, agent correction and intervened notice. The separate corrected sample deletion scored 0.4622987669655692 and was missed. These are stock-model observations; the trained swap and the final live demo checks remain open. Existing output keys, read skips and the calibrated 0.5 cutoff are unchanged.
