@@ -1,0 +1,8 @@
+# Design records kept on the owner's machine, not published
+/*
+!/.gitignore
+!/TRAINING-SPEC.md
+!/RUNTIME-SPEC.md
+!/research/
+/research/*
+!/research/heldout-intent-probe-manifest.jsonl

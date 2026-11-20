@@ -4,3 +4,18 @@ vendor/
 __pycache__/
 .pytest_cache/
 *.pyc
+
+# Build-process records: kept on the owner's machine, not published
+/task.md
+/AGENTS.md
+/STATUS.md
+/TASKLIST.md
+/SIDEQUESTS.md
+/TASK-CLAIMS.md
+/MESSAGES.md
+/BUILD-LOG.md
+/VALIDATION-LOG.md
+/CONSTRAINTS.md
+/notes/
+/prompts/
+/recaps/
