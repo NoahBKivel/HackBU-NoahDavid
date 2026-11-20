@@ -48,11 +48,11 @@ def test_screens_all_sections_in_one_queued_submission_with_global_references():
 def test_selection_cutoff_and_lowest_score_drop_preserve_screen_findings():
     state, event = session({'first.md': '# Shared heading\n' + ('first ' * 70),
                             'second.md': '# Shared heading\n' + ('second ' * 70)})
-    runner = Runner({'SCR#S1': .9, 'M8#S2': .5})
+    runner = Runner({'SCR#S1': .9, 'M8#S2': .75})
     result = screen(state, [], event, runner, Tokenizer(), 150, [])
     assert '=== first.md › Shared heading ===' in result['text']
     assert '=== second.md › Shared heading ===' not in result['text']
-    assert result['screen_fired'] == {'M8#S2': .5}
+    assert result['screen_fired'] == {'M8#S2': .75}
     assert result['screen_sections']['S2']['text'].startswith('# Shared heading')
     assert result['row_budget'] == 150 + 640 - shared.count_tokens(result['text'], Tokenizer()) - 1
 

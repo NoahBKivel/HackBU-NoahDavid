@@ -4,7 +4,7 @@ from intent_runtime.formats import Formats, M7_WORDING
 
 
 def test_cutoff_matches_firing_and_flagged():
-    for score, expected in ((0.44, False), (0.45, True), (0.46, True)):
+    for score, expected in ((0.69, False), (0.70, True), (0.71, True)):
         answers = {"M4": {"true": score, "false": 1 - score}}
         assert ("M4" in fired(answers)) is expected
         assert readings(answers, [])['flagged'] is expected
