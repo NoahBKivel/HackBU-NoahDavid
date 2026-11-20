@@ -1,0 +1,8 @@
+{
+  "slug": "composite",
+  "module": "intent_training.constructions.composite",
+  "objective": ["L2"],
+  "planned_count": 300,
+  "label_bases": ["construction"],
+  "generation_required": true
+}

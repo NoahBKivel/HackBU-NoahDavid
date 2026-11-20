@@ -13,13 +13,16 @@ def target_rows(records: Iterable[dict[str, Any]], *, is_base_dev: bool = False,
     for request in records:
         request = deepcopy(request)
         meta = request["_meta"]
-        record_id = str(meta["id"])
+        identity = meta.get("id") or meta.get("record_id") or request.get("record_id")
+        if identity is None:
+            raise ValueError("A calibration record requires its stable identity.")
+        record_id = str(identity)
         for question in request["questions"].values():
             question.setdefault("src", meta["source"])
         record = materialize(request)
         for question in record["questions"]:
             options = [str(value) for value in question["keys"]]
-            yield {"record_id": record_id, "group_id": str(meta["group_id"]),
+            yield {"record_id": record_id, "group_id": str(meta.get("group_id", record_id)),
                    "question_id": question["qid"], "options": options,
                    "label": options[question["label"]],
                    "target": question.get("target", [float(i == question["label"]) for i in range(len(options))]),

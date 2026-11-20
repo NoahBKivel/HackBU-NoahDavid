@@ -14,7 +14,9 @@ def safe_extract(archive: Path, target: Path) -> dict[str, int]:
         for member in stream:
             path = PurePosixPath(member.name)
             if (path.is_absolute() or ".." in path.parts or "\\" in member.name
-                    or ":" in member.name or member.issym() or member.islnk()):
+                    or any(ord(character) < 32 or character in '<>:"|?*' for character in member.name)
+                    or any(part.endswith((".", " ")) for part in path.parts)
+                    or member.issym() or member.islnk()):
                 counts["rejected"] += 1
                 continue
             destination = target.joinpath(*path.parts)

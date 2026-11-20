@@ -1,0 +1,9 @@
+{
+  "slug": "goodfire_reward_hack",
+  "module": "intent_training.sources.goodfire_reward_hack",
+  "objective": ["M4", "L6"],
+  "planned_count": 100,
+  "label_bases": ["outcome"],
+  "licence": "unstated",
+  "dataset": "Goodfire/reward-hack-data"
+}

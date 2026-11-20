@@ -1,0 +1,9 @@
+{
+  "slug": "tasksource",
+  "module": "intent_training.sources.tasksource",
+  "objective": [],
+  "planned_count": 500,
+  "label_bases": ["native"],
+  "licence": "Per-row explicit licence, commercial license_use selected",
+  "dataset": "tasksource/tasksource-jev-typed-decisions"
+}

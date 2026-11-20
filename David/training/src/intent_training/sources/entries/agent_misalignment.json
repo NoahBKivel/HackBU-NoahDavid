@@ -1,0 +1,9 @@
+{
+  "slug": "agent_misalignment",
+  "module": "intent_training.sources.agent_misalignment",
+  "objective": ["L1", "L2", "L4", "L5", "G4", "G1"],
+  "planned_count": 150,
+  "label_bases": ["T"],
+  "licence": "OpenRAIL-D with use restrictions for trajectories; CC-BY-4.0 for aggregates. Released fine-tunes require use restrictions, attribution and dataset disclosure. Redistributed copies retain safety metadata.",
+  "dataset": "rpotham/agent-misalignment-dataset"
+}

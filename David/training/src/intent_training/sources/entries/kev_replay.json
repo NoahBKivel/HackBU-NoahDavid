@@ -1,0 +1,10 @@
+{
+  "slug": "kev_replay",
+  "module": "intent_training.sources.kev_replay",
+  "objective": [],
+  "planned_count": 2500,
+  "slices": {"decision-v7": 2000, "hard-v1": 500},
+  "label_bases": ["native"],
+  "licence": "Per original source; verified evidence required before conversion",
+  "dataset": "jaredpalmer/kev-suites"
+}

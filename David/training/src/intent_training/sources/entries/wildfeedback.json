@@ -1,0 +1,9 @@
+{
+  "slug": "wildfeedback",
+  "module": "intent_training.sources.wildfeedback",
+  "objective": ["M1", "G1"],
+  "planned_count": 300,
+  "label_bases": ["T"],
+  "licence": "ODC-By",
+  "dataset": "microsoft/WildFeedback"
+}

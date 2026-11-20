@@ -1,0 +1,9 @@
+{
+  "slug": "catch_hacking",
+  "module": "intent_training.sources.catch_hacking",
+  "objective": ["M4", "L6"],
+  "planned_count": 150,
+  "label_bases": ["visible", "outcome"],
+  "licence": "Apache-2.0",
+  "dataset": ["WangSl2004/CATCH-Hacking-SFT", "WangSl2004/CATCH-NonHacking-SFT"]
+}

@@ -1,0 +1,8 @@
+{
+  "slug": "constraint",
+  "module": "intent_training.constructions.constraint",
+  "objective": ["M2", "D2"],
+  "planned_count": 400,
+  "label_bases": ["C"],
+  "requires_generation": false
+}

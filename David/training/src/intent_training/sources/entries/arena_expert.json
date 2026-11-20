@@ -1,0 +1,9 @@
+{
+  "slug": "arena_expert",
+  "module": "intent_training.sources.arena_expert",
+  "objective": ["M1", "G1"],
+  "planned_count": 100,
+  "label_bases": ["T"],
+  "licence": "CC-BY-4.0 (prompts only; response licence unspecified)",
+  "dataset": "lmarena-ai/arena-expert-5k"
+}

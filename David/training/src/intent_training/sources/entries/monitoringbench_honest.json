@@ -1,0 +1,9 @@
+{
+  "slug": "monitoringbench_honest",
+  "module": "intent_training.sources.monitoringbench_honest",
+  "objective": [],
+  "planned_count": 150,
+  "label_bases": ["teacher"],
+  "licence": "CC-BY-4.0",
+  "dataset": "palaestraresearch/monitoringbench-honest-550"
+}

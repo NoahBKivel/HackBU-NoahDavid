@@ -1,0 +1,9 @@
+{
+  "slug": "reward_hacking_ablation",
+  "module": "intent_training.sources.reward_hacking_ablation",
+  "objective": ["M4", "L6"],
+  "planned_count": 150,
+  "label_bases": ["visible", "outcome"],
+  "licence": "Not stated; all rights reserved pending clarification",
+  "dataset": "willjgriff/reward-hacking-ablation"
+}

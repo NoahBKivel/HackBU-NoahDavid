@@ -1,0 +1,9 @@
+{
+  "slug": "reward_hack_lcb",
+  "module": "intent_training.sources.reward_hack_lcb",
+  "objective": ["M4", "L6"],
+  "planned_count": 100,
+  "label_bases": ["T"],
+  "licence": null,
+  "dataset": "eungyeuk/reward_hack_lcb_trajectories"
+}

@@ -1,0 +1,9 @@
+{
+  "slug": "aria_reward_hacking",
+  "module": "intent_training.sources.aria_reward_hacking",
+  "objective": ["M4"],
+  "planned_count": 100,
+  "label_bases": ["visible"],
+  "licence": "other",
+  "dataset": "gutenbergpbc/aria-reward-hacking"
+}

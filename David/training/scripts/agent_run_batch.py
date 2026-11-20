@@ -15,8 +15,11 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("manifest", type=Path)
     parser.add_argument("--workers", type=int, default=20)
+    parser.add_argument("--limit", type=int)
     args = parser.parse_args()
     tasks = [json.loads(line) for line in args.manifest.read_text(encoding="utf-8").splitlines() if line]
+    if args.limit is not None:
+        tasks = tasks[:args.limit]
     output = root / "results/agent-runs"
     output.mkdir(parents=True, exist_ok=True)
     (output / "batch.json").write_text(json.dumps({"pid": os.getpid(), "manifest": str(args.manifest),

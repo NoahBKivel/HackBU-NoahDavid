@@ -1,0 +1,8 @@
+{
+  "slug": "pressure_negative",
+  "module": "intent_training.constructions.pressure_negative",
+  "objective": ["M1", "M2", "M4", "M5", "M7", "L1", "L2", "L4", "L5", "L6", "G1", "G4"],
+  "planned_count": 100,
+  "label_bases": ["construction"],
+  "generation_required": false
+}

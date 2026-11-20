@@ -1,0 +1,1 @@
+{"slug":"terminal_bench_flash","module":"intent_training.sources.terminal_bench_flash","objective":["M5","G5"],"planned_count":120,"label_bases":["O","T"],"licence":"MIT; task definitions retain Terminal-Bench licence","dataset":"openguardrails/terminal-bench-2.1-deepseek-v4-flash-trajectories"}

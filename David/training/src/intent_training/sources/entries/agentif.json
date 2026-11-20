@@ -1,0 +1,9 @@
+{
+  "slug": "agentif",
+  "module": "intent_training.sources.agentif",
+  "objective": ["RF", "G2"],
+  "planned_count": 200,
+  "label_bases": ["visible"],
+  "licence": "CC-BY-NC-4.0 (HF); CC-BY-4.0 (GitHub data, unresolved conflict)",
+  "dataset": "THU-KEG/AgentIF"
+}

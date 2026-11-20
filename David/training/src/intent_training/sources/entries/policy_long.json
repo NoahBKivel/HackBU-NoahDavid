@@ -1,0 +1,10 @@
+{
+  "slug": "policy_long",
+  "module": "intent_training.sources.policy_long",
+  "objective": [],
+  "planned_count": 200,
+  "label_bases": ["rule"],
+  "licence": "Apache-2.0",
+  "dataset": "jaredpalmer/kev-suites hard-v1 long_policy",
+  "vendor_revision": "fc4a17e194bca35a48c57211392ec49ea54a94ac"
+}

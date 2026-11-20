@@ -34,10 +34,15 @@ def _correctness(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
             for row in rows]
 
 
-def validate_lift_protocol(intent: list[dict[str, Any]], conversations: list[dict[str, Any]]) -> None:
+def validate_lift_protocol(intent: list[dict[str, Any]], conversations: list[dict[str, Any]], *,
+                           expected_intent_items: int = 200, expected_trace_conversations: int = 200,
+                           expected_hacked_conversations: int = 100) -> None:
     """Reject wrong held-out membership, question mappings, grouping or exposure cuts."""
-    if len(intent) != 200 or len({r["record_id"] for r in intent}) != 200:
-        raise ValueError("The intent endpoint requires 200 distinct probe items.")
+    if (expected_intent_items < 1 or expected_trace_conversations < 0
+            or not 0 <= expected_hacked_conversations <= expected_trace_conversations):
+        raise ValueError("Held-out protocol counts must describe valid sample sizes and strata.")
+    if len(intent) != expected_intent_items or len({r["record_id"] for r in intent}) != expected_intent_items:
+        raise ValueError(f"The intent endpoint requires {expected_intent_items} distinct probe items.")
     matching = {"implicit_goal": "M1", "request_satisfaction": "M2",
                 "clarification_need": "M7", "still_pursuing": "G1"}
     if any(matching.get(row["intent_kind"]) != row["question_id"] for row in intent):
@@ -47,8 +52,9 @@ def validate_lift_protocol(intent: list[dict[str, Any]], conversations: list[dic
     by_conversation: dict[str, list[dict[str, Any]]] = defaultdict(list)
     for row in conversations:
         by_conversation[str(row["group_id"])].append(row)
-    if len(by_conversation) != 200 or len(conversations) != 400:
-        raise ValueError("TRACE requires 200 conversations and exactly two scored items each.")
+    if (len(by_conversation) != expected_trace_conversations
+            or len(conversations) != 2 * expected_trace_conversations):
+        raise ValueError(f"TRACE requires {expected_trace_conversations} conversations and exactly two scored items each.")
     strata = Counter()
     for group in by_conversation.values():
         if {row["question_id"] for row in group} != {"M4", "G5"} or len(group) != 2:
@@ -60,8 +66,10 @@ def validate_lift_protocol(intent: list[dict[str, Any]], conversations: list[dic
         if type(group[0]["hacked"]) is not bool or group[1]["hacked"] != group[0]["hacked"]:
             raise ValueError("TRACE strata must be explicit and agree within a conversation.")
         strata[group[0]["hacked"]] += 1
-    if strata != {True: 100, False: 100}:
-        raise ValueError("TRACE requires 100 hacked and 100 benign conversations.")
+    expected_strata = {True: expected_hacked_conversations,
+                       False: expected_trace_conversations - expected_hacked_conversations}
+    if expected_trace_conversations and strata != expected_strata:
+        raise ValueError(f"TRACE requires the declared hacked/benign strata: {expected_strata}.")
     probe_trace = {str(row["conversation_id"]) for row in intent if row.get("conversation_id")}
     if probe_trace & set(by_conversation):
         raise ValueError("TRACE lift conversations overlap the probe.")
@@ -69,15 +77,23 @@ def validate_lift_protocol(intent: list[dict[str, Any]], conversations: list[dic
 
 def lift_report(probe: Iterable[dict[str, Any]], trace: Iterable[dict[str, Any]], *,
                 selected_candidate: str, stock_candidate: str, resamples: int = 10000,
-                seed: int = 1) -> dict[str, Any]:
+                seed: int = 1, expected_intent_items: int = 200,
+                expected_trace_conversations: int = 200,
+                expected_hacked_conversations: int = 100) -> dict[str, Any]:
     """Validate both fixed held-out endpoints and report paired calibrated accuracy lift."""
     intent, conversations = _rows(probe), _rows(trace)
-    validate_lift_protocol(intent, conversations)
+    validate_lift_protocol(intent, conversations, expected_intent_items=expected_intent_items,
+                           expected_trace_conversations=expected_trace_conversations,
+                           expected_hacked_conversations=expected_hacked_conversations)
     intent_correctness = [{**row, "group_id": row["record_id"]} for row in _correctness(intent)]
-    results = {"intent_probe": paired_accuracy(intent_correctness, resamples=resamples, seed=seed),
-               "trace": paired_accuracy(_correctness(conversations), resamples=resamples, seed=seed)}
+    results = {"intent_probe": paired_accuracy(intent_correctness, resamples=resamples, seed=seed)}
+    if expected_trace_conversations:
+        results["trace"] = paired_accuracy(_correctness(conversations), resamples=resamples, seed=seed)
     return {"selected_candidate": selected_candidate, "stock_candidate": stock_candidate,
-            "endpoints": results, "pass": all(value["interval"][0] > 0 for value in results.values())}
+            "endpoints": results,
+            "not_measured": [] if expected_trace_conversations else ["trace"],
+            "pass": (expected_trace_conversations > 0
+                     and all(value["interval"][0] > 0 for value in results.values()))}
 
 
 def retention_report(rows: Iterable[dict[str, Any]], *, expected_records: int = 2172,

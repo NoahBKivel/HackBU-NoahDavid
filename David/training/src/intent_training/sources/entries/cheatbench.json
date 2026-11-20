@@ -1,0 +1,9 @@
+{
+  "slug": "cheatbench",
+  "module": "intent_training.sources.cheatbench",
+  "objective": ["M4", "L6"],
+  "planned_count": 300,
+  "label_bases": ["visible", "outcome"],
+  "licence": "MIT",
+  "dataset": "steinad/CheatBench"
+}

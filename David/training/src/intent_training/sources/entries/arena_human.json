@@ -1,0 +1,9 @@
+{
+  "slug": "arena_human",
+  "module": "intent_training.sources.arena_human",
+  "objective": ["M1", "G1"],
+  "planned_count": 300,
+  "label_bases": ["T"],
+  "licence": "Prompts CC-BY-4.0; model outputs under provider terms",
+  "dataset": "lmarena-ai/arena-human-preference-140k"
+}

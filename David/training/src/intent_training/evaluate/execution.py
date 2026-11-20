@@ -61,7 +61,9 @@ def join_scored_candidates(rows: list[dict[str, Any]]) -> dict[str, list[dict[st
 def score_heldout(manifest: Path, *, selected: str, stock: str,
                    selected_calibration: Path, stock_calibration: Path,
                    output: Path, once_ledger: Path, device: str = "cuda",
-                   dtype: Any = None) -> None:
+                   dtype: Any = None, expected_intent_items: int = 200,
+                   expected_trace_conversations: int = 200,
+                   expected_hacked_conversations: int = 100) -> None:
     """Score both frozen candidates once through the serving path with frozen transforms."""
     from intent_training.select.calibration import calibrated_probabilities
 
@@ -94,7 +96,10 @@ def score_heldout(manifest: Path, *, selected: str, stock: str,
                 if row["type"] != "noul":
                     raise ValueError("Lift endpoints require binary question rows.")
                 protocol_rows[entry["endpoint"]].append({**entry, "question_id": question, "options": ["false", "true"]})
-    validate_lift_protocol(protocol_rows["intent_probe"], protocol_rows["trace"])
+    validate_lift_protocol(protocol_rows["intent_probe"], protocol_rows["trace"],
+                           expected_intent_items=expected_intent_items,
+                           expected_trace_conversations=expected_trace_conversations,
+                           expected_hacked_conversations=expected_hacked_conversations)
     inputs = {"manifest_sha256": _digest(manifest), "selected": selected, "stock": stock,
               "selected_calibration_sha256": _digest(selected_calibration),
               "stock_calibration_sha256": _digest(stock_calibration)}
@@ -125,13 +130,21 @@ def score_heldout(manifest: Path, *, selected: str, stock: str,
     os.replace(temporary_ledger, once_ledger)
 
 
-def evaluation_report(payload: dict[str, Any], *, resamples: int = 10000, seed: int = 1) -> dict[str, Any]:
+def evaluation_report(payload: dict[str, Any], *, resamples: int = 10000, seed: int = 1,
+                      expected_intent_items: int = 200,
+                      expected_trace_conversations: int = 200,
+                      expected_hacked_conversations: int = 100,
+                      expected_retention_records: int = 2172) -> dict[str, Any]:
     """Assemble measured evaluations with explicit model identities and denominators."""
     result = {"selected_candidate": payload["selected_candidate"], "stock_candidate": payload["stock_candidate"]}
-    result["lift"] = lift_report(payload["intent_probe"], payload["trace"],
+    result["lift"] = lift_report(payload["intent_probe"], payload.get("trace", []),
                                   selected_candidate=result["selected_candidate"], stock_candidate=result["stock_candidate"],
-                                  resamples=resamples, seed=seed)
-    result["retention"] = retention_report(payload["retention"], resamples=resamples, seed=seed)
+                                  resamples=resamples, seed=seed,
+                                  expected_intent_items=expected_intent_items,
+                                  expected_trace_conversations=expected_trace_conversations,
+                                  expected_hacked_conversations=expected_hacked_conversations)
+    result["retention"] = retention_report(payload["retention"], expected_records=expected_retention_records,
+                                            resamples=resamples, seed=seed)
     result["requirement_recall"] = requirement_recall(payload["requirement_filter"])
     result["benign_rates"] = benign_rates(payload["benign_dev"])
     for benchmark in ("llmbar", "rewardbench2"):

@@ -82,13 +82,17 @@ def loss_module(model: Any, args: Any) -> Any:
     """Wrap custom decision forwards inside Accelerate's actual DDP entry point."""
     import torch
     import kev.train as native
+    from .teacher_weights import weight_variants
+
     class DecisionLoss(torch.nn.Module):
-        def __init__(self) -> None:
+        def __init__(self, weights_by_id: dict[str, float]) -> None:
             super().__init__()
             self.decision = model
+            self.weights_by_id = weights_by_id
 
         def forward(self, variants: list[Any]) -> Any:
             if variants:
+                weight_variants(variants, self.weights_by_id)
                 loss, _ = native.batch_loss(self.decision, args, variants, "cuda", {}, None,
                     torch.autocast("cuda", dtype=torch.bfloat16))
             else:
@@ -96,7 +100,7 @@ def loss_module(model: Any, args: Any) -> Any:
             # An empty rank and conditionally unused parameters still join the same reduction.
             return loss + sum(parameter.reshape(-1)[0] * 0
                               for parameter in self.decision.trainable_parameters())
-    return DecisionLoss()
+    return DecisionLoss(getattr(args, "teacher_weights_by_id", {}))
 
 
 def run(config_path: str) -> None:
@@ -110,7 +114,8 @@ def run(config_path: str) -> None:
     from .grouping import optimizer_groups
     from .kernels import install_required_kernels, kernel_calls, convolution_calls
     from .measure import training_model
-    from .persistence import save_checkpoint, LoRAResumeWriter
+    from .persistence import save_checkpoint, LoRAResumeWriter, restore_distributed_continuation
+    from .teacher_weights import record_weight, weighted_normalizer
 
     config = json.loads(Path(config_path).read_text())
     accelerator = Accelerator(mixed_precision="no", gradient_accumulation_steps=1,
@@ -126,13 +131,17 @@ def run(config_path: str) -> None:
     args = _arguments(int(config.get("max_state", 8192)), int(config["pass_tokens_max"]))
     args.batch, args.accum = 16, 1
     records_bytes = Path(config["records_path"]).read_bytes()
-    records = [json.loads(line) for line in records_bytes.splitlines() if line.strip()]
+    from kev.data import load_records
+    records = load_records(config["records_path"])
     if config.get("fixed_records"):
         records = records[:int(config["fixed_records"])]
     for index, record in enumerate(records):
         meta = record.setdefault("_meta", {})
         meta.setdefault("id", record.get("record_id", f"record-{index}"))
         meta.setdefault("source", record.get("source", "measurement"))
+    args.teacher_weights_by_id = {
+        str(record["_meta"]["id"]): record_weight(record) for record in records
+    }
     groups = optimizer_groups(records, 16)
     cycle_group_count = len(groups)
     mode = config.get("mode", "parity")
@@ -159,8 +168,51 @@ def run(config_path: str) -> None:
     counts = native.state_token_counts(tokenizer, records)
     shapes = native.plan_shapes(model, tokenizer, args, records, 0, set(), counts)
     timings = []
+    start_step = 0
+    if config.get("resume_from"):
+        if config.get("continuation_release") and accelerator.is_main_process:
+            from datetime import datetime, timezone
+            import modal
+            release_path = Path(config["continuation_release"])
+            while True:
+                modal.Volume.from_name(config["modal_volume"]).reload()
+                if release_path.exists():
+                    release = json.loads(release_path.read_text())
+                    if (release.get("original_call_id") != config["original_call_id"]
+                            or release.get("terminal") is not True
+                            or release.get("resume_from") != config["resume_from"]):
+                        raise ValueError("Continuation release does not identify the completed original run.")
+                    break
+                if datetime.now(timezone.utc) >= datetime.fromisoformat(config["absolute_deadline_utc"].replace("Z", "+00:00")):
+                    raise TimeoutError("Continuation release did not arrive before deadline.")
+                time.sleep(5)
+        accelerator.wait_for_everyone()
+        if accelerator.is_main_process:
+            destination.mkdir(parents=True, exist_ok=True)
+        accelerator.wait_for_everyone()
+        if mode != "train" or accelerator.num_processes != 4:
+            raise ValueError("Continuation requires the original four-rank training configuration.")
+        verify_frozen_input(Path(config["records_path"]), config["expected_sha256"], config["expected_records"])
+        restored = restore_distributed_continuation(Path(config["resume_from"]), optimizer, scheduler,
+                                                   accelerator.unwrap_model(wrapper).decision, len(groups))
+        start_step = restored["step"]
+        if accelerator.is_main_process:
+            print(json.dumps({"continuation_restored": restored, "records_sha256": hashlib.sha256(records_bytes).hexdigest(),
+                              "next_group_record_ids": [r["_meta"]["id"] for r in groups[start_step]]}), flush=True)
+            (destination / "continuation.json").write_text(json.dumps(restored, indent=2))
+        accelerator.wait_for_everyone()
+    budget_stop = False
     save_interval = max(1, math.ceil(len(groups) / 10))
     for index, group in enumerate(groups):
+        if index < start_step:
+            continue
+        if config.get("absolute_deadline_utc") and not timings:
+            from datetime import datetime, timezone
+            expired = int(datetime.now(timezone.utc) >= datetime.fromisoformat(config["absolute_deadline_utc"].replace("Z", "+00:00")))
+            if int(accelerator.reduce(torch.tensor(expired, device=accelerator.device), reduction="max")):
+                budget_stop = True
+                break
+        group_weight = weighted_normalizer(group)
         partition_world = int(config.get("partition_world", accelerator.num_processes))
         shard_ids = (range(partition_world) if accelerator.num_processes == 1
                      else [accelerator.process_index])
@@ -182,8 +234,8 @@ def run(config_path: str) -> None:
             with context:
                 loss = wrapper(variants)
                 loss_sum += loss.detach().double()
-                # DDP averages across ranks; this restores the global record-mean objective.
-                accelerator.backward(loss * accelerator.num_processes / len(group))
+                # DDP averages ranks; divide by the global sum of record weights.
+                accelerator.backward(loss * accelerator.num_processes / group_weight)
             tokens += sum(variant.tokens for variant in variants)
         norm = accelerator.clip_grad_norm_(wrapper.parameters(), native.MAX_GRAD_NORM)
         if not torch.isfinite(norm):
@@ -193,7 +245,7 @@ def run(config_path: str) -> None:
         optimizer.zero_grad(set_to_none=True)
         torch.cuda.synchronize()
         seconds = torch.tensor(time.perf_counter() - started, device=accelerator.device)
-        global_loss = float(accelerator.reduce(loss_sum, reduction="sum")) / len(group)
+        global_loss = float(accelerator.reduce(loss_sum, reduction="sum")) / group_weight
         seconds = float(accelerator.reduce(seconds, reduction="max"))
         global_tokens = int(accelerator.reduce(torch.tensor(tokens, device=accelerator.device), reduction="sum"))
         peak = int(accelerator.reduce(torch.tensor(torch.cuda.max_memory_allocated(), device=accelerator.device), reduction="max"))
@@ -207,7 +259,12 @@ def run(config_path: str) -> None:
         if accelerator.is_main_process:
             (destination / "progress.json").write_text(json.dumps({"steps": timings}))
             print(json.dumps(row), flush=True)
-        if mode == "train" and ((index + 1) % save_interval == 0 or index + 1 == len(groups)):
+        budget_elapsed = accelerator.reduce(torch.tensor(time.perf_counter() - startup, device=accelerator.device), reduction="max")
+        budget_stop = mode == "train" and float(budget_elapsed) >= float(config.get("max_train_seconds", 1740))
+        if config.get("absolute_deadline_utc"):
+            expired = int(datetime.now(timezone.utc) >= datetime.fromisoformat(config["absolute_deadline_utc"].replace("Z", "+00:00")))
+            budget_stop = budget_stop or bool(accelerator.reduce(torch.tensor(expired, device=accelerator.device), reduction="max"))
+        if mode == "train" and ((index + 1) % save_interval == 0 or index + 1 == len(groups) or budget_stop):
             if accelerator.is_main_process:
                 unwrapped = accelerator.unwrap_model(wrapper).decision
                 meta = Meta(base=config["base"], base_revision=config["base_revision"],
@@ -220,18 +277,21 @@ def run(config_path: str) -> None:
                 import modal
                 modal.Volume.from_name(config["modal_volume"]).commit()
             accelerator.wait_for_everyone()
+        if budget_stop:
+            break
     if accelerator.is_main_process:
         timed = timings[cycle_group_count:] if mode == "benchmark" else timings
         result = {"status": "MEASURED", "backend": "accelerate", "mode": mode,
                   "world_size": accelerator.num_processes, "steps": timings,
+                  "completed_full_epoch": start_step + len(timings) == len(groups), "start_step": start_step, "total_global_steps": start_step + len(timings), "stopped_for_time_budget": bool(budget_stop),
                   "records_sha256": hashlib.sha256(records_bytes).hexdigest(),
                   "fixed_records": config.get("fixed_records"), "startup_seconds": startup_seconds,
-                  "records_per_hour": sum(row["records"] for row in timed) / sum(row["seconds"] for row in timed) * 3600,
-                  "tokens_per_second": sum(row["forward_tokens"] for row in timed) / sum(row["seconds"] for row in timed),
+                  "records_per_hour": sum(row["records"] for row in timed) / max(max(sum(row["seconds"] for row in timed), 1e-12), 1e-12) * 3600,
+                  "tokens_per_second": sum(row["forward_tokens"] for row in timed) / max(sum(row["seconds"] for row in timed), 1e-12),
                   "kernel_binding": binding, "kernel_calls_rank0": kernel_calls(),
                   "convolution_calls_rank0": convolution_calls(), "max_state": args.max_state,
                   "pass_tokens_max": args.pass_tokens_max, "global_batch": 16}
-        result["gpu_memory_bytes_per_device"] = memory
+        result["gpu_memory_bytes_per_device"] = memory if timings else None
         (destination / "result.json").write_text(json.dumps(result, indent=2))
     accelerator.wait_for_everyone()
 

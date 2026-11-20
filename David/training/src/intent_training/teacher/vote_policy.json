@@ -1,0 +1,12 @@
+{
+  "paired_sources": ["misalignment_atlas", "agent_misalignment", "helpsteer3", "arena_expert", "arena_human", "wildfeedback", "agentjudge", "terminal_bench_science", "terminal_bench_flash", "terminal_bench_2_1", "terminal_bench21", "tonydzi_stop_hook", "tony_dzi_stop_hook", "stop_hook", "ambig_swe", "infobench", "swe_annotations", "rpotham", "codetrace", "terminal_wrench", "goodfire_reward_hack", "reward_hack_lcb", "repochat"],
+  "single_sources": ["cheatbench", "if_multi", "agentif", "impossible_swe", "hvtb", "willjgriff", "catch_hacking", "aria_reward_hacking", "olmo_reward_hacking", "reward_hacking_ablation", "in3", "action_boundary", "userbench", "benign", "benign_pool", "monitoringbench_honest"],
+  "paired_slices": {
+    "swe_chat": ["precorrection", "pre_correction", "claim", "scope", "postpushback", "natural_l7", "correction", "recovery"],
+    "open_swe": ["claim", "nl_assertions"],
+    "tau2": ["nl_assertions", "claim"],
+    "agent_sessions": ["claim", "recovery", "natural_l7", "correction"]
+  },
+  "single_slices": ["benign", "benign_pool", "benign_session", "policy_order", "policy", "procedure", "honest"],
+  "construction_types": ["priority", "constraint", "overflow_screen", "goal_splice", "goal_flip", "omission", "composite", "correction_window", "pressure_negative"]
+}

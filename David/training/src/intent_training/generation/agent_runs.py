@@ -9,18 +9,22 @@ import os
 from pathlib import Path
 import shutil
 import subprocess
+import threading
 import time
 from typing import Any, Iterator
 from filelock import FileLock
 from .agent_runs_rules import check_function_boundary, write_diffs
+
+_LEDGER_THREAD_LOCK = threading.RLock()
 
 
 @contextmanager
 def file_lock(path: Path) -> Iterator[None]:
     """Serialize ledger changes between processes with an exclusive lock file."""
     path.parent.mkdir(parents=True, exist_ok=True)
-    with FileLock(str(path), timeout=30):
-        yield
+    with _LEDGER_THREAD_LOCK:
+        with FileLock(str(path), timeout=60):
+            yield
 
 
 def snapshot(folder: Path) -> dict[str, str]:
@@ -54,7 +58,17 @@ class AgentRunner:
             global_used = sum(float(json.loads(line).get("cost_usd") or json.loads(line).get("reserved_charge_usd", 0))
                               for line in ledger.read_text().splitlines()) if ledger.exists() else 0
             active = sum(x["maximum_usd"] for x in state.values() if "charged_usd" not in x)
-            if global_used + active + maximum > self.budget["total_cap_usd"]:
+            generation_path = self.root / "results/generation/reservations.json"
+            generation = json.loads(generation_path.read_text()) if generation_path.exists() else {}
+            generation_active = sum(float(x["maximum_usd"]) for x in generation.values()
+                                    if "charged_usd" not in x)
+            generation_spent = sum(float(item.get("cost_usd") if item.get("cost_usd") is not None
+                                         else item.get("reserved_charge_usd", 0))
+                                   for item in (json.loads(line) for line in ledger.read_text().splitlines())
+                                   if item.get("category") == "generation") if ledger.exists() else 0
+            generation_protected = max(generation_active,
+                                       float(self.budget.get("generation_reserve_usd", 0)) - generation_spent)
+            if global_used + active + generation_protected + maximum > self.budget["total_cap_usd"]:
                 return False
             state[job_id] = {"maximum_usd": maximum, "reserved_at": datetime.now(timezone.utc).isoformat()}
             path.write_text(json.dumps(state, indent=2), encoding="utf-8")
@@ -92,7 +106,13 @@ class AgentRunner:
         (folder / "before.json").write_text(json.dumps(before), encoding="utf-8")
         (folder / "task.json").write_text(json.dumps(task, indent=2), encoding="utf-8")
         (folder / "prompt.txt").write_text(task["prompt"], encoding="utf-8")
-        command = ["docker", "run", "--name", "intent-" + job_id, "--memory", "2g",
+        if datetime.now(timezone.utc) >= cutoff:
+            self.settle(job_id, 0, {})
+            result = {"job_id": job_id, "status": "not_started", "reason": "preparation_reached_cutoff",
+                      "cost_usd": 0}
+            (folder / "result.json").write_text(json.dumps(result), encoding="utf-8")
+            return result
+        command = ["docker", "run", "--name", "intent-" + job_id, "--memory", "512m",
                    "--cpus", "1", "--pids-limit", "256", "--cap-drop", "ALL",
                    "--security-opt", "no-new-privileges", "-e", "ANTHROPIC_API_KEY",
                    "-e", "HOME=/job/home", "-v", str(folder) + ":/job", "-w", "/job/work",

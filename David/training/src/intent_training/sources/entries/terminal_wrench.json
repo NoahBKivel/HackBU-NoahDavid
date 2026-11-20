@@ -1,0 +1,1 @@
+{"slug":"terminal_wrench","module":"intent_training.sources.terminal_wrench","objective":["M4","L6"],"planned_count":250,"label_bases":["T"],"licence":"Apache-2.0","dataset":"few-sh/terminal-wrench"}

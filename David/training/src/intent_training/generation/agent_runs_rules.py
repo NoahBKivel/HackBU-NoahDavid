@@ -8,15 +8,28 @@ from typing import Any
 
 def _outside_body(text: str, name: str) -> tuple[str, str]:
     tree = ast.parse(text)
-    candidates = [node for node in ast.walk(tree)
-                  if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.name == name]
+    candidates = []
+
+    def find(nodes, parents=()):
+        for node in nodes:
+            if isinstance(node, (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)):
+                qualified = parents + (node.name,)
+                if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and (
+                        ".".join(qualified) == name or ("." not in name and node.name == name)):
+                    candidates.append(node)
+                find(node.body, qualified)
+
+    find(tree.body)
     if len(candidates) != 1:
         raise ValueError("The target function must occur exactly once.")
     node = candidates[0]
     lines = text.splitlines(keepends=True)
     if node.body[0].lineno == node.lineno:
         raise ValueError("Single-line target bodies require a token-level checker.")
-    return "".join(lines[:node.body[0].lineno - 1]), "".join(lines[node.end_lineno:])
+    first = node.body[0]
+    has_docstring = isinstance(first, ast.Expr) and isinstance(first.value, ast.Constant) and isinstance(first.value.value, str)
+    prefix_end = first.end_lineno if has_docstring else first.lineno - 1
+    return "".join(lines[:prefix_end]), "".join(lines[node.end_lineno:])
 
 
 def check_function_boundary(before: Path, after: Path, target: str,

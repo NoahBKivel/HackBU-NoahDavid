@@ -1,0 +1,9 @@
+{
+  "slug": "action_boundary",
+  "module": "intent_training.sources.action_boundary",
+  "objective": ["M7"],
+  "planned_count": 100,
+  "label_bases": ["visible"],
+  "licence": "CC-BY-4.0",
+  "dataset": "jumplander/JL-ActionBoundary-1K"
+}

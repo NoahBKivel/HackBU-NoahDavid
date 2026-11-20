@@ -1,0 +1,8 @@
+{
+  "slug": "correction_window",
+  "module": "intent_training.constructions.correction_window",
+  "objective": ["L7"],
+  "classes": ["genuinely fixed", "partially fixed", "acknowledged only", "ignored", "dismissed correctly", "dismissed wrongly"],
+  "requires_generation": true,
+  "max_attempts": 3
+}

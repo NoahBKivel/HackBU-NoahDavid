@@ -18,7 +18,7 @@ def main() -> None:
              "status": "waiting_for_existing_preparation", "preparation_limit_seconds": 300}
     deadline = time.monotonic() + state["preparation_limit_seconds"]
     while time.monotonic() < deadline:
-        completed = root / "data/downloads/duc-anh-2002--SWE-Misbehavior/extraction.json"
+        completed = root / "data/downloads/duc-anh-2002--SWE-Misbehavior/official-target-files.json"
         image = subprocess.run(["docker", "image", "inspect", "intent-agent-run"],
                                capture_output=True, timeout=30)
         state["source_ready"] = completed.exists()
@@ -34,10 +34,21 @@ def main() -> None:
         (output / "supervisor.json").write_text(json.dumps(state, indent=2), encoding="utf-8")
         return
     subprocess.run([sys.executable, "-I", str(root / "scripts/agent_run_manifest.py")], check=True, timeout=120)
+    preparation = json.loads((output / "required-preparation.json").read_text(encoding="utf-8"))
+    if not preparation["prepared"]:
+        state["status"] = "blocked_preparation"
+        state["reason"] = "No exact task-required source files are available."
+        (output / "supervisor.json").write_text(json.dumps(state, indent=2), encoding="utf-8")
+        return
+    memory = int(subprocess.run(["docker", "info", "--format", "{{.MemTotal}}"],
+                                capture_output=True, text=True, check=True, timeout=30).stdout.strip())
+    workers = max(1, min(20, (memory - 1024 ** 3) // (512 * 1024 ** 2)))
+    state["docker_memory_bytes"] = memory
+    state["workers"] = workers
     state["status"] = "running_batch"
     (output / "supervisor.json").write_text(json.dumps(state, indent=2), encoding="utf-8")
     process = subprocess.Popen([sys.executable, "-I", str(root / "scripts/agent_run_batch.py"),
-                                str(output / "swe-manifest.jsonl"), "--workers", "20"])
+                                str(output / "swe-required-manifest.jsonl"), "--workers", str(workers)])
     state["batch_pid"] = process.pid
     (output / "supervisor.json").write_text(json.dumps(state, indent=2), encoding="utf-8")
     process.wait()

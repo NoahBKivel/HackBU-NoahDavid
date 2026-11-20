@@ -1,0 +1,13 @@
+{
+  "slug": "if_multi",
+  "module": "intent_training.sources.if_multi",
+  "objective": ["RF", "M2", "D2", "G2"],
+  "planned_count": 400,
+  "slices": [
+    {"objective": ["RF"], "planned_count": 200},
+    {"objective": ["M2", "D2", "G2"], "planned_count": 200}
+  ],
+  "label_bases": ["visible", "outcome"],
+  "licence": "ODC-BY",
+  "dataset": "allenai/IF_multi_constraints_upto5"
+}

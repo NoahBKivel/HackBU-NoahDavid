@@ -6,6 +6,7 @@ import hashlib
 import math
 
 from intent_training.assemble.labels import record_digest
+from .reservations import load_reservations, reserved
 
 
 def grouped_records(records):
@@ -55,17 +56,22 @@ def grouped_records(records):
     return result
 
 
-def split_records(records, *, seed, dev_fraction=0.1):
+def split_records(records, *, seed, dev_fraction=0.1, reservations=None):
     """Assign base development groups before any prevalence-altering top-ups."""
     if not 0 < dev_fraction < 1:
         raise ValueError("The development fraction must lie between zero and one.")
     groups = grouped_records(deepcopy(records))
+    reservations = load_reservations() if reservations is None else reservations
+    reserved_groups = {key for key, members in groups.items() if any(reserved(row, reservations) for row in members)}
     ordered = sorted(groups, key=lambda group: hashlib.sha256(f"{seed}:{group}".encode()).hexdigest())
-    count = math.ceil(len(ordered) * dev_fraction)
-    dev_groups = set(ordered[:count])
+    natural = [group for group in ordered if group not in reserved_groups]
+    count = math.ceil(len(natural) * dev_fraction)
+    dev_groups = set(natural[:count])
     result = {"train": [], "base_dev": []}
+    if reserved_groups:
+        result["dev_topup"] = []
     for group_id in ordered:
-        split = "base_dev" if group_id in dev_groups else "train"
+        split = "dev_topup" if group_id in reserved_groups else "base_dev" if group_id in dev_groups else "train"
         for record in groups[group_id]:
             meta = record.setdefault("_meta", {})
             meta["group_id"] = group_id
@@ -79,8 +85,11 @@ def assert_split_integrity(splits):
     """Reject a leaked transitive group, including planted pair leaks."""
     records = []
     destinations = {}
+    reservations = load_reservations()
     for split, members in splits.items():
         for record in members:
+            if split == "train" and reserved(record, reservations):
+                raise ValueError("A dev-reserved task or trajectory entered the training split.")
             records.append(record)
             destinations[id(record)] = split
             declared = record.get("_meta", {}).get("split")
@@ -98,7 +107,7 @@ def add_dev_topups(splits, records):
     topups = deepcopy(records)
     for record in topups:
         record.setdefault("_meta", {})["split"] = "dev_topup"
-    result["dev_topup"] = topups
+    result["dev_topup"] = result.get("dev_topup", []) + topups
     # Top-ups may share base-dev groups, but must never share a training group.
-    assert_split_integrity({"train": result["train"], "dev": result.get("base_dev", []) + topups})
+    assert_split_integrity({"train": result["train"], "dev": result.get("base_dev", []) + result["dev_topup"]})
     return result

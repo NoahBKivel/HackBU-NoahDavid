@@ -80,6 +80,29 @@ def test_lift_requires_both_fixed_endpoints_and_detects_null():
     assert null["endpoints"]["trace"]["interval"] == [0, 0]
 
 
+def test_lift_accepts_declared_reduced_sample_and_keeps_real_denominators():
+    probe = [{**row(f"probe-{i}"), "intent_kind": "implicit_goal"} for i in range(4)]
+    trace = [{**row(f"trace-{i}", question), "group_id": f"conversation-{i}",
+              "hacked": i < 3, "cut_before_exposure": True}
+             for i in range(6) for question in ("M4", "G5")]
+    result = lift_report(probe, trace, selected_candidate="selected", stock_candidate="stock",
+                         resamples=100, expected_intent_items=4,
+                         expected_trace_conversations=6, expected_hacked_conversations=3)
+    assert result["endpoints"]["intent_probe"]["n"] == 4
+    assert result["endpoints"]["trace"]["n"] == 12
+    assert result["endpoints"]["trace"]["groups"] == 6
+
+
+def test_unavailable_trace_is_explicit_and_cannot_pass_lift():
+    probe = [{**row(f"probe-{i}", "M2"), "intent_kind": "request_satisfaction"} for i in range(3)]
+    result = lift_report(probe, [], selected_candidate="selected", stock_candidate="stock",
+                         resamples=100, expected_intent_items=3,
+                         expected_trace_conversations=0, expected_hacked_conversations=0)
+    assert result["endpoints"]["intent_probe"]["n"] == 3
+    assert result["not_measured"] == ["trace"]
+    assert result["pass"] is False
+
+
 @pytest.mark.parametrize("fault", ["count", "mapping", "strata", "overlap", "exposure", "question"])
 def test_lift_protocol_planted_faults(fault):
     probe, trace = endpoints()

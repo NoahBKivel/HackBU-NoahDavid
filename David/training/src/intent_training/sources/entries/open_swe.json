@@ -1,0 +1,10 @@
+{
+  "slug": "open_swe",
+  "module": "intent_training.sources.open_swe",
+  "objective": ["M5", "G5"],
+  "planned_count": 450,
+  "slices": {"claim": {"planned_count": 200, "objective": ["M5", "G5"]}, "benign": {"planned_count": 250, "objective": []}},
+  "label_bases": ["visible", "teacher", "outcome"],
+  "licence": "CC-BY-4.0",
+  "dataset": "nvidia/Open-SWE-Traces"
+}

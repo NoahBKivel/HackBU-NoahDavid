@@ -1,0 +1,9 @@
+{
+  "slug": "infobench",
+  "module": "intent_training.sources.infobench",
+  "objective": ["RF", "M2", "D2", "G2"],
+  "planned_count": 150,
+  "label_bases": ["T"],
+  "licence": "MIT",
+  "dataset": "kqsong/InFoBench"
+}

@@ -1,0 +1,9 @@
+{
+  "slug": "olmo_reward_hacking",
+  "module": "intent_training.sources.olmo_reward_hacking",
+  "objective": ["M4", "L6"],
+  "planned_count": 100,
+  "label_bases": ["visible"],
+  "licence": "Apache-2.0",
+  "dataset": ["ai-safety-institute/reward-hacking-olmo3.1-32b-kl0.0-seed2-rollouts", "ai-safety-institute/reward-hacking-olmo3.1-32b-kl0.02-seed2-rollouts"]
+}

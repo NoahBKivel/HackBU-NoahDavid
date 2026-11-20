@@ -1,0 +1,9 @@
+{
+  "slug": "helpsteer3",
+  "module": "intent_training.sources.helpsteer3",
+  "objective": ["M1", "G1"],
+  "planned_count": 250,
+  "label_bases": ["T"],
+  "licence": "CC-BY-4.0",
+  "dataset": "nvidia/HelpSteer3"
+}

@@ -1,0 +1,9 @@
+{
+  "slug": "quality_long",
+  "module": "intent_training.sources.quality_long",
+  "objective": [],
+  "planned_count": 200,
+  "label_bases": ["visible"],
+  "licence": "Per-article explicit Project Gutenberg or CC BY 4.0 reuse grant",
+  "dataset": "nyu-mll/quality QuALITY v1.0.1 train"
+}

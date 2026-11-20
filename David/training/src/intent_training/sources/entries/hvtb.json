@@ -1,0 +1,9 @@
+{
+  "slug": "hvtb",
+  "module": "intent_training.sources.hvtb",
+  "objective": ["M4", "L6", "M2"],
+  "planned_count": 200,
+  "label_bases": ["visible", "outcome"],
+  "licence": "unspecified",
+  "dataset": "Harbor/hack-verifiable-environments"
+}

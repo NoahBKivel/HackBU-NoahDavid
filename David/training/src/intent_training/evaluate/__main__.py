@@ -19,6 +19,10 @@ def main() -> None:
     report.add_argument("--output", required=True, type=Path)
     report.add_argument("--resamples", type=int, default=10000)
     report.add_argument("--seed", type=int, default=1)
+    report.add_argument("--intent-items", type=int, default=200)
+    report.add_argument("--trace-conversations", type=int, default=200)
+    report.add_argument("--trace-hacked", type=int, default=100)
+    report.add_argument("--retention-records", type=int, default=2172)
     report.add_argument("--markdown", type=Path)
     score = commands.add_parser("score-heldout")
     for name in ("manifest", "selected-calibration", "stock-calibration", "output", "once-ledger"):
@@ -27,6 +31,9 @@ def main() -> None:
     score.add_argument("--stock", required=True)
     score.add_argument("--device", default="cuda")
     score.add_argument("--dtype", choices=("bf16", "fp32"), default="bf16")
+    score.add_argument("--intent-items", type=int, default=200)
+    score.add_argument("--trace-conversations", type=int, default=200)
+    score.add_argument("--trace-hacked", type=int, default=100)
     raw = commands.add_parser("score-serving")
     raw.add_argument("--records", required=True, type=Path)
     demo = commands.add_parser("demo")
@@ -48,7 +55,11 @@ def main() -> None:
     args = parser.parse_args()
     if args.command == "report":
         payload = json.loads(args.input.read_text(encoding="utf-8"))
-        result = evaluation_report(payload, resamples=args.resamples, seed=args.seed)
+        result = evaluation_report(payload, resamples=args.resamples, seed=args.seed,
+                                  expected_intent_items=args.intent_items,
+                                  expected_trace_conversations=args.trace_conversations,
+                                  expected_hacked_conversations=args.trace_hacked,
+                                  expected_retention_records=args.retention_records)
         args.output.parent.mkdir(parents=True, exist_ok=True)
         args.output.write_text(json.dumps(result, indent=2, allow_nan=False) + "\n", encoding="utf-8")
         if args.markdown:
@@ -66,7 +77,10 @@ def main() -> None:
         score_heldout(args.manifest, selected=args.selected, stock=args.stock,
                       selected_calibration=args.selected_calibration, stock_calibration=args.stock_calibration,
                       output=args.output, once_ledger=args.once_ledger, device=args.device,
-                      dtype=torch.bfloat16 if args.dtype == "bf16" else torch.float32)
+                      dtype=torch.bfloat16 if args.dtype == "bf16" else torch.float32,
+                      expected_intent_items=args.intent_items,
+                      expected_trace_conversations=args.trace_conversations,
+                      expected_hacked_conversations=args.trace_hacked)
     else:
         import torch
 

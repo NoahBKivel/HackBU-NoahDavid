@@ -1,0 +1,9 @@
+{
+  "slug": "ambig_swe",
+  "module": "intent_training.sources.ambig_swe",
+  "objective": ["M7"],
+  "planned_count": 200,
+  "label_bases": ["T"],
+  "licence": "MIT",
+  "dataset": "sani903/InteractiveSWEAgents"
+}

@@ -23,6 +23,9 @@ def write_results(report: dict[str, Any], path: Path) -> None:
 
     for endpoint, result in report["lift"]["endpoints"].items():
         append(f"{endpoint} accuracy lift", f"{selected} minus {stock}", result, "difference")
+    missing = report["lift"].get("not_measured", [])
+    if missing:
+        lines.append(f"Not measured: {', '.join(missing)}.")
     append("Retention accuracy difference", f"{selected} minus {stock}", report["retention"], "difference")
     for candidate, value in report["requirement_recall"].items():
         append("Requirement-filter recall", selected if candidate == "selected" else stock, value)

@@ -1,0 +1,9 @@
+{
+  "slug": "codetrace",
+  "module": "intent_training.sources.codetrace",
+  "objective": ["L1", "L2", "L4", "L5", "G4", "G1"],
+  "planned_count": 150,
+  "label_bases": ["T"],
+  "licence": "MIT",
+  "dataset": "NJU-LINK/CodeTraceBench"
+}

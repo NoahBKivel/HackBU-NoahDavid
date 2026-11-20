@@ -1,0 +1,8 @@
+{
+  "slug": "overflow_screen",
+  "module": "intent_training.constructions.overflow_screen",
+  "objective": ["SCR", "M8"],
+  "planned_count": 200,
+  "label_bases": ["construction", "teacher"],
+  "generation_required": false
+}

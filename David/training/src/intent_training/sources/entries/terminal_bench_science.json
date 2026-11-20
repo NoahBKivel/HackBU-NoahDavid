@@ -1,0 +1,10 @@
+{
+  "slug": "terminal_bench_science",
+  "module": "intent_training.sources.terminal_bench_science",
+  "objective": ["M5", "G5"],
+  "planned_count": 500,
+  "slices": {"claim": 250, "benign": 250},
+  "label_bases": ["O", "T"],
+  "licence": "No dataset licence assigned; original benchmark content retains upstream terms.",
+  "dataset": "yangjunxiao2021/terminal-bench-science-trajectories"
+}

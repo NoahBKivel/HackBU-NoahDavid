@@ -1,0 +1,8 @@
+{
+  "slug": "goal_splice",
+  "module": "intent_training.constructions.goal_splice",
+  "objective": ["L4", "L1", "G1"],
+  "planned_count": 400,
+  "generation_required": true,
+  "paired": true
+}

@@ -1,0 +1,9 @@
+{
+  "slug": "repochat",
+  "module": "intent_training.sources.repochat",
+  "objective": ["M1", "G1"],
+  "planned_count": 150,
+  "label_bases": ["T"],
+  "licence": "CC-BY-4.0 (prompts); model responses subject to originating model terms",
+  "dataset": "lmarena-ai/repochat-arena-preference-4k"
+}

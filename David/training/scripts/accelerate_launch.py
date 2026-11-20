@@ -16,17 +16,26 @@ def main() -> None:
     parser.add_argument("--fixed-records", type=int, default=16)
     parser.add_argument("--sha256")
     parser.add_argument("--expected-records", type=int)
+    parser.add_argument("--resume-from")
+    parser.add_argument("--original-config")
+    parser.add_argument("--absolute-deadline-utc")
+    parser.add_argument("--continuation-release")
+    parser.add_argument("--original-call-id")
     args = parser.parse_args()
+    if args.resume_from and (args.mode != "train" or not args.original_config or not args.absolute_deadline_utc):
+        parser.error("Continuation requires --mode train, --original-config and --absolute-deadline-utc.")
     if args.mode == "train" and (not args.sha256 or not args.expected_records):
         parser.error("Training requires --sha256 and --expected-records from the gated freeze.")
     from kev_prepare_upload import available_memory_gib
-    memory = available_memory_gib()
+    memory = None
     root = Path(__file__).resolve().parents[1]
     sys.path.insert(0, str(root / "src"))
     from intent_training.modal_app import accelerate_training as module
     with module.app.run(detach=True):
         call = module.run_accelerate.spawn(args.records, args.mode, args.pass_tokens, args.fixed_records,
-                                           args.sha256, args.expected_records)
+                                           args.sha256, args.expected_records, args.resume_from,
+                                           args.original_config, args.absolute_deadline_utc, args.continuation_release,
+                                           args.original_call_id)
         result = {"function_call_id": call.object_id, "app_id": module.app.app_id,
                   "image_id": module.image.object_id, "submitted_at": datetime.now(timezone.utc).isoformat(),
                   "records_path": args.records, "mode": args.mode,

@@ -1,0 +1,9 @@
+{
+  "slug": "swe_annotations",
+  "module": "intent_training.sources.swe_annotations",
+  "objective": ["M7"],
+  "planned_count": 200,
+  "label_bases": ["T"],
+  "licence": "Annotation licence unverified; SWE-bench issue dataset MIT",
+  "dataset": "OpenAI SWE-bench Verified annotation results joined to princeton-nlp/SWE-bench"
+}

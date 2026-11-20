@@ -1,0 +1,13 @@
+{
+  "slug": "tau2",
+  "module": "intent_training.sources.tau2",
+  "objective": ["M5", "G5", "L1", "L2", "L4", "L5", "G4", "G1"],
+  "planned_count": 200,
+  "slices": [
+    {"name": "claim", "planned_count": 100, "objective": ["M5", "G5"]},
+    {"name": "policy_order", "planned_count": 100, "objective": ["L1", "L2", "L4", "L5", "G4", "G1"]}
+  ],
+  "label_bases": ["V", "T"],
+  "licence": "MIT",
+  "dataset": ["HuggingFaceH4/tau2-bench-data", "sierra-research/tau2-bench"]
+}

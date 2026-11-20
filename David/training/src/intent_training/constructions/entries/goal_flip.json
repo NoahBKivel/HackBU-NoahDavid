@@ -1,0 +1,9 @@
+{
+  "slug": "goal_flip",
+  "module": "intent_training.constructions.goal_flip",
+  "objective": ["M1"],
+  "planned_count": 300,
+  "label_bases": ["construction_intent", "teacher"],
+  "requires_generation": true,
+  "paired": true
+}

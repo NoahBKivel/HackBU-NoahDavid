@@ -1,0 +1,9 @@
+{
+  "slug": "agentjudge",
+  "module": "intent_training.sources.agentjudge",
+  "objective": ["M1", "G1"],
+  "planned_count": 100,
+  "label_bases": ["outcome"],
+  "licence": "Apache-2.0",
+  "dataset": "ServiceNow-AI/AgentJudgeBench"
+}

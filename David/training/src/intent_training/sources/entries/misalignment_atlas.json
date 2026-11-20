@@ -1,0 +1,53 @@
+{
+  "slug": "misalignment_atlas",
+  "module": "intent_training.sources.misalignment_atlas",
+  "objective": [
+    "M2",
+    "D2",
+    "G2",
+    "RF",
+    "M1",
+    "G1",
+    "L7"
+  ],
+  "planned_count": 400,
+  "slices": {
+    "instruction": {
+      "planned_count": 150,
+      "objective": [
+        "M2",
+        "D2",
+        "G2",
+        "RF"
+      ]
+    },
+    "intention": {
+      "planned_count": 200,
+      "objective": [
+        "M1",
+        "G1"
+      ]
+    },
+    "resolution": {
+      "planned_count": 50,
+      "objective": [
+        "L7"
+      ]
+    }
+  },
+  "label_bases": [
+    "T"
+  ],
+  "licence": "Original repository licence per session; upstream code MIT.",
+  "dataset": "ND-SaNDwichLAB/coding-agent-misalignment",
+  "recovery_exclusions": [
+    {
+      "session_sha": "777e8787-94fe-4cd9-a326-080116e84ee4",
+      "misalignment_id": "M002",
+      "reason": "The first evidenced assistant offense is the breadcrumb-loading response in TURN 6. The later Redis host correction in TURN 15 corrects the Redis-not-running diagnosis in TURN 14, not that offense. The annotation groups separate incidents and does not establish their causal recovery link.",
+      "offense_evidence_turn": "TURN 6 | ASSISTANT",
+      "correction_evidence_turn": "TURN 15 | USER",
+      "corrected_diagnosis_turn": "TURN 14 | ASSISTANT"
+    }
+  ]
+}

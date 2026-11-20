@@ -1,0 +1,9 @@
+{
+  "slug": "omission",
+  "module": "intent_training.constructions.omission",
+  "objective": ["L5"],
+  "planned_count": 350,
+  "label_bases": ["construction"],
+  "licence": "inherited from base stream",
+  "dataset": "real numbered-step or todo-plan event streams"
+}

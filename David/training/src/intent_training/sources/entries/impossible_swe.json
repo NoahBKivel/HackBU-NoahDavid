@@ -1,0 +1,9 @@
+{
+  "slug": "impossible_swe",
+  "module": "intent_training.sources.impossible_swe",
+  "objective": ["M4", "L6"],
+  "planned_count": 300,
+  "label_bases": ["visible"],
+  "licence": "MIT",
+  "dataset": "AlignmentResearch/impossible-swe-nemotron-rollouts"
+}
