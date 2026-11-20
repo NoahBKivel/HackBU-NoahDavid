@@ -37,7 +37,7 @@
 ## 3. Claim Discipline
 
 - **Asserted:** the contract shape, the formulas in 7.8, the ordering rule.
-- **Sourced:** latencies and memory from the stock-Kev measurements on an L40S (`David/docs/research/2026-11-07-31-stock-kev-modal-measurements-and-intent-probe-research.md`, "report 31").
+- **Sourced:** latencies and memory from the stock-Kev measurements on an L40S made during the design ("the design measurements").
 - **Estimated:** per-event latency with the served model and the running cost (section 9); settled by the demo checks.
 - **Refused:** no false-correction rate is claimed; no accuracy figure is claimed for the runtime beyond the training track's held-out results.
 
@@ -287,10 +287,10 @@ At container start the class reads `selected.json` (6.4), loads that checkpoint 
 
 ## 9. Cost and latency (estimated)
 
-- **Per classified event, no flag:** about 1.2 s at an 8K-token state and about 2.9 s at 32K, for 12 rows on the L40S (report 31, cache-miss column, model time only). Modal and the Dict add about 0.15–0.3 s (report 31 measured about 100 ms of Dict I/O on a skipped event; each event here writes an entry and the header, which is held in memory), and a container rebuilding a long session reads one entry per stored event once. **With a flag:** plus about 70 ms per diagnostic row on states over 4,096 tokens (one D1 row per detailed event, D5, one D2 row per R_k); up to about 10–25 D1 rows (0.7–1.8 s) when many events are detailed, at the full validated length; at L = 8,192 the detail budget holds a few blocks, about 3–8 rows (0.2–0.6 s). If another request evicted the state from Kev's cache, the full read repeats. **Open corrections:** each L7 row carries its whole correction message (up to about 6–7K tokens with evidence), so each open message adds roughly 0.3–0.5 s to every classified event (estimated from report 31's state-prefill cost at one question, about 0.06 ms per token across 2K to 32K states, applied to the row's length; row length itself was not measured).
-- **Requirement filter:** about 0.1 s per unit (report 31: 107 ms for one row on a 2K state), paid when instructions or documents arrive; a 60-unit document costs several seconds before the next event is scored.
+- **Per classified event, no flag:** about 1.2 s at an 8K-token state and about 2.9 s at 32K, for 12 rows on the L40S (the design measurements, cache-miss column, model time only). Modal and the Dict add about 0.15–0.3 s (the design measurements measured about 100 ms of Dict I/O on a skipped event; each event here writes an entry and the header, which is held in memory), and a container rebuilding a long session reads one entry per stored event once. **With a flag:** plus about 70 ms per diagnostic row on states over 4,096 tokens (one D1 row per detailed event, D5, one D2 row per R_k); up to about 10–25 D1 rows (0.7–1.8 s) when many events are detailed, at the full validated length; at L = 8,192 the detail budget holds a few blocks, about 3–8 rows (0.2–0.6 s). If another request evicted the state from Kev's cache, the full read repeats. **Open corrections:** each L7 row carries its whole correction message (up to about 6–7K tokens with evidence), so each open message adds roughly 0.3–0.5 s to every classified event (estimated from the design measurements' state-prefill cost at one question, about 0.06 ms per token across 2K to 32K states, applied to the row's length; row length itself was not measured).
+- **Requirement filter:** about 0.1 s per unit (the design measurements: 107 ms for one row on a 2K state), paid when instructions or documents arrive; a 60-unit document costs several seconds before the next event is scored.
 - **Overflow event:** several 8K screen states of 20 rows each plus the merged state; expected beyond 8 s, delivered as a late result.
-- **Running cost:** $2.27 per hour while the container is up (report 31); a few hours of demo and testing.
+- **Running cost:** $2.27 per hour while the container is up (the design measurements); a few hours of demo and testing.
 
 ---
 

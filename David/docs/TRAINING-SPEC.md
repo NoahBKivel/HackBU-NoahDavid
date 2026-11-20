@@ -302,7 +302,7 @@ A record is the run as it stood at event k; event k renders as LATEST EVENT. Cut
 
 ### 7.3 Sources
 
-Dossier numbers (#N) refer to `docs/DATASET-DOSSIER.md`, the per-source research record. Columns: planned count n^plan (multiply by s); label basis (V = visible-based: a human reading the visible trace or a rule over visible tool calls, wins over the teacher; O = outcome-based, informs the teacher only; T = teacher, with any source label as a hint; C = construction: the intended label, which yields to the teacher under the mismatch rule, 7.4); conversion. The secrets scan (section 12.2) runs on every record.
+Columns: planned count n^plan (multiply by s); label basis (V = visible-based: a human reading the visible trace or a rule over visible tool calls, wins over the teacher; O = outcome-based, informs the teacher only; T = teacher, with any source label as a hint; C = construction: the intended label, which yields to the teacher under the mismatch rule, 7.4); conversion. The secrets scan (section 12.2) runs on every record.
 
 **Gaming the measure and targeting the checker (M4, L6)**
 
@@ -341,14 +341,14 @@ A V label here covers the question its offence matches: reading tests, grader ou
 | THU-KEG/AgentIF | 200 (RF, G2) | V (constraint annotations; checker code run in a sandbox) | Split system prompts on blank lines; locate each constraint in its pointed paragraph; drop Chinese-heavy records; keep `state: success` constraints for G2; drop broken checkers. |
 | ND-SaNDwichLAB coding-agent-misalignment (instruction episodes) | 150 | T (LLM labels inform) | Turn indices → event seqs; dedupe against SWE-chat sessions; cut before the user's correction. |
 | kqsong/InFoBench | 150 | T per requirement | Sample responses from the generator; R_k are the instruction's units (6.7) the teacher labels RF-yes, with InFoBench's decomposed requirements given to the teacher as a hint. |
-| SWE-Misbehavior (dossier #45: the `duc-anh-2002` and `dxlong2000` releases) | 200 | V (rule checkers: AST diffs, file-change bookkeeping) | Headless Claude Code runs (section 8.7) on task prompts with an explicit boundary appended ("only modify the body of `f`"); checker violations → M2/D2. |
+| SWE-Misbehavior (the `duc-anh-2002` and `dxlong2000` releases) | 200 | V (rule checkers: AST diffs, file-change bookkeeping) | Headless Claude Code runs (section 8.7) on task prompts with an explicit boundary appended ("only modify the body of `f`"); checker violations → M2/D2. |
 
 **Silent ambiguity (M7)**
 
 | Source | n^plan | Basis | Conversion |
 |---|---|---|---|
 | Ambig-SWE (sani903/InteractiveSWEAgents) | 200 | T (against the full original issue) | Underspecified issue → `[I1]`; the full original goes to the side record; label first actions as asked, looked up, or silently assumed. |
-| SWE-bench Verified annotations (OpenAI's human underspecification ratings, dossier #46) | 200 | T (per-annotator `underspecified` scores inform) | Join issue text; the generator writes a first action; the issue's instance ids are excluded from any SWE-bench Verified evaluation. |
+| SWE-bench Verified annotations (OpenAI's human underspecification ratings) | 200 | T (per-annotator `underspecified` scores inform) | Join issue text; the generator writes a first action; the issue's instance ids are excluded from any SWE-bench Verified evaluation. |
 | hbx/IN3 | 150 | V (missing details with importance) | Generator writes a guess and an ask continuation per task (an ask renders as a `turn_completed` MESSAGE asking the question, cut there); importance ≥ 2 makes a guess material; rebalance the 80/20 vague skew to 50/50. |
 | SWE-chat scope choices | 100 | T | Agent made a material choice the user then rejected; cut at the choice. |
 | jumplander/JL-ActionBoundary-1K | 100 | V (ACT/INSPECT/ASK/DEFER families) | Keep families together (pair group). |
@@ -647,7 +647,7 @@ Baseline: stock Kev-4B given the same calibration family (per question, T_q and 
 | Forgetting general skill | retention gate | replay; LoRA at 2×10⁻⁵; interpolation | skills outside decision-v7 are unmeasured |
 | A source never arrives | access check at start | quota redistribution | none |
 | Secrets or personal data in records | secrets scan; PII pass on TonyDzi | scrubbing | secret formats outside the scan's patterns |
-| Licence or notice breach | each converter's declared licence | exclusion list | licences recorded unverified in the dossier |
+| Licence or notice breach | each converter's declared licence | exclusion list | licences recorded as each source declares them, unverified |
 
 **Recovery.** A failed correctness gate takes its 12.1 fallback (stopping its stage where that fallback says so); the demo check moves selection down the pick order; every other behaviour gate reports; if no trained candidate passes, stock Kev-4B is the model.
 
