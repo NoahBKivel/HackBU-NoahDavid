@@ -25,10 +25,10 @@ def swap(target: str, source: str | None, receipt_path: Path, required_source: s
              .add_local_dir(FOLDER / "src" / "intent_runtime", "/root/intent_runtime")
              .add_local_dir(FOLDER.parents[0] / "monitor_format", "/root/David/monitor_format"))
 
-    @helper.function(image=image, volumes={"/handoff": origin, "/model": destination}, cpu=2, timeout=1800)
+    @helper.function(image=image, volumes={"/handoff": origin, "/model": destination}, cpu=2, timeout=1800, serialized=True)
     def copy_selected(version: str, explicit_source: str | None, required: str | None) -> dict:
         from intent_runtime.handoff import copy_handoff
-        result = copy_handoff(Path("/handoff"), Path("/model"), version, explicit_source, required)
+        result = copy_handoff(Path("/handoff/side-fast-train/20261108T143549Z/runtime-release"), Path("/model"), version, explicit_source, required)
         destination.commit()
         return result
 

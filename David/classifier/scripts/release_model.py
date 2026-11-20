@@ -27,6 +27,8 @@ def progress(message: str) -> None:
     now = datetime.now(timezone.utc).isoformat()
     print(json.dumps({'at': now, 'release': message}), flush=True)
     path = ROOT / 'STATUS.md'
+    if not path.exists():
+        return
     lines = [line for line in path.read_text(encoding='utf-8').splitlines()
              if not line.startswith('Release progress:')]
     lines.insert(lines.index('## Active work') + 2, f'Release progress: {now}; {message}')
